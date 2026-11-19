@@ -1,0 +1,113 @@
+{
+  "bot_name": "Antigravity助手",
+  "platforms": [
+    {
+      "id": "qq_napcat_1",
+      "type": "onebot_v11",
+      "enabled": true,
+      "ws_url": "ws://127.0.0.1:3001",
+      "access_token": "CHANGE_ME_NAPCAT_TOKEN",
+      "self_id": "",
+      "group_allowlist": ["123456789"],
+      "group_blocklist": [],
+      "private_chat_enabled": false,
+      "private_allowlist": [],
+      "reconnect_initial_seconds": 2.0,
+      "reconnect_max_seconds": 60.0,
+      "rpc_timeout_seconds": 5.0
+    },
+    {
+      "id": "qq_napcat_2",
+      "type": "onebot_v11",
+      "enabled": false,
+      "ws_url": "ws://127.0.0.1:3002",
+      "access_token": "",
+      "self_id": "",
+      "group_allowlist": [],
+      "group_blocklist": []
+    },
+    {
+      "id": "custom_platform_ws",
+      "type": "generic_ws",
+      "enabled": false,
+      "ws_url": "ws://127.0.0.1:4001/ws",
+      "access_token": "",
+      "self_id": "bot_01",
+      "group_allowlist": []
+    }
+  ],
+  "triggers": {
+    "mention": {
+      "enabled": true,
+      "allow_at_all": false,
+      "include_quote_at": false,
+      "unknown_reply_at_behavior": "mention"
+    },
+    "quote": {
+      "enabled": true
+    },
+    "keyword": {
+      "enabled": true,
+      "keywords": ["/ai", "小助手", "请问机器人"],
+      "regex_patterns": [],
+      "case_sensitive": false,
+      "exclude_keywords": []
+    },
+    "dice": {
+      "enabled": true,
+      "probability": 0.03,
+      "min_message_length": 4,
+      "cooldown_seconds": 180.0,
+      "ignore_prefixes": ["/", "!", ".", "！"]
+    },
+    "context_llm": {
+      "enabled": true,
+      "min_unread_messages": 12,
+      "min_interval_seconds": 240.0,
+      "judge_context_window": 15,
+      "cooldown_after_reply_seconds": 180.0
+    }
+  },
+  "collector": {
+    "wait_triggers": ["mention", "quote", "keyword"],
+    "quiet_wait_seconds": 4.0,
+    "max_wait_seconds": 15.0,
+    "max_extra_messages": 5,
+    "track_only_trigger_user": true,
+    "context_message_limit": 25,
+    "history_buffer_size": 100
+  },
+  "rate_limit": {
+    "max_concurrent_requests": 1,
+    "max_queue_size": 8,
+    "user_cooldown_seconds": 12.0,
+    "channel_min_interval_seconds": 3.0,
+    "max_replies_per_channel_per_minute": 6
+  },
+  "reply": {
+    "quote_trigger_message": true,
+    "at_trigger_user": false,
+    "max_reply_chars": 800
+  },
+  "agy": {
+    "mode": "agy",
+    "executable": "auto",
+    "workspace_dir": "./bot_workspace",
+    "data_dir": "./data",
+    "model": "gemini-3.8-flash-medium",
+    "judge_model": "",
+    "effort": "",
+    "agent": "",
+    "sandbox": false,
+    "max_warm_processes": 2,
+    "max_turns_per_session": 20,
+    "turn_timeout_seconds": 90.0,
+    "judge_timeout_seconds": 30.0,
+    "resume_on_restart": true,
+    "rate_limit_cooldown_seconds": 180.0,
+    "fatal_error_pause_seconds": 3600.0
+  },
+  "logging": {
+    "level": "INFO"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "example-image-gen": {
+      "command": "python3",
+      "args": ["/absolute/path/to/your_image_gen_mcp.py"],
+      "disabled": true,
+      "enabledTools": ["generate_image"],
+      "tools": {
+        "generate_image": { "eager": true }
+      },
+      "timeoutSeconds": 60
+    }
+  }
+}

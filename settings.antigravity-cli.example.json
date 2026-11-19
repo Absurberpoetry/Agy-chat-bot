@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "deny": [
+      "command(*)",
+      "execute_url(*)",
+      "read_url(*)",
+      "write_file(GEMINI.md)",
+      "write_file(AGENTS.md)",
+      "write_file(.agents/)"
+    ],
+    "allow": []
+  }
+}
