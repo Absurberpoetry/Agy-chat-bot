@@ -267,7 +267,7 @@ class PluginContext:
 
 
 class BotPlugin:
-    """Base class for external Antigravity QQ Bot plugins."""
+    """Base class for external AGY CLI BOT plugins."""
 
     id: str = ""
     name: str = ""

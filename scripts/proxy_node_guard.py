@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Proxy Node Guard for Antigravity QQ Bot (port 7890).
+"""Proxy Node Guard for AGY CLI BOT (port 7890).
 
 Automatically benchmarks all proxy nodes on the local Clash/Mihomo core listening on port 7890
 against Google Antigravity upstream (`cloudcode-pa.googleapis.com`), verifies real Antigravity
