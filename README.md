@@ -1,4 +1,4 @@
-# AGY BOT
+# AGY CLI BOT
 
 基于官方原生 Antigravity CLI（`agy`）的轻量多平台聊天机器人。
 

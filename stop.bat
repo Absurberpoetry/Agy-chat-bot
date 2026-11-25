@@ -4,7 +4,7 @@ cd /d "%~dp0"
 
 if not exist ".venv\Scripts\python.exe" (
     schtasks /End /TN AGYBot >nul 2>&1
-    echo AGY BOT stopped.
+    echo AGY CLI BOT stopped.
     exit /b 0
 )
 

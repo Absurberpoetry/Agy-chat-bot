@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 cd /d "%~dp0"
 
 echo ========================================
-echo   AGY BOT Windows Installer
+echo   AGY CLI BOT Windows Installer
 echo ========================================
 
 set "PY_CMD="

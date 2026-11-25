@@ -3,7 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 
 echo "========================================"
-echo "  AGY BOT Linux / macOS 一键安装初始化"
+echo "  AGY CLI BOT Linux / macOS 一键安装初始化"
 echo "========================================"
 
 if ! command -v python3 >/dev/null 2>&1; then

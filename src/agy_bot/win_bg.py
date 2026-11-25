@@ -144,7 +144,7 @@ def start_bg() -> int:
         web_port = 8618
 
     print("========================================")
-    print(f"  AGY BOT 已在后台持久启动（计划任务: {TASK_NAME}）")
+    print(f"  AGY CLI BOT 已在后台持久启动（计划任务: {TASK_NAME}）")
     print("  - 无 72 小时超时限制，断开 SSH 或关闭窗口均不影响运行")
     print(f"  - 所有运行日志统一写入: {root / 'bot.log'}")
     print(f"  - WebUI 访问地址: http://127.0.0.1:{web_port}")
@@ -155,7 +155,7 @@ def start_bg() -> int:
 
 def stop_bg() -> int:
     _stop_existing(_root_dir())
-    print(f"AGY BOT 已停止（计划任务 {TASK_NAME}）。")
+    print(f"AGY CLI BOT 已停止（计划任务 {TASK_NAME}）。")
     return 0
 
 
