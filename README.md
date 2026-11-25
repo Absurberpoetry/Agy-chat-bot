@@ -33,4 +33,4 @@ bash scripts/linux/install.sh
 bash scripts/linux/start.sh
 ```
 
-启动后访问 `http://127.0.0.1:8618`（默认账号 `admin` / 密码 `admin123`，公网部署请及时修改密码），在 WebUI 中完成登录与平台配置即可使用。
+首次运行启动脚本时会提示设置 WebUI 登录账号和密码。启动后访问 `http://127.0.0.1:8618`，在 WebUI 中完成登录与平台配置即可使用。

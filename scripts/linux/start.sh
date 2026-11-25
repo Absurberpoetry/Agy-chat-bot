@@ -27,6 +27,7 @@ case "${1:-}" in
       echo "[错误] 未找到 config.json，请先运行 bash scripts/linux/install.sh"
       exit 1
     fi
+    PYTHONPATH="$(pwd)/src" ./.venv/bin/python -X utf8 -m agy_bot.first_run config.json
     nohup ./.venv/bin/python -u run.py >> bot.log 2>&1 &
     echo "AGY CLI BOT 已在后台启动 (PID $!)，统一日志: $(pwd)/bot.log"
     echo "WebUI 默认地址: http://127.0.0.1:8618"

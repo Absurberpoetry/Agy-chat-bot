@@ -351,8 +351,8 @@ class WebUIConfig:
     enabled: bool = False
     host: str = "0.0.0.0"
     port: int = 8618
-    username: str = "admin"
-    password: str = "admin123"
+    username: str = ""
+    password: str = ""
     log_buffer_size: int = 1000
 
 
@@ -811,8 +811,8 @@ def load_config_from_dict(
         enabled=bool(wu.get("enabled", wu.get("enable", False))),
         host=str(wu.get("host", "0.0.0.0")),
         port=int(wu.get("port", 8618)),
-        username=str(wu.get("username", "admin")),
-        password=str(wu.get("password", "admin123")),
+        username=str(wu.get("username", "")),
+        password=str(wu.get("password", "")),
         log_buffer_size=max(100, int(wu.get("log_buffer_size", 1000))),
     )
 

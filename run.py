@@ -19,6 +19,7 @@ if str(SRC) not in sys.path:
 
 from agy_bot.app import BotApplication  # noqa: E402
 from agy_bot.config import load_config  # noqa: E402
+from agy_bot.first_run import ensure_webui_credentials  # noqa: E402
 from agy_bot.webui.log_buffer import LogRingBufferHandler  # noqa: E402
 
 _WIN_JOB_HANDLE: int = 0
@@ -225,6 +226,10 @@ def main() -> int:
 
     _disable_windows_console_quick_edit()
     _bind_windows_kill_on_close_job()
+
+    if not args.dry_run:
+        if not ensure_webui_credentials(cfg_path):
+            return 1
 
     cfg = load_config(cfg_path)
     if args.dry_run:

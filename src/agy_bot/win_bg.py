@@ -46,6 +46,11 @@ def start_bg() -> int:
         print("[错误] 未找到 config.json，请先运行 install.bat 并填写配置")
         return 1
 
+    from agy_bot.first_run import ensure_webui_credentials
+
+    if not ensure_webui_credentials(root / "config.json"):
+        return 1
+
     data_dir = root / "data"
     data_dir.mkdir(parents=True, exist_ok=True)
     runner = data_dir / "_run_bg.cmd"
