@@ -303,7 +303,7 @@ class DebouncerAndIntegrationTests(unittest.IsolatedAsyncioTestCase):
             await app.shutdown()
 
     def test_load_example_config_and_generic_ws_normalize(self) -> None:
-        cfg = load_config(ROOT / "config.example.json")
+        cfg = load_config(ROOT / "templates" / "config.example.json")
         self.assertEqual(cfg.rate_limit.max_concurrent_requests, 1)
         self.assertEqual(len(cfg.platforms), 3)
 

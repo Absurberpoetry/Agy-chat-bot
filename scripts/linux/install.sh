@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../.."
 
 echo "========================================"
 echo "  AGY BOT Linux / macOS 一键安装初始化"
@@ -23,22 +23,22 @@ echo "[3/3] 正在安装依赖 (requirements.txt) ..."
 ./.venv/bin/python -m pip install -r requirements.txt
 
 if [ ! -f "config.json" ]; then
-  cp config.example.json config.json
+  cp templates/config.example.json config.json
   echo "[配置] 已生成 config.json"
 else
   echo "[配置] 检测到已有 config.json，保持原配置不变。"
 fi
 
 if [ ! -f "settings.antigravity-cli.bot.json" ]; then
-  cp settings.antigravity-cli.example.json settings.antigravity-cli.bot.json
+  cp templates/settings.antigravity-cli.example.json settings.antigravity-cli.bot.json
   echo "[配置] 已生成 settings.antigravity-cli.bot.json"
 fi
 
 echo ""
 echo "========================================"
 echo "  安装完成！下一步："
-echo "  1. 编辑 config.json（填写代理、QQ/TG 参数与 WebUI 密码）"
-echo "  2. 前台启动测试: bash start.sh"
-echo "  3. 后台持久运行: bash start.sh -d"
-echo "  4. 停止后台服务: bash start.sh stop"
+echo "  1. 前台启动: bash scripts/linux/start.sh"
+echo "  2. 后台常驻: bash scripts/linux/start.sh -d"
+echo "  3. 停止服务: bash scripts/linux/start.sh stop"
+echo "  4. 打开浏览器访问 http://127.0.0.1:8618 进行图形化配置"
 echo "========================================"

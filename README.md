@@ -47,7 +47,7 @@ Python 插件开发指南见 [plugins/README.md](plugins/README.md)。
 
 ## 快速开始（Windows / Linux）
 
-详细新手图文步骤请参阅 [使用说明.md](使用说明.md)。
+详细新手图文步骤请参阅 [docs/使用说明.md](docs/使用说明.md)。
 
 ### 1. 一键安装与初始化
 - **Windows（纯 CMD / 双击即可，无需 PowerShell）**：
@@ -56,26 +56,21 @@ Python 插件开发指南见 [plugins/README.md](plugins/README.md)。
   ```
 - **Linux / Ubuntu**：
   ```bash
-  bash install.sh
+  bash scripts/linux/install.sh
   ```
 
-脚本会自动创建 `.venv`、安装 `requirements.txt`，并生成 `config.json` 与 `settings.antigravity-cli.bot.json`。
+脚本会自动创建 `.venv`、安装 `requirements.txt`，并从 `templates/` 生成 `config.json` 与 `settings.antigravity-cli.bot.json`。
 
-### 2. 编辑 `config.json`
-- 填写 `platforms` 中要启用的客户端（QQ OneBot v11 填 `ws_url` 与 `access_token`；Telegram 启用 `tg_bot_1` 填 Bot Token）；
-- 如需代理访问 Google / Telegram，填写 `agy.proxy`（例如 `http://127.0.0.1:7890`）；
-- 公网部署请修改 `webui.username` 与 `webui.password`（默认 `admin` / `admin123`）。
-
-### 3. 启动与后台保活
+### 2. 启动与可视化配置（无需手改 JSON）
 - **Windows**：
   - 前台启动：`start.bat`（离线干跑验证：`start.bat --dry-run`）
   - 后台持久保活（SSH 断开不掉线，统一日志 `bot.log`）：`start_background.bat`
   - 停止后台服务：`stop.bat`
 - **Linux / Ubuntu**：
-  - 前台启动：`bash start.sh`
-  - 后台运行：`bash start.sh -d`（停止：`bash start.sh stop`）
+  - 前台启动：`bash scripts/linux/start.sh`
+  - 后台运行：`bash scripts/linux/start.sh -d`（停止：`bash scripts/linux/start.sh stop`）
 
-启动后访问 `http://127.0.0.1:8618`（或服务器 IP:8618）登录 WebUI，在 **全局配置 → 平台** 中点 **「测试连接」** 验证客户端连通性。
+启动后访问 `http://127.0.0.1:8618`（默认账号 `admin` / 密码 `admin123`，公网部署请及时改强密码），在 WebUI 的 **全局配置 → 核心引擎 / 平台** 中填写代理、启用 QQ（NapCat / LLBot）或 Telegram Bot 并点 **「测试连接」→「保存并热重载」** 即可上线。
 
 ---
 
@@ -90,21 +85,28 @@ python -m unittest discover -s tests -p "test_*.py"
 ## 目录结构
 
 ```text
-├── run.py                                  # 启动入口
-├── config.example.json                     # 配置文件模板（复制为 config.json）
-├── settings.antigravity-cli.example.json   # 机器人隔离权限模板
-├── bot_workspace/                          # 主代理 agy 工作区（GEMINI.md / .agents/）
-├── data/                                   # 运行期数据（SQLite 库 / 人设库 / 子代理工作区，不提交仓库）
-├── plugins/                                # 聊天网关 Python 插件目录
+├── install.bat / start.bat / start_background.bat / stop.bat  # Windows 一键脚本
+├── run.py                                                     # 主程序启动入口
+├── requirements.txt                                           # Python 依赖清单
+├── docs/使用说明.md                                            # 新手部署与排障文档
+├── templates/                                                 # 默认配置与权限模板
+│   ├── config.example.json
+│   └── settings.antigravity-cli.example.json
+├── scripts/linux/                                             # Linux/Ubuntu 一键脚本
+│   ├── install.sh
+│   └── start.sh
+├── bot_workspace/                                             # 主代理 agy 工作区（GEMINI.md / .agents/）
+├── data/                                                      # 运行期数据（SQLite 库 / 人设库 / 子代理工作区，不提交仓库）
+├── plugins/                                                   # 聊天网关 Python 插件目录（含 SDK 示例）
 ├── src/agy_bot/
-│   ├── app.py                              # 主控调度（消息流、防抖、压缩、子代理）
-│   ├── adapters/                           # OneBot v11 (NapCat) 与通用 WS 适配器
-│   ├── collector/                          # SQLite 群聊上下文存储、双触发压缩与防抖
-│   ├── runner/                             # 官方 agy CLI stream-json 暖进程池与子代理调度
-│   ├── plugins/                            # Python 聊天网关插件 SDK 与加载器
-│   ├── webui/                              # WebUI 后端 API、CLI PTY 终端与前端控制台
-│   └── mcp_history_server.py               # 内置只读 SQLite 历史消息检索 MCP 服务
-└── tests/                                  # 单元与集成测试套件
+│   ├── app.py                                                 # 主控调度（消息流、防抖、压缩、子代理）
+│   ├── adapters/                                              # OneBot v11 (NapCat/LLBot)、Telegram 与通用 WS 适配器
+│   ├── collector/                                             # SQLite 群聊上下文存储、双触发压缩与防抖
+│   ├── runner/                                                # 官方 agy CLI stream-json 暖进程池与子代理调度
+│   ├── plugins/                                               # Python 聊天网关插件 SDK 与加载器
+│   ├── webui/                                                 # WebUI 后端 API、CLI PTY 终端与前端控制台
+│   └── mcp_history_server.py                                  # 内置只读 SQLite 历史消息检索 MCP 服务
+└── tests/                                                     # 单元与集成测试套件
 ```
 
 ---

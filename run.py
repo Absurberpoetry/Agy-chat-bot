@@ -218,7 +218,7 @@ def main() -> int:
     cfg_path = Path(args.config)
     if not cfg_path.exists():
         print(
-            f"找不到配置文件: {cfg_path}\n请先运行 install.bat（或复制 config.example.json 为 config.json）。",
+            f"找不到配置文件: {cfg_path}\n请先运行 install.bat（或复制 templates/config.example.json 为 config.json）。",
             file=sys.stderr,
         )
         return 1

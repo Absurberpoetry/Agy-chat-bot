@@ -44,7 +44,9 @@ def start_bg() -> int:
         print("[错误] 未找到 config.json，请先运行 install.bat 并填写配置")
         return 1
 
-    runner = root / "_run_bg.cmd"
+    data_dir = root / "data"
+    data_dir.mkdir(parents=True, exist_ok=True)
+    runner = data_dir / "_run_bg.cmd"
     runner.write_text(
         "@echo off\r\n"
         "chcp 65001 >nul\r\n"
@@ -93,7 +95,7 @@ def start_bg() -> int:
         "  </Actions>\n"
         "</Task>\n"
     )
-    xml_path = root / "_task_bg.xml"
+    xml_path = data_dir / "_task_bg.xml"
     xml_path.write_text(xml_body, encoding="utf-16")
     try:
         r_create = subprocess.run(

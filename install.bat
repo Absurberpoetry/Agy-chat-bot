@@ -60,14 +60,14 @@ if errorlevel 1 (
 )
 
 if not exist "config.json" (
-    copy /y "config.example.json" "config.json" >nul
-    echo [OK] Created config.json from config.example.json
+    copy /y "templates\config.example.json" "config.json" >nul
+    echo [OK] Created config.json from templates\config.example.json
 ) else (
     echo [OK] Kept existing config.json
 )
 
 if not exist "settings.antigravity-cli.bot.json" (
-    copy /y "settings.antigravity-cli.example.json" "settings.antigravity-cli.bot.json" >nul
+    copy /y "templates\settings.antigravity-cli.example.json" "settings.antigravity-cli.bot.json" >nul
     echo [OK] Created settings.antigravity-cli.bot.json
 )
 
