@@ -471,7 +471,7 @@ class SqliteContextAndCompactionTests(unittest.IsolatedAsyncioTestCase):
 
                 # 1. initialize
                 r_init = await _rpc({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
-                self.assertEqual(r_init["result"]["serverInfo"]["name"], "agy-bot-chat-history")
+                self.assertEqual(r_init["result"]["serverInfo"]["name"], "agy-cli-bot-chat-history")
 
                 # 2. tools/list
                 r_list = await _rpc({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})

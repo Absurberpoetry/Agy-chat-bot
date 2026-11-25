@@ -59,7 +59,7 @@ async def _read_json_dict(request: web.Request) -> dict[str, Any]:
 
 
 class WebUIServer:
-    """Built-in aiohttp admin WebUI and JSON/SSE API server for Antigravity QQ Bot."""
+    """Built-in aiohttp admin WebUI and JSON/SSE API server for AGY CLI BOT."""
 
     def __init__(
         self,
@@ -791,7 +791,7 @@ class WebUIServer:
             text=text,
             content_type="text/plain",
             charset="utf-8",
-            headers={"Content-Disposition": 'attachment; filename="agy-bot.log"'},
+            headers={"Content-Disposition": 'attachment; filename="agy-cli-bot.log"'},
         )
 
     async def _handle_get_personas(self, request: web.Request) -> web.Response:

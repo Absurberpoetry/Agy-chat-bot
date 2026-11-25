@@ -262,7 +262,7 @@ def run_stdio_server(db_path: Path) -> None:
                     "result": {
                         "protocolVersion": "2024-11-05",
                         "capabilities": {"tools": {}},
-                        "serverInfo": {"name": "agy-bot-chat-history", "version": "1.0.0"},
+                        "serverInfo": {"name": "agy-cli-bot-chat-history", "version": "1.0.0"},
                     },
                 },
                 content_length_framing=use_cl,

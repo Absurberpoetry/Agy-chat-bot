@@ -9,7 +9,7 @@ class ExampleHelperPlugin(BotPlugin):
     id = "example_helper"
     name = "基础工具示例插件"
     version = "1.0.0"
-    author = "Antigravity Bot"
+    author = "AGY CLI BOT"
     description = "提供 /ping 与 /time 快捷命令，可作为编写自定义外部插件的参考模板"
     default_config = {
         "ping_reply": "pong!",

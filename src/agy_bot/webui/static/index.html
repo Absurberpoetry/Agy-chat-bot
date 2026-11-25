@@ -6901,7 +6901,7 @@ async function loadConfig() {
 async function saveAllConfig() {
   if (!currentConfig) return;
   const c = JSON.parse(JSON.stringify(currentConfig));
-  c.bot_name = document.getElementById('cfg_bot_name').value.trim() || 'Antigravity助手';
+  c.bot_name = document.getElementById('cfg_bot_name').value.trim() || 'AGY CLI BOT';
   c.admins = splitCsv(document.getElementById('cfg_admins').value);
   c.logging.level = document.getElementById('cfg_log_level').value;
 

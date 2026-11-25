@@ -9,7 +9,8 @@ import time
 import xml.sax.saxutils as xml_esc
 
 
-TASK_NAME = "AGYBot"
+TASK_NAME = "AGYCliBot"
+LEGACY_TASK_NAME = "AGYBot"
 
 
 def _root_dir() -> pathlib.Path:
@@ -21,7 +22,8 @@ def _pid_file(root: pathlib.Path) -> pathlib.Path:
 
 
 def _stop_existing(root: pathlib.Path) -> None:
-    subprocess.run(["schtasks", "/End", "/TN", TASK_NAME], capture_output=True)
+    for task_name in (TASK_NAME, LEGACY_TASK_NAME):
+        subprocess.run(["schtasks", "/End", "/TN", task_name], capture_output=True)
     pf = _pid_file(root)
     if pf.is_file():
         pid_txt = pf.read_text(encoding="utf-8", errors="ignore").strip()

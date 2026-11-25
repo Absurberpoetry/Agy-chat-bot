@@ -200,7 +200,7 @@ async def _run_with_clean_shutdown(app: BotApplication, pid_file: Path, my_pid: 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Multi-platform bot powered by official Antigravity CLI",
+        description="AGY CLI BOT - Multi-platform bot powered by official Antigravity CLI",
     )
     parser.add_argument(
         "-c",

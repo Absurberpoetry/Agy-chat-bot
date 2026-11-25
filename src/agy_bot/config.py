@@ -363,7 +363,7 @@ class LoggingConfig:
 
 @dataclass(slots=True)
 class BotConfig:
-    bot_name: str = "Antigravity助手"
+    bot_name: str = "AGY CLI BOT"
     admins: list[str] = field(default_factory=list)
     active_persona_id: str = ""
     platforms: list[PlatformConfig] = field(default_factory=list)
@@ -820,7 +820,7 @@ def load_config_from_dict(
     logging_cfg = LoggingConfig(level=str(lg.get("level", "INFO")).upper())
 
     return BotConfig(
-        bot_name=str(raw.get("bot_name", "Antigravity助手")),
+        bot_name=str(raw.get("bot_name", "AGY CLI BOT")),
         admins=_as_str_list(raw.get("admins")),
         active_persona_id=str(raw.get("active_persona_id", "")),
         platforms=platforms,
