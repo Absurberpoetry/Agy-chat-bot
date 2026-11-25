@@ -1,6 +1,6 @@
 # AgyChat Bot
 
-基于官方原生 Antigravity CLI（`agy`）的轻量多平台聊天机器人。
+基于官方原生 Antigravity CLI（`agy`）的轻量聊天机器人，可以把gemini从agy cli接到聊天客户端，把agy cli当群聊bot用。
 
 它直接调用官方 `agy` CLI 的 `stream-json` 协议，无需中间桥接层，可将 Antigravity 接入 QQ（NapCat / LLBot OneBot v11）、Telegram 及自定义 WebSocket 客户端，并自带可视化 WebUI 控制台，支持 Windows 部署，linux部署尚待验证。
 
