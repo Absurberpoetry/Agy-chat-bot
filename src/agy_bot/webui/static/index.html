@@ -2038,20 +2038,28 @@
     filter: blur(8px);
     pointer-events: none;
   }
-  #appSplash.leaving .sp-blade-top {
-    transform: translate(-16px, -12px);
+  #appSplash.leaving .sp-arch-left {
+    transform: translate(-16px, -14px);
     transition: transform .48s cubic-bezier(.22, 1, .36, 1);
   }
-  #appSplash.leaving .sp-blade-bot {
-    transform: translate(-14px, 14px);
+  #appSplash.leaving .sp-arch-right-top {
+    transform: translate(14px, -12px);
+    transition: transform .48s cubic-bezier(.22, 1, .36, 1);
+  }
+  #appSplash.leaving .sp-arch-right-bot {
+    transform: translate(18px, 14px);
+    transition: transform .48s cubic-bezier(.22, 1, .36, 1);
+  }
+  #appSplash.leaving .sp-ag-core {
+    transform: translate3d(0, -24px, 24px) rotateZ(45deg) rotateY(180deg);
     transition: transform .48s cubic-bezier(.22, 1, .36, 1);
   }
   #appSplash.leaving .sp-cursor-white {
-    transform: translate3d(22px, -8px, 18px) rotateX(65deg);
+    transform: translate3d(24px, -6px, 18px) rotateX(65deg);
     transition: transform .48s cubic-bezier(.22, 1, .36, 1);
   }
   #appSplash.leaving .sp-cursor-black {
-    transform: translate3d(16px, 10px, 8px);
+    transform: translate3d(-20px, 10px, 8px);
     transition: transform .48s cubic-bezier(.22, 1, .36, 1);
   }
   #appSplash.gone {
@@ -2175,15 +2183,18 @@
   .sp-brk-bl { animation: spBrkBL .64s cubic-bezier(.16, 1, .3, 1) .36s both, spBrkPulse 3.2s ease-in-out 1.3s infinite alternate; }
   .sp-brk-br { animation: spBrkBR .64s cubic-bezier(.16, 1, .3, 1) .3s both, spBrkPulse 3.2s ease-in-out 1.45s infinite alternate; }
 
-  /* Original >_ Chevron Hero Elements assembling from void */
-  .sp-chevron-echo {
+  /* Anti-Gravity Sculptural Arch Hero Elements assembling from void */
+  .sp-arch-echo {
     animation: spEchoIn .68s cubic-bezier(.16, 1, .3, 1) .42s both, spEchoFloat 4.0s ease-in-out 1.12s infinite alternate;
   }
-  .sp-blade-top {
-    animation: spBladeTopIn .72s cubic-bezier(.16, 1, .3, 1) .48s both, spBladeTopFloat 3.4s cubic-bezier(.45, 0, .55, 1) 1.22s infinite alternate;
+  .sp-arch-left {
+    animation: spArchLeftIn .76s cubic-bezier(.16, 1, .3, 1) .46s both, spBladeTopFloat 3.6s cubic-bezier(.45, 0, .55, 1) 1.24s infinite alternate;
   }
-  .sp-blade-bot {
-    animation: spBladeBotIn .74s cubic-bezier(.16, 1, .3, 1) .58s both, spBladeBotFloat 3.6s cubic-bezier(.45, 0, .55, 1) 1.34s infinite alternate;
+  .sp-arch-right-top {
+    animation: spArchRightTopIn .74s cubic-bezier(.16, 1, .3, 1) .54s both, spArchRightTopFloat 3.8s cubic-bezier(.45, 0, .55, 1) 1.3s infinite alternate;
+  }
+  .sp-arch-right-bot {
+    animation: spArchRightBotIn .76s cubic-bezier(.16, 1, .3, 1) .62s both, spBladeBotFloat 3.6s cubic-bezier(.45, 0, .55, 1) 1.4s infinite alternate;
   }
   .sp-sheen-bar {
     animation: spSheenSweep 2.6s cubic-bezier(.4, 0, .2, 1) 1.05s infinite both;
@@ -2207,38 +2218,56 @@
     pointer-events: none;
     transform-style: preserve-3d;
   }
-  /* Terminal Cursor '_' Base: Matte-black obsidian prism */
+  /* Levitating Anti-Gravity Core inside the hollow arch: rises from void + 3D Y-axis spin */
+  .sp-ag-core {
+    position: absolute;
+    left: 88px;
+    top: 78px;
+    width: 16px;
+    height: 16px;
+    background: linear-gradient(135deg, #FFFFFF 0%, #D8DCE6 100%);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55), 0 0 14px rgba(255, 255, 255, 0.25);
+    backface-visibility: visible;
+    animation: spAgCoreIn .74s cubic-bezier(.16, 1, .3, 1) .68s both, spAgCoreSpin 4.0s cubic-bezier(.45, .05, .25, 1) 1.46s infinite;
+  }
+  .sp-ag-core::after {
+    content: "";
+    position: absolute;
+    inset: 4px;
+    background: #090A0E;
+  }
+  /* Anti-Gravity Horizon Split Base: Matte-black obsidian prism across the arch void */
   .sp-cursor-black {
     position: absolute;
-    left: 102px;
-    top: 129px;
-    width: 50px;
-    height: 12px;
+    left: 56px;
+    top: 118px;
+    width: 68px;
+    height: 11px;
     background: linear-gradient(125deg, #22252e 0%, #090a0d 55%, #040406 100%);
     border: 1px solid rgba(255, 255, 255, 0.3);
     box-shadow: 0 10px 22px rgba(0, 0, 0, 0.65);
     backface-visibility: visible;
-    animation: spCursorBlackIn .68s cubic-bezier(.16, 1, .3, 1) .66s both, spCursorBlackDrift 3.6s ease-in-out 1.38s infinite alternate;
+    animation: spCursorBlackIn .68s cubic-bezier(.16, 1, .3, 1) .68s both, spCursorBlackDrift 3.6s ease-in-out 1.4s infinite alternate;
   }
-  /* Terminal Cursor '_' Top: Pure-white floating prism doing periodic pseudo-3D X-axis mechanical flip! */
+  /* Anti-Gravity Horizon Top Blade: Pure-white floating prism doing periodic pseudo-3D X-axis flip! */
   .sp-cursor-white {
     position: absolute;
-    left: 108px;
-    top: 118px;
-    width: 48px;
-    height: 9px;
-    background: linear-gradient(90deg, #FFFFFF 0%, #E7EAF2 78%, #C4C9D6 100%);
+    left: 70px;
+    top: 109px;
+    width: 66px;
+    height: 8.5px;
+    background: linear-gradient(90deg, #FFFFFF 0%, #ECEEF4 78%, #C4C9D6 100%);
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.52);
     backface-visibility: visible;
     transform-style: preserve-3d;
-    animation: spCursorWhiteFlipIn .72s cubic-bezier(.16, 1, .3, 1) .74s both, spCursorFlipX 3.6s cubic-bezier(.45, .05, .25, 1) 1.55s infinite;
+    animation: spCursorWhiteFlipIn .72s cubic-bezier(.16, 1, .3, 1) .76s both, spCursorFlipX 3.6s cubic-bezier(.45, .05, .25, 1) 1.56s infinite;
   }
   .sp-cursor-white::after {
     content: "";
     position: absolute;
-    left: 6px;
+    left: 8px;
     top: 3px;
-    width: 11px;
+    width: 14px;
     height: 2.5px;
     background: #0B0C10;
   }
@@ -2495,30 +2524,48 @@
     to   { opacity: 0.8; }
   }
 
-  /* Hero >_ Chevron Shards: from void -> sculpted assembly */
+  /* Anti-Gravity Arch Shards: from void -> buoyant upward levitation assembly */
   @keyframes spEchoIn {
-    from { opacity: 0; transform: translate(-18px, 14px) scale(0.86); }
+    from { opacity: 0; transform: translate(-10px, 24px) scale(0.86); }
     to   { opacity: 1; transform: translate(0, 0) scale(1); }
   }
   @keyframes spEchoFloat {
     from { transform: translate(0px, 0px); }
-    to   { transform: translate(-3.5px, 3px); }
+    to   { transform: translate(-3px, 3px); }
   }
-  @keyframes spBladeTopIn {
-    from { opacity: 0; transform: translate(-30px, -22px) scale(0.88); }
+  @keyframes spArchLeftIn {
+    from { opacity: 0; transform: translate(-22px, 32px) scale(0.88); }
     to   { opacity: 1; transform: translate(0, 0) scale(1); }
+  }
+  @keyframes spArchRightTopIn {
+    from { opacity: 0; transform: translate(20px, -24px) scale(0.88); }
+    to   { opacity: 1; transform: translate(0, 0) scale(1); }
+  }
+  @keyframes spArchRightTopFloat {
+    from { transform: translate(0px, 0px); }
+    to   { transform: translate(3px, -3px); }
+  }
+  @keyframes spArchRightBotIn {
+    from { opacity: 0; transform: translate(24px, 28px) scale(0.88); }
+    to   { opacity: 1; transform: translate(0, 0) scale(1); }
+  }
+  @keyframes spAgCoreIn {
+    from { opacity: 0; transform: translate3d(0, 34px, 12px) rotateZ(45deg) rotateY(-180deg) scale(0.35); }
+    to   { opacity: 1; transform: translate3d(0, 0, 12px) rotateZ(45deg) rotateY(0deg) scale(1); }
+  }
+  @keyframes spAgCoreSpin {
+    0%, 46% { transform: translate3d(0, 0, 12px) rotateZ(45deg) rotateY(0deg); }
+    64%     { transform: translate3d(0, -6px, 18px) rotateZ(45deg) rotateY(190deg); }
+    82%     { transform: translate3d(0, -2px, 12px) rotateZ(45deg) rotateY(360deg); }
+    100%    { transform: translate3d(0, 0, 12px) rotateZ(45deg) rotateY(360deg); }
   }
   @keyframes spBladeTopFloat {
     from { transform: translate(0px, 0px); }
-    to   { transform: translate(3px, -2.5px); }
-  }
-  @keyframes spBladeBotIn {
-    from { opacity: 0; transform: translate(-32px, 26px) scale(0.88); }
-    to   { opacity: 1; transform: translate(0, 0) scale(1); }
+    to   { transform: translate(-2.5px, -3px); }
   }
   @keyframes spBladeBotFloat {
     from { transform: translate(0px, 0px); }
-    to   { transform: translate(-3px, 3px); }
+    to   { transform: translate(3.5px, 3px); }
   }
   @keyframes spSheenSweep {
     0%   { transform: translateX(-140px); opacity: 0; }
@@ -2527,24 +2574,24 @@
     100% { transform: translateX(170px); opacity: 0; }
   }
 
-  /* Individual HTML 3D Flip & Spin Keyframes */
+  /* Individual HTML 3D Flip & Spin Keyframes (angled -6deg across the arch) */
   @keyframes spCursorBlackIn {
-    from { opacity: 0; transform: translate3d(34px, 12px, 6px) rotateY(78deg); }
-    to   { opacity: 1; transform: translate3d(0px, 0px, 6px) rotateY(0deg); }
+    from { opacity: 0; transform: translate3d(-32px, 12px, 6px) rotateZ(-6deg) rotateY(-78deg); }
+    to   { opacity: 1; transform: translate3d(0px, 0px, 6px) rotateZ(-6deg) rotateY(0deg); }
   }
   @keyframes spCursorBlackDrift {
-    from { transform: translate3d(0px, 0px, 6px) rotateY(0deg); }
-    to   { transform: translate3d(-4px, 1.5px, 8px) rotateY(-14deg); }
+    from { transform: translate3d(0px, 0px, 6px) rotateZ(-6deg) rotateY(0deg); }
+    to   { transform: translate3d(-4px, 1.5px, 8px) rotateZ(-6deg) rotateY(-12deg); }
   }
   @keyframes spCursorWhiteFlipIn {
-    from { opacity: 0; transform: translate3d(-26px, -10px, 16px) rotateX(-180deg) scaleX(0.6); }
-    to   { opacity: 1; transform: translate3d(0px, 0px, 16px) rotateX(0deg) scaleX(1); }
+    from { opacity: 0; transform: translate3d(28px, -10px, 16px) rotateZ(-6deg) rotateX(-180deg) scaleX(0.6); }
+    to   { opacity: 1; transform: translate3d(0px, 0px, 16px) rotateZ(-6deg) rotateX(0deg) scaleX(1); }
   }
   @keyframes spCursorFlipX {
-    0%, 54% { transform: translate3d(0px, 0px, 16px) rotateX(0deg); }
-    72%     { transform: translate3d(3px, -2px, 20px) rotateX(195deg); }
-    86%     { transform: translate3d(1px, 0px, 16px) rotateX(368deg); }
-    100%    { transform: translate3d(0px, 0px, 16px) rotateX(360deg); }
+    0%, 54% { transform: translate3d(0px, 0px, 16px) rotateZ(-6deg) rotateX(0deg); }
+    72%     { transform: translate3d(3px, -2px, 20px) rotateZ(-6deg) rotateX(195deg); }
+    86%     { transform: translate3d(1px, 0px, 16px) rotateZ(-6deg) rotateX(368deg); }
+    100%    { transform: translate3d(0px, 0px, 16px) rotateZ(-6deg) rotateX(360deg); }
   }
   @keyframes spChipFlipYIn {
     from { opacity: 0; transform: translate3d(14px, -14px, 14px) rotateY(-180deg) scale(0.4); }
@@ -2607,7 +2654,7 @@
     .splash-emblem-3d, .sp-gyro-ring, .sp-plane-back, .sp-plane-mid, .sp-plane-front-wire, .sp-plane-slice,
     .sp-ring-a, .sp-ring-a-path, .sp-ring-b, .sp-ring-c,
     .sp-brk-tl, .sp-brk-tr, .sp-brk-bl, .sp-brk-br,
-    .sp-chevron-echo, .sp-blade-top, .sp-blade-bot, .sp-sheen-bar,
+    .sp-arch-echo, .sp-arch-left, .sp-arch-right-top, .sp-arch-right-bot, .sp-ag-core, .sp-sheen-bar,
     .sp-cursor-black, .sp-cursor-white, .sp-flip-chip-tr, .sp-flip-chip-tr2, .sp-spin-diamond, .sp-flip-chip-bl, .sp-flip-chip-tl,
     .sp-glint-outer, .sp-glint-inner, .splash-brand, .splash-seg-bar, .splash-status, .splash-seg::after { animation: none !important; }
     .sh-hl, .sh-active-hl, .view.active, .msg-wrap, #toast, #appSplash { transition: none !important; animation: none !important; }
@@ -2636,20 +2683,24 @@
       <div class="sp-plane sp-plane-front-wire"></div>
       <div class="sp-plane sp-plane-slice"></div>
 
-      <!-- Core SVG: Segmented Rings + Snap Brackets + Original Split White CLI Chevron '>' -->
+      <!-- Core SVG: Segmented Rings + Snap Brackets + Sculptural Anti-Gravity Arch -->
       <svg class="splash-svg" viewBox="0 0 192 192" fill="none">
         <defs>
-          <linearGradient id="spWhiteBladeTop" x1="46" y1="50" x2="112" y2="94" gradientUnits="userSpaceOnUse">
+          <linearGradient id="spArchWhiteLeft" x1="42" y1="34" x2="112" y2="148" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stop-color="#FFFFFF"/>
-            <stop offset="64%" stop-color="#EDF0F6"/>
-            <stop offset="100%" stop-color="#D4D8E3"/>
+            <stop offset="58%" stop-color="#EDF0F6"/>
+            <stop offset="100%" stop-color="#CDD2DE"/>
           </linearGradient>
-          <linearGradient id="spWhiteBladeBot" x1="112" y1="98" x2="46" y2="142" gradientUnits="userSpaceOnUse">
+          <linearGradient id="spArchWhiteRightTop" x1="94" y1="38" x2="138" y2="98" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FFFFFF"/>
+            <stop offset="100%" stop-color="#D7DCE6"/>
+          </linearGradient>
+          <linearGradient id="spArchWhiteRightBot" x1="116" y1="102" x2="150" y2="148" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stop-color="#F7F8FB"/>
-            <stop offset="56%" stop-color="#DCE0EA"/>
-            <stop offset="100%" stop-color="#B0B5C4"/>
+            <stop offset="56%" stop-color="#D8DCE6"/>
+            <stop offset="100%" stop-color="#AAB0BF"/>
           </linearGradient>
-          <linearGradient id="spGrayEcho" x1="38" y1="56" x2="104" y2="146" gradientUnits="userSpaceOnUse">
+          <linearGradient id="spGrayEcho" x1="36" y1="42" x2="146" y2="152" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stop-color="#767B8A" stop-opacity="0.62"/>
             <stop offset="100%" stop-color="#1E2028" stop-opacity="0.78"/>
           </linearGradient>
@@ -2658,9 +2709,10 @@
             <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.9"/>
             <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
           </linearGradient>
-          <clipPath id="spChevronClip">
-            <polygon points="46,52 72,52 110,92 85,92"/>
-            <polygon points="88,99 112,99 72,140 46,140"/>
+          <clipPath id="spArchClip">
+            <path d="M42 146 C54 106 67 34 96 34 C106 34 114 40 120 50 L104 64 C101 59 98 57 96 57 C81 57 74 104 66 146 Z"/>
+            <path d="M103 40 C122 48 132 72 137 94 L114 99 C110 81 104 65 95 57 Z"/>
+            <path d="M116 108 L139 103 C143 118 147 132 150 146 L126 146 C123 134 119 121 116 108 Z"/>
           </clipPath>
         </defs>
 
@@ -2684,29 +2736,34 @@
         <path class="sp-brk-bl" d="M26 150V166H42" stroke="#A6AAB6" stroke-opacity="0.34" stroke-width="1"/>
         <path class="sp-brk-br" d="M166 150V166H150" stroke="#FFFFFF" stroke-opacity="0.48" stroke-width="1.1"/>
 
-        <!-- Layer 1: Recessed Smoked-Gray Shadow Echo behind '>' -->
-        <g class="sp-chevron-echo">
-          <polygon points="38,59 62,59 98,96 62,135 38,135 74,96" fill="url(#spGrayEcho)" stroke="#07080B" stroke-opacity="0.72" stroke-width="1"/>
+        <!-- Layer 1: Recessed Smoked-Gray Levitation Shadow Arch -->
+        <g class="sp-arch-echo">
+          <path d="M36 150 C49 109 62 41 90 41 C118 41 131 109 144 150 L121 150 C112 110 105 65 90 65 C75 65 68 110 59 150 Z" fill="url(#spGrayEcho)" stroke="#07080B" stroke-opacity="0.72" stroke-width="1"/>
         </g>
 
-        <!-- Layer 2: Upper Pure-White Split Blade of '>' (with obsidian tip cutout) -->
-        <g class="sp-blade-top">
-          <polygon points="46,52 72,52 110,92 85,92" fill="url(#spWhiteBladeTop)"/>
-          <polygon points="91,72 110,92 94,92 84,81" fill="#090A0E"/>
-          <line x1="46" y1="52" x2="72" y2="52" stroke="#FFFFFF" stroke-width="1.2"/>
-          <line x1="72" y1="52" x2="110" y2="92" stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="1"/>
+        <!-- Layer 2: Left Ascending Pure-White Anti-Gravity Arch Wing (with subtle bevel & obsidian foot notch) -->
+        <g class="sp-arch-left">
+          <path d="M42 146 C54 106 67 34 96 34 C106 34 114 40 120 50 L104 64 C101 59 98 57 96 57 C81 57 74 104 66 146 Z" fill="url(#spArchWhiteLeft)"/>
+          <path d="M42 146 C54 106 67 34 96 34 C106 34 114 40 120 50" stroke="#FFFFFF" stroke-opacity="0.95" stroke-width="1.15" fill="none"/>
+          <path d="M42 146 L54 146 L57 134 L46 134 Z" fill="#090A0E"/>
         </g>
 
-        <!-- Layer 3: Lower Detached Pearl-White Blade of '>' (with gray fracture bevel & obsidian base notch) -->
-        <g class="sp-blade-bot">
-          <polygon points="88,99 112,99 72,140 46,140" fill="url(#spWhiteBladeBot)"/>
-          <polygon points="88,99 112,99 107,104 83,104" fill="#525664"/>
-          <polygon points="46,140 58,140 65,133 53,133" fill="#090A0E"/>
+        <!-- Layer 3: Right Sliced Arch — Upper Pearl-White Crest (with matte-black crown overlap cutout) -->
+        <g class="sp-arch-right-top">
+          <path d="M103 40 C122 48 132 72 137 94 L114 99 C110 81 104 65 95 57 Z" fill="url(#spArchWhiteRightTop)" stroke="#090A0D" stroke-opacity="0.32" stroke-width="0.9"/>
+          <path d="M95 57 L103 40 L114 48 L104 64 Z" fill="#090A0E"/>
         </g>
 
-        <!-- Specular Sheen sweeping across the assembled white blades -->
-        <g clip-path="url(#spChevronClip)" opacity="0.74">
-          <rect class="sp-sheen-bar" x="28" y="34" width="38" height="126" transform="skewX(-22)" fill="url(#spSheenGrad)"/>
+        <!-- Layer 4: Right Detached Lower Flared Wing (with gray fracture bevel & obsidian base accent) -->
+        <g class="sp-arch-right-bot">
+          <path d="M116 108 L139 103 C143 118 147 132 150 146 L126 146 C123 134 119 121 116 108 Z" fill="url(#spArchWhiteRightBot)"/>
+          <polygon points="116,108 139,103 141,109 118,114" fill="#525664"/>
+          <path d="M137 146 L150 146 L147 135 L134 135 Z" fill="#090A0E"/>
+        </g>
+
+        <!-- Specular Sheen sweeping across the assembled white Anti-Gravity arch -->
+        <g clip-path="url(#spArchClip)" opacity="0.74">
+          <rect class="sp-sheen-bar" x="28" y="26" width="38" height="136" transform="skewX(-22)" fill="url(#spSheenGrad)"/>
         </g>
 
         <!-- Dual Counter-Orbiting Satellites -->
@@ -2719,8 +2776,9 @@
         </g>
       </svg>
 
-      <!-- Individual Hardware-3D Flipping & Rotating Elements (Terminal Cursor '_' + Floating Prisms) -->
+      <!-- Individual Hardware-3D Flipping & Rotating Elements (Levitating Core + Horizon Bars + Floating Prisms) -->
       <div class="sp-3d-parts">
+        <div class="sp-ag-core"></div>
         <div class="sp-cursor-black"></div>
         <div class="sp-cursor-white"></div>
         <div class="sp-flip-chip-tr"></div>
