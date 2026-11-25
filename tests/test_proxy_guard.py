@@ -165,25 +165,49 @@ class ProxyGuardTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(res.filtered_nodes, 5)
             self.assertEqual(res.selected_node, "🇨🇳台湾2-流媒体解锁|AI-hy2")
             self.assertEqual(res.selected_delay_ms, 72)
-            # Non-whitelist nodes (HK/JP-non-AI/Atlanta) were NEVER touched!
-            self.assertEqual(state["switches"], ["🇯🇵日本01|hy2|流媒体解锁|AI", "🇨🇳台湾2-流媒体解锁|AI-hy2"])
-            self.assertEqual(res.geo_blocked_nodes, ["🇯🇵日本01|hy2|流媒体解锁|AI"])
+            # Taiwan(AI) is strictly prioritized BEFORE Japan(AI) even when Japan has lower ping (60ms < 72ms)!
+            self.assertEqual(state["switches"], ["🇨🇳台湾2-流媒体解锁|AI-hy2"])
+            self.assertEqual(res.geo_blocked_nodes, [])
             # Verified stale google connection closed, non-google connection left intact
             self.assertIn("c-google", state["closed_conns"])
             self.assertNotIn("c-other", state["closed_conns"])
 
-            # Pass 2: Known geo-blocked fast node (🇯🇵日本01, 60ms) is deprioritized BELOW clean Phoenix (190ms)!
+            # Pass 2: When ALL Taiwan nodes fail, fallback tries clean Japan(AI) before Phoenix;
+            # if Japan is geo-blocked, continues seamlessly to clean Phoenix!
             state["switches"].clear()
             state["current"] = "🇨🇳台湾2-流媒体解锁|AI-hy2"
             res2 = await select_best_working_node(
                 ctl,
                 probe_fn=fake_probe,
-                geo_blocked_nodes={"🇯🇵日本01|hy2|流媒体解锁|AI", "🇯🇵日本04|流媒体解锁|AI"},
                 settle_seconds=0.0,
             )
             self.assertTrue(res2.ok)
             self.assertEqual(res2.selected_node, "🇺🇸凤凰城04|流媒体解锁|AI|电信优化")
-            # Tried clean Phoenix BEFORE geo-blocked JP01/JP04 despite higher ping!
+            # All Taiwan nodes unavailable/broken -> tried clean JP04 (55ms) & JP01 (60ms) first, both geo-blocked -> fell back to Phoenix!
+            self.assertEqual(
+                state["switches"],
+                [
+                    "🇯🇵日本04|流媒体解锁|AI",
+                    "🇯🇵日本01|hy2|流媒体解锁|AI",
+                    "🇺🇸凤凰城04|流媒体解锁|AI|电信优化",
+                ],
+            )
+            self.assertEqual(
+                res2.geo_blocked_nodes,
+                ["🇯🇵日本04|流媒体解锁|AI", "🇯🇵日本01|hy2|流媒体解锁|AI"],
+            )
+
+            # Pass 3: Known geo-blocked JP01/JP04 are deprioritized BELOW clean Phoenix!
+            state["switches"].clear()
+            state["current"] = "🇨🇳台湾2-流媒体解锁|AI-hy2"
+            res3 = await select_best_working_node(
+                ctl,
+                probe_fn=fake_probe,
+                geo_blocked_nodes={"🇯🇵日本01|hy2|流媒体解锁|AI", "🇯🇵日本04|流媒体解锁|AI"},
+                settle_seconds=0.0,
+            )
+            self.assertTrue(res3.ok)
+            self.assertEqual(res3.selected_node, "🇺🇸凤凰城04|流媒体解锁|AI|电信优化")
             self.assertEqual(state["switches"], ["🇺🇸凤凰城04|流媒体解锁|AI|电信优化"])
         finally:
             await runner.cleanup()

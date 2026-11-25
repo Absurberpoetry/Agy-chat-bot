@@ -131,6 +131,16 @@ def is_allowed_proxy_node(name: str) -> bool:
     return False
 
 
+def proxy_node_region_priority(name: str) -> int:
+    """Region priority order: Taiwan(AI) first (0), Japan(AI) second (1), US Phoenix/other fallback (2)."""
+    raw = (name or "").strip()
+    if _TAIWAN_RE.search(raw):
+        return 0
+    if _JAPAN_RE.search(raw):
+        return 1
+    return 2
+
+
 @dataclass(slots=True)
 class ProxyControllerInfo:
     proxy_port: int
@@ -475,10 +485,12 @@ async def select_best_working_node(
     known_geo_blocked = {str(x).strip() for x in (geo_blocked_nodes or ()) if str(x).strip()}
 
     # Selection priority:
-    #   Tier 0: Not known geo-blocked AND not the currently broken node -> lowest latency first
+    #   Tier 0: Not known geo-blocked AND not the currently broken node
     #   Tier 1: Currently broken node (if not known geo-blocked and skip_current_if_broken=True)
     #   Tier 2: Previously geo-blocked nodes (only tried if all clean nodes failed)
-    def _rank(item: NodeLatency) -> tuple[int, int, str]:
+    # Within each tier, strictly prefer Taiwan(AI) first (0), then Japan(AI) (1), then Phoenix (2),
+    # and within the same region sort by lowest latency first.
+    def _rank(item: NodeLatency) -> tuple[int, int, int, str]:
         is_geo = item.name in known_geo_blocked
         is_cur_broken = skip_current_if_broken and item.name == current_node
         if not is_geo and not is_cur_broken:
@@ -487,7 +499,8 @@ async def select_best_working_node(
             tier = 1
         else:
             tier = 2
-        return (tier, item.delay_ms if item.delay_ms is not None else 999999, item.name)
+        region_prio = proxy_node_region_priority(item.name)
+        return (tier, region_prio, item.delay_ms if item.delay_ms is not None else 999999, item.name)
 
     ordered = sorted(reachable, key=_rank)
     if max_probes > 0 and len(ordered) > max_probes:
