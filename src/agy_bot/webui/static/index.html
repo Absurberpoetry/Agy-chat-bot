@@ -2057,6 +2057,7 @@
     pointer-events: none;
     border-radius: 4px;
     backface-visibility: visible;
+    will-change: transform, opacity;
   }
   .sp-plane-back {
     width: 118px;
@@ -2064,13 +2065,13 @@
     background: linear-gradient(148deg, #07080a 0%, #14161c 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 28px 60px rgba(0, 0, 0, 0.68);
-    animation: spPlaneBackFlipIn .72s cubic-bezier(.16, 1, .3, 1) .12s both, spPlaneADrift 5.2s ease-in-out .86s infinite alternate;
+    animation: spPlaneBackFlipIn .76s cubic-bezier(.16, 1, .3, 1) .08s both, spPlaneADrift 6.4s ease-in-out .84s infinite;
   }
   .sp-plane-front-wire {
     width: 126px;
     height: 126px;
     border: 1px solid rgba(255, 255, 255, 0.12);
-    animation: spPlaneFrontFlipIn .76s cubic-bezier(.16, 1, .3, 1) .24s both, spPlaneFrontDrift 5.8s ease-in-out 1.02s infinite alternate;
+    animation: spPlaneFrontFlipIn .78s cubic-bezier(.16, 1, .3, 1) .18s both, spPlaneFrontDrift 7.0s ease-in-out .96s infinite;
   }
 
   /* Pseudo-3D tilt wrapper for the morphing Antigravity mark */
@@ -2205,7 +2206,7 @@
     50%      { transform: translate(-50%, -50%) scale(1.025); opacity: 1; }
   }
   @keyframes spLevitate {
-    0%, 100% { transform: translateY(0px) rotateX(2.5deg) rotateY(-3deg); }
+    0%, 100% { transform: translateY(0px) rotateX(0deg) rotateY(0deg); }
     50%      { transform: translateY(-6px) rotateX(-2.5deg) rotateY(3.5deg); }
   }
   @keyframes spPlaneBackFlipIn {
@@ -2213,16 +2214,16 @@
     to   { opacity: 1; transform: translate3d(-14px, -10px, -30px) rotateY(0deg) rotateX(0deg) rotateZ(-7deg) scale(1); }
   }
   @keyframes spPlaneADrift {
-    from { transform: translate3d(-15px, -11px, -30px) rotateY(-5deg) rotateZ(-8deg); }
-    to   { transform: translate3d(-9px, -6px, -26px) rotateY(6deg) rotateZ(-4deg); }
+    0%, 100% { transform: translate3d(-14px, -10px, -30px) rotateY(0deg) rotateX(0deg) rotateZ(-7deg); }
+    50%      { transform: translate3d(-9px, -6px, -26px) rotateY(6deg) rotateX(-3deg) rotateZ(-4deg); }
   }
   @keyframes spPlaneFrontFlipIn {
-    from { opacity: 0; transform: translate3d(18px, 14px, 34px) rotateX(96deg) rotateZ(12deg) scale(0.86); }
-    to   { opacity: 1; transform: translate3d(12px, 10px, 16px) rotateX(0deg) rotateZ(4deg) scale(1); }
+    from { opacity: 0; transform: translate3d(18px, 14px, 34px) rotateX(96deg) rotateY(0deg) rotateZ(12deg) scale(0.86); }
+    to   { opacity: 1; transform: translate3d(12px, 10px, 16px) rotateX(0deg) rotateY(0deg) rotateZ(4deg) scale(1); }
   }
   @keyframes spPlaneFrontDrift {
-    from { transform: translate3d(13px, 11px, 18px) rotateX(5deg) rotateY(-5deg) rotateZ(4.5deg); }
-    to   { transform: translate3d(7px, 6px, 14px) rotateX(-5deg) rotateY(6deg) rotateZ(1.5deg); }
+    0%, 100% { transform: translate3d(12px, 10px, 16px) rotateX(0deg) rotateY(0deg) rotateZ(4deg); }
+    50%      { transform: translate3d(7px, 6px, 14px) rotateX(-5deg) rotateY(5deg) rotateZ(1.5deg); }
   }
   @keyframes spGyroIn {
     from { opacity: 0; transform: rotateX(70deg) rotateY(-18deg) rotateZ(-80deg) scale(0.48); }
@@ -2335,12 +2336,12 @@
             </clipPath>
           </defs>
 
-          <!-- Phase 2 Morphing Layers (top-to-bottom depth gradient, zero pause!) -->
+          <!-- Phase 2 Morphing Layers (pixel-matched stroke widths to Phase 1 for invisible seam!) -->
           <g id="spAgMorphGroup" opacity="0">
             <!-- Staggered matte-black depth layer (offset -6, -4) -->
-            <path id="spAgBlackEcho" transform="translate(-6 -4)" fill="#07080B" fill-opacity="0.82" stroke="#1E2028" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" d=""/>
+            <path id="spAgBlackEcho" transform="translate(-6 -4)" fill="#07080B" fill-opacity="0.82" stroke="#1E2028" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d=""/>
             <!-- Staggered cool-gray mid depth layer (offset +4, +5) -->
-            <path id="spAgGrayEcho" transform="translate(4 5)" fill="url(#spAgGrayLayer)" stroke="#9DA3B3" stroke-opacity="0.28" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" d=""/>
+            <path id="spAgGrayEcho" transform="translate(4 5)" fill="url(#spAgGrayLayer)" stroke="#8A90A0" stroke-opacity="0.45" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d=""/>
             <!-- Hero Top-to-Bottom Vertical Gradient Antigravity Mark -->
             <path id="spAgHeroPath" fill="url(#spAgVerticalGrad)" stroke="url(#spAgVerticalRim)" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round" d=""/>
             <!-- Subtle specular sheen gliding smoothly across the vertical-gradient surface -->
@@ -2349,18 +2350,18 @@
             </g>
           </g>
 
-          <!-- Phase 1: Upper contour drawing symmetrically outward from crown -> pinned tips -->
+          <!-- Phase 1: Upper contour drawing symmetrically outward from crown -> pinned tips (exact matching widths!) -->
           <g id="spUpperStrokes" class="sp-upper-strokes">
             <g transform="translate(-6 -4)">
-              <path id="spUpBlkL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="#08090D" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
-              <path id="spUpBlkR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="#08090D" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
+              <path id="spUpBlkL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="#1E2028" stroke-width="2" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
+              <path id="spUpBlkR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="#1E2028" stroke-width="2" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
             </g>
             <g transform="translate(4 5)">
-              <path id="spUpGryL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="#858B9C" stroke-opacity="0.65" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
-              <path id="spUpGryR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="#858B9C" stroke-opacity="0.65" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
+              <path id="spUpGryL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="#8A90A0" stroke-opacity="0.45" stroke-width="2" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
+              <path id="spUpGryR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="#8A90A0" stroke-opacity="0.45" stroke-width="2" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
             </g>
-            <path id="spUpMainL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="url(#spAgVerticalRim)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
-            <path id="spUpMainR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="url(#spAgVerticalRim)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
+            <path id="spUpMainL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="url(#spAgVerticalRim)" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
+            <path id="spUpMainR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="url(#spAgVerticalRim)" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
           </g>
 
           <!-- Fixed endpoint anchor indicators locking at (44,142) & (148,142) -->
@@ -11432,74 +11433,116 @@ let _splashDismissed = false;
   }
 
   const ARC_LEN = 145;
-  const DRAW_START_MS = 120;
-  const DRAW_DUR_MS = 500;
-  const MORPH_START_MS = 540; // Overlaps tail of draw for seamless continuous momentum!
-  const MORPH_DUR_MS = 760;
-  const GRAY_LAG_MS = 65;
-  const BLK_LAG_MS = 130;
+  const DRAW_START_MS = 80;
+  const DRAW_DUR_MS = 480;
+  const GRAY_LAG_MS = 55;
+  const BLK_LAG_MS = 110;
+  // Each layer transitions to morph at the EXACT instant its own draw hits 1.000 (ZERO teleport, ZERO gap!)
+  const HERO_MORPH_START = DRAW_START_MS + DRAW_DUR_MS;
+  const GRAY_MORPH_START = HERO_MORPH_START + GRAY_LAG_MS;
+  const BLK_MORPH_START = HERO_MORPH_START + BLK_LAG_MS;
+  const MORPH_DUR_MS = 780;
 
   let t0 = 0;
-  let morphShown = false;
+  let heroSwapped = false;
+  let graySwapped = false;
+  let blkSwapped = false;
   let pinsLit = false;
   let pinsHidden = false;
+  const dZero = buildPath(0);
+
+  // Pre-seed paths with dZero at opacity 0 so first frame has zero path-parse stutter
+  hero.setAttribute('d', dZero);
+  gray.setAttribute('d', dZero);
+  blk.setAttribute('d', dZero);
+  clip.setAttribute('d', dZero);
+  hero.setAttribute('opacity', '0');
+  gray.setAttribute('opacity', '0');
+  blk.setAttribute('opacity', '0');
+  grp.setAttribute('opacity', '1');
 
   const setDash = (el, progress) => {
     if (el) el.style.strokeDashoffset = (ARC_LEN * (1 - clamp01(progress))).toFixed(2);
   };
 
+  let _resolveMorphDone = null;
+  window._splashMorphDone = new Promise(r => { _resolveMorphDone = r; });
+
   const tick = (nowTs) => {
     const splashEl = document.getElementById('appSplash');
-    if (!splashEl || splashEl.classList.contains('gone')) return;
+    if (!splashEl || splashEl.classList.contains('gone')) {
+      if (_resolveMorphDone) _resolveMorphDone();
+      return;
+    }
     if (!t0) t0 = nowTs;
     const elapsed = nowTs - t0;
 
-    // Phase 1: Symmetrical outward draw of upper contour (all on one rAF clock — zero hitch!)
-    if (!morphShown) {
-      const pMain = easeInOutCubic((elapsed - DRAW_START_MS) / DRAW_DUR_MS);
-      const pGry = easeInOutCubic((elapsed - DRAW_START_MS - 45) / DRAW_DUR_MS);
-      const pBlk = easeInOutCubic((elapsed - DRAW_START_MS - 90) / DRAW_DUR_MS);
-      setDash(upMainL, pMain);
-      setDash(upMainR, pMain);
-      setDash(upGryL, pGry);
-      setDash(upGryR, pGry);
-      setDash(upBlkL, pBlk);
-      setDash(upBlkR, pBlk);
-
-      if (!pinsLit && pMain >= 0.86) {
+    // 1) Hero layer: draw 0..1 -> at EXACT 1.000 swap pixel-identically to smooth easeInOutCubic downward morph
+    if (!heroSwapped) {
+      const p = easeInOutCubic((elapsed - DRAW_START_MS) / DRAW_DUR_MS);
+      setDash(upMainL, p);
+      setDash(upMainR, p);
+      if (!pinsLit && p >= 0.92) {
         pinsLit = true;
         if (pinL) pinL.classList.add('active');
         if (pinR) pinR.classList.add('active');
       }
-    }
-
-    // Phase 2: Endpoints stay pinned, inner line immediately flows downward into solid liquid-metal icon!
-    if (elapsed >= MORPH_START_MS) {
-      if (!morphShown) {
-        morphShown = true;
-        setDash(upMainL, 1); setDash(upMainR, 1);
-        setDash(upGryL, 1); setDash(upGryR, 1);
-        setDash(upBlkL, 1); setDash(upBlkR, 1);
-        grp.setAttribute('opacity', '1');
-        if (upper) upper.classList.add('morphed');
+      if (elapsed >= HERO_MORPH_START) {
+        heroSwapped = true;
+        hero.setAttribute('opacity', '1');
+        if (upMainL) upMainL.style.opacity = '0';
+        if (upMainR) upMainR.style.opacity = '0';
       }
-
-      const tHero = easeOutQuart((elapsed - MORPH_START_MS) / MORPH_DUR_MS);
-      const tGray = easeOutQuart((elapsed - MORPH_START_MS - GRAY_LAG_MS) / MORPH_DUR_MS);
-      const tBlk = easeOutQuart((elapsed - MORPH_START_MS - BLK_LAG_MS) / MORPH_DUR_MS);
-
+    }
+    if (heroSwapped) {
+      const tHero = easeInOutCubic((elapsed - HERO_MORPH_START) / MORPH_DUR_MS);
       const dHero = buildPath(tHero);
       hero.setAttribute('d', dHero);
       clip.setAttribute('d', dHero);
-      gray.setAttribute('d', buildPath(tGray));
-      blk.setAttribute('d', buildPath(tBlk));
-
-      if (!pinsHidden && tHero >= 0.92) {
+      if (!pinsHidden && tHero >= 0.94) {
         pinsHidden = true;
         if (pinL) pinL.classList.add('done');
         if (pinR) pinR.classList.add('done');
       }
-      if (tBlk >= 1) return;
+    }
+
+    // 2) Gray echo layer: own exact draw -> morph handoff
+    if (!graySwapped) {
+      const pG = easeInOutCubic((elapsed - DRAW_START_MS - GRAY_LAG_MS) / DRAW_DUR_MS);
+      setDash(upGryL, pG);
+      setDash(upGryR, pG);
+      if (elapsed >= GRAY_MORPH_START) {
+        graySwapped = true;
+        gray.setAttribute('opacity', '1');
+        if (upGryL) upGryL.style.opacity = '0';
+        if (upGryR) upGryR.style.opacity = '0';
+      }
+    }
+    if (graySwapped) {
+      const tGray = easeInOutCubic((elapsed - GRAY_MORPH_START) / MORPH_DUR_MS);
+      gray.setAttribute('d', buildPath(tGray));
+    }
+
+    // 3) Black shadow layer: own exact draw -> morph handoff
+    if (!blkSwapped) {
+      const pB = easeInOutCubic((elapsed - DRAW_START_MS - BLK_LAG_MS) / DRAW_DUR_MS);
+      setDash(upBlkL, pB);
+      setDash(upBlkR, pB);
+      if (elapsed >= BLK_MORPH_START) {
+        blkSwapped = true;
+        blk.setAttribute('opacity', '1');
+        if (upBlkL) upBlkL.style.opacity = '0';
+        if (upBlkR) upBlkR.style.opacity = '0';
+        if (upper) upper.classList.add('morphed');
+      }
+    }
+    if (blkSwapped) {
+      const tBlk = easeInOutCubic((elapsed - BLK_MORPH_START) / MORPH_DUR_MS);
+      blk.setAttribute('d', buildPath(tBlk));
+      if (tBlk >= 1) {
+        if (_resolveMorphDone) _resolveMorphDone();
+        return;
+      }
     }
 
     requestAnimationFrame(tick);
@@ -11518,11 +11561,11 @@ function hideAppSplash(immediate = false) {
   const el = document.getElementById('appSplash');
   if (!el) return;
   const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-  const minVisibleMs = immediate ? 0 : 2150;
+  const minVisibleMs = immediate ? 0 : 2100;
   const waitMs = Math.max(0, minVisibleMs - (now - _splashStartedAt));
   setTimeout(() => {
     el.classList.add('leaving');
-    setTimeout(() => { el.classList.add('gone'); }, 580);
+    setTimeout(() => { el.classList.add('gone'); }, 560);
   }, waitMs);
 }
 
@@ -11532,7 +11575,12 @@ setTimeout(() => hideAppSplash(true), 5500);
 (async () => {
   try {
     setSplashStatus('正在校验登录状态...');
-    if (await checkAuth()) {
+    const authed = await checkAuth();
+    // Wait for the hero morph (~1.35s) before heavy workbench DOM hydration so the animation stays locked 60/120fps!
+    if (window._splashMorphDone) {
+      await Promise.race([window._splashMorphDone, new Promise(r => setTimeout(r, 1550))]);
+    }
+    if (authed) {
       setSplashStatus('正在加载工作台数据...');
       await initApp();
     }
