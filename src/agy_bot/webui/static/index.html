@@ -2121,38 +2121,35 @@
     animation: spArcDraw .86s cubic-bezier(.22, 1, .36, 1) .22s both;
   }
 
-  /* Phase 1: Upper edge draws symmetrically outward from peak (96,36) -> pinned left/right tips */
-  .sp-upper-half {
-    stroke-dasharray: 145;
-    stroke-dashoffset: 145;
-    animation: spUpperDraw .62s cubic-bezier(.22, 1, .36, 1) .34s forwards;
-  }
-  .sp-upper-ghost-gray {
-    stroke-dasharray: 145;
-    stroke-dashoffset: 145;
-    animation: spUpperDraw .62s cubic-bezier(.22, 1, .36, 1) .41s forwards;
-  }
-  .sp-upper-ghost-black {
-    stroke-dasharray: 145;
-    stroke-dashoffset: 145;
-    animation: spUpperDraw .62s cubic-bezier(.22, 1, .36, 1) .48s forwards;
+  /* Phase 1 & 2 are unified inside one single rAF timeline — zero CSS/JS handoff pause! */
+  .sp-upper-strokes {
+    opacity: 1;
+    transition: opacity .14s ease-out;
   }
   .sp-upper-strokes.morphed {
     opacity: 0;
-    transition: opacity .16s ease-out;
   }
 
-  /* Fixed endpoint anchor pins lighting up right as upper edge locks in */
+  /* Fixed endpoint anchor pins lighting up right as upper edge reaches tips */
   .sp-pin-dot {
     opacity: 0;
     transform-box: fill-box;
     transform-origin: center;
-    animation: spPinLock 1.05s cubic-bezier(.22, 1, .36, 1) .78s forwards;
+    transition: opacity .22s ease, transform .28s cubic-bezier(.22, 1, .36, 1);
+    transform: scale(0.35);
+  }
+  .sp-pin-dot.active {
+    opacity: 0.92;
+    transform: scale(1.1);
+  }
+  .sp-pin-dot.done {
+    opacity: 0;
+    transform: scale(0.5);
   }
 
-  /* Specular sheen gliding once the solid white Antigravity icon finishes forming */
+  /* Flowing liquid-chrome specular sheen band */
   .sp-sheen-bar {
-    animation: spSheenSweep 2.6s cubic-bezier(.4, 0, .2, 1) 1.65s infinite both;
+    animation: spSheenSweep 2.4s cubic-bezier(.4, 0, .2, 1) 1.15s infinite both;
   }
 
   /* Wordmark & minimal 3-segment indicator */
@@ -2345,18 +2342,47 @@
       <div class="sp-ag-tilt">
         <svg class="splash-svg" viewBox="0 0 192 192" fill="none">
           <defs>
-            <linearGradient id="spAgPureWhite" x1="46" y1="34" x2="146" y2="146" gradientUnits="userSpaceOnUse">
+            <!-- Flowing Liquid Metal / Molten Chrome Horizon Gradient (animated in rAF!) -->
+            <linearGradient id="spLiquidChrome" x1="36" y1="28" x2="156" y2="152" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stop-color="#FFFFFF"/>
-              <stop offset="56%" stop-color="#EFF1F6"/>
-              <stop offset="100%" stop-color="#CFD4DF"/>
+              <stop offset="22%" stop-color="#EDF0F7"/>
+              <stop offset="42%" stop-color="#9CA2B3"/>
+              <stop offset="53%" stop-color="#343844"/>
+              <stop offset="64%" stop-color="#B9BFCB"/>
+              <stop offset="82%" stop-color="#FFFFFF"/>
+              <stop offset="100%" stop-color="#CDD2DF"/>
             </linearGradient>
+            <!-- Liquid Metal Chrome Rim Stroke -->
+            <linearGradient id="spChromeRim" x1="44" y1="34" x2="148" y2="146" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#FFFFFF"/>
+              <stop offset="45%" stop-color="#CFD5E2"/>
+              <stop offset="72%" stop-color="#6B7180"/>
+              <stop offset="100%" stop-color="#F6F8FC"/>
+            </linearGradient>
+            <!-- Volumetric 3D Liquid-Metal Specular Bevel Filter -->
+            <filter id="spLiquidMetalFx" x="-16%" y="-16%" width="132%" height="132%" color-interpolation-filters="sRGB">
+              <feGaussianBlur in="SourceAlpha" stdDeviation="3.4" result="blur"/>
+              <feSpecularLighting in="blur" surfaceScale="5.8" specularConstant="1.15" specularExponent="26" lighting-color="#FFFFFF" result="specOut">
+                <fePointLight id="spMetalLight" x="74" y="42" z="78"/>
+              </feSpecularLighting>
+              <feComposite in="specOut" in2="SourceAlpha" operator="in" result="specClip"/>
+              <feComponentTransfer in="specClip" result="specSoft">
+                <feFuncA type="linear" slope="0.62"/>
+              </feComponentTransfer>
+              <feMerge>
+                <feMergeNode in="SourceGraphic"/>
+                <feMergeNode in="specSoft"/>
+              </feMerge>
+            </filter>
             <linearGradient id="spAgGrayLayer" x1="48" y1="40" x2="148" y2="146" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#757A89" stop-opacity="0.65"/>
-              <stop offset="100%" stop-color="#272A33" stop-opacity="0.72"/>
+              <stop offset="0%" stop-color="#7B8192" stop-opacity="0.62"/>
+              <stop offset="55%" stop-color="#2D303A" stop-opacity="0.72"/>
+              <stop offset="100%" stop-color="#5C6170" stop-opacity="0.58"/>
             </linearGradient>
             <linearGradient id="spSheenGrad" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0"/>
-              <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.88"/>
+              <stop offset="42%" stop-color="#FFFFFF" stop-opacity="0.92"/>
+              <stop offset="58%" stop-color="#D8DFEE" stop-opacity="0.75"/>
               <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
             </linearGradient>
             <clipPath id="spAgMorphClip">
@@ -2369,39 +2395,38 @@
             <circle class="sp-ring-a-path" cx="96" cy="96" r="82" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="1" stroke-linecap="butt"/>
           </g>
 
-          <!-- Phase 2 Morphing Layers (hidden until upper edge completes, then inner line contracts downward!) -->
+          <!-- Phase 2 Liquid-Metal Morphing Layers (seamlessly overlapped with Phase 1 — zero pause!) -->
           <g id="spAgMorphGroup" opacity="0">
             <!-- Staggered matte-black depth layer (offset -6, -4) -->
-            <path id="spAgBlackEcho" transform="translate(-6 -4)" fill="#07080B" fill-opacity="0.82" stroke="#1E2028" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" d=""/>
-            <!-- Staggered cool-gray mid depth layer (offset +4, +5) -->
-            <path id="spAgGrayEcho" transform="translate(4 5)" fill="url(#spAgGrayLayer)" stroke="#8A8F9E" stroke-opacity="0.32" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" d=""/>
-            <!-- Hero Pure-White Antigravity Mark -->
-            <path id="spAgHeroPath" fill="url(#spAgPureWhite)" stroke="#FFFFFF" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round" d=""/>
-            <!-- Specular sheen gliding over the newly formed white surface -->
-            <g clip-path="url(#spAgMorphClip)" opacity="0.72">
-              <rect class="sp-sheen-bar" x="28" y="24" width="38" height="132" transform="skewX(-22)" fill="url(#spSheenGrad)"/>
+            <path id="spAgBlackEcho" transform="translate(-6 -4)" fill="#07080B" fill-opacity="0.82" stroke="#262933" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" d=""/>
+            <!-- Staggered smoked-chrome mid depth layer (offset +4, +5) -->
+            <path id="spAgGrayEcho" transform="translate(4 5)" fill="url(#spAgGrayLayer)" stroke="#9DA3B3" stroke-opacity="0.34" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" d=""/>
+            <!-- Hero Liquid-Metal Chrome Antigravity Mark -->
+            <path id="spAgHeroPath" filter="url(#spLiquidMetalFx)" fill="url(#spLiquidChrome)" stroke="url(#spChromeRim)" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round" d=""/>
+            <!-- Subtle dark liquid-metal caustic inner rim + gliding specular sheen -->
+            <g clip-path="url(#spAgMorphClip)">
+              <path id="spAgInnerHighlight" fill="none" stroke="#FFFFFF" stroke-opacity="0.72" stroke-width="1.6" transform="translate(-1.5 -2)" d=""/>
+              <rect class="sp-sheen-bar" x="24" y="22" width="44" height="138" transform="skewX(-24)" fill="url(#spSheenGrad)" opacity="0.68"/>
             </g>
           </g>
 
-          <!-- Phase 1: Upper Antigravity contour drawing symmetrically outward from crown -> pinned tips -->
+          <!-- Phase 1: Upper liquid-chrome contour drawing symmetrically outward from crown -> pinned tips (driven by same rAF clock!) -->
           <g id="spUpperStrokes" class="sp-upper-strokes">
-            <!-- Staggered black & gray ghost contour trails -->
             <g transform="translate(-6 -4)">
-              <path class="sp-upper-ghost-black" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="#08090D" stroke-width="3.5" stroke-linecap="round"/>
-              <path class="sp-upper-ghost-black" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="#08090D" stroke-width="3.5" stroke-linecap="round"/>
+              <path id="spUpBlkL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="#08090D" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
+              <path id="spUpBlkR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="#08090D" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
             </g>
             <g transform="translate(4 5)">
-              <path class="sp-upper-ghost-gray" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="#7A7F8F" stroke-opacity="0.65" stroke-width="2.5" stroke-linecap="round"/>
-              <path class="sp-upper-ghost-gray" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="#7A7F8F" stroke-opacity="0.65" stroke-width="2.5" stroke-linecap="round"/>
+              <path id="spUpGryL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="#858B9C" stroke-opacity="0.68" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
+              <path id="spUpGryR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="#858B9C" stroke-opacity="0.68" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
             </g>
-            <!-- Pure-white leading upper contour -->
-            <path class="sp-upper-half" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round"/>
-            <path class="sp-upper-half" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="#FFFFFF" stroke-width="3.5" stroke-linecap="round"/>
+            <path id="spUpMainL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="url(#spChromeRim)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
+            <path id="spUpMainR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="url(#spChromeRim)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
           </g>
 
           <!-- Fixed endpoint anchor indicators locking at (44,142) & (148,142) -->
-          <circle class="sp-pin-dot" cx="44" cy="142" r="3.2" fill="#FFFFFF"/>
-          <circle class="sp-pin-dot" cx="148" cy="142" r="3.2" fill="#FFFFFF"/>
+          <circle id="spPinL" class="sp-pin-dot" cx="44" cy="142" r="3" fill="#FFFFFF"/>
+          <circle id="spPinR" class="sp-pin-dot" cx="148" cy="142" r="3" fill="#FFFFFF"/>
         </svg>
       </div>
     </div>
@@ -11397,15 +11422,28 @@ async function initApp() {
 const _splashStartedAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
 let _splashDismissed = false;
 
-/* Smooth Bezier Morph: Upper Antigravity edge stays fixed at both tips (44,142) & (148,142),
-   inner contour sweeps downward to form the iconic solid white Antigravity mark! */
+/* Unified rAF Timeline (ZERO pause between upper-edge draw & downward liquid-metal morph!):
+   1) Upper chrome contour draws smoothly outward from crown -> pinned tips (0..540ms)
+   2) Overlapping at 460ms (before momentum stops!), inner curve flows downward while tips stay pinned -> liquid metal Antigravity icon!
+   3) Chrome horizon gradient + 3D specular point light continuously flow like liquid mercury! */
 (function startSplashAntigravityMorph() {
   const grp = document.getElementById('spAgMorphGroup');
   const hero = document.getElementById('spAgHeroPath');
+  const innerHi = document.getElementById('spAgInnerHighlight');
   const gray = document.getElementById('spAgGrayEcho');
   const blk = document.getElementById('spAgBlackEcho');
   const clip = document.getElementById('spAgClipPath');
   const upper = document.getElementById('spUpperStrokes');
+  const upMainL = document.getElementById('spUpMainL');
+  const upMainR = document.getElementById('spUpMainR');
+  const upGryL = document.getElementById('spUpGryL');
+  const upGryR = document.getElementById('spUpGryR');
+  const upBlkL = document.getElementById('spUpBlkL');
+  const upBlkR = document.getElementById('spUpBlkR');
+  const pinL = document.getElementById('spPinL');
+  const pinR = document.getElementById('spPinR');
+  const chromeGrad = document.getElementById('spLiquidChrome');
+  const metalLight = document.getElementById('spMetalLight');
   if (!grp || !hero || !gray || !blk || !clip) return;
 
   const OUTER = 'M 44 142 C 57 134 65 96 72 68 C 78 44 86 36 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142';
@@ -11422,8 +11460,13 @@ let _splashDismissed = false;
     [62, 132, 54, 142, 44, 142],
   ];
 
-  const ease = (u) => {
-    const x = Math.max(0, Math.min(1, u));
+  const clamp01 = (u) => Math.max(0, Math.min(1, u));
+  const easeInOutCubic = (u) => {
+    const x = clamp01(u);
+    return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  };
+  const easeOutQuart = (u) => {
+    const x = clamp01(u);
     return 1 - Math.pow(1 - x, 4);
   };
   const buildPath = (t) => {
@@ -11444,6 +11487,7 @@ let _splashDismissed = false;
   if (reduced) {
     const d1 = buildPath(1);
     hero.setAttribute('d', d1);
+    if (innerHi) innerHi.setAttribute('d', d1);
     gray.setAttribute('d', d1);
     blk.setAttribute('d', d1);
     clip.setAttribute('d', d1);
@@ -11452,33 +11496,92 @@ let _splashDismissed = false;
     return;
   }
 
-  const MORPH_START_MS = 920;
-  const MORPH_DUR_MS = 820;
-  const GRAY_LAG_MS = 75;
-  const BLK_LAG_MS = 145;
-  let started = false;
+  const ARC_LEN = 145;
+  const DRAW_START_MS = 120;
+  const DRAW_DUR_MS = 500;
+  const MORPH_START_MS = 540; // Overlaps tail of draw for seamless continuous momentum!
+  const MORPH_DUR_MS = 760;
+  const GRAY_LAG_MS = 65;
+  const BLK_LAG_MS = 130;
+
+  let t0 = 0;
+  let morphShown = false;
+  let pinsLit = false;
+  let pinsHidden = false;
+
+  const setDash = (el, progress) => {
+    if (el) el.style.strokeDashoffset = (ARC_LEN * (1 - clamp01(progress))).toFixed(2);
+  };
 
   const tick = (nowTs) => {
-    if (_splashDismissed && nowTs - _splashStartedAt > MORPH_START_MS + MORPH_DUR_MS + BLK_LAG_MS + 600) return;
-    const elapsed = nowTs - _splashStartedAt;
+    const splashEl = document.getElementById('appSplash');
+    if (!splashEl || splashEl.classList.contains('gone')) return;
+    if (!t0) t0 = nowTs;
+    const elapsed = nowTs - t0;
+
+    // Phase 1: Symmetrical outward draw of upper contour (all on one rAF clock — zero hitch!)
+    if (!morphShown) {
+      const pMain = easeInOutCubic((elapsed - DRAW_START_MS) / DRAW_DUR_MS);
+      const pGry = easeInOutCubic((elapsed - DRAW_START_MS - 45) / DRAW_DUR_MS);
+      const pBlk = easeInOutCubic((elapsed - DRAW_START_MS - 90) / DRAW_DUR_MS);
+      setDash(upMainL, pMain);
+      setDash(upMainR, pMain);
+      setDash(upGryL, pGry);
+      setDash(upGryR, pGry);
+      setDash(upBlkL, pBlk);
+      setDash(upBlkR, pBlk);
+
+      if (!pinsLit && pMain >= 0.86) {
+        pinsLit = true;
+        if (pinL) pinL.classList.add('active');
+        if (pinR) pinR.classList.add('active');
+      }
+    }
+
+    // Phase 2: Endpoints stay pinned, inner line immediately flows downward into solid liquid-metal icon!
     if (elapsed >= MORPH_START_MS) {
-      if (!started) {
-        started = true;
+      if (!morphShown) {
+        morphShown = true;
+        setDash(upMainL, 1); setDash(upMainR, 1);
+        setDash(upGryL, 1); setDash(upGryR, 1);
+        setDash(upBlkL, 1); setDash(upBlkR, 1);
         grp.setAttribute('opacity', '1');
         if (upper) upper.classList.add('morphed');
       }
-      const tHero = ease((elapsed - MORPH_START_MS) / MORPH_DUR_MS);
-      const tGray = ease((elapsed - MORPH_START_MS - GRAY_LAG_MS) / MORPH_DUR_MS);
-      const tBlk = ease((elapsed - MORPH_START_MS - BLK_LAG_MS) / MORPH_DUR_MS);
+
+      const tHero = easeOutQuart((elapsed - MORPH_START_MS) / MORPH_DUR_MS);
+      const tGray = easeOutQuart((elapsed - MORPH_START_MS - GRAY_LAG_MS) / MORPH_DUR_MS);
+      const tBlk = easeOutQuart((elapsed - MORPH_START_MS - BLK_LAG_MS) / MORPH_DUR_MS);
 
       const dHero = buildPath(tHero);
       hero.setAttribute('d', dHero);
+      if (innerHi) innerHi.setAttribute('d', dHero);
       clip.setAttribute('d', dHero);
       gray.setAttribute('d', buildPath(tGray));
       blk.setAttribute('d', buildPath(tBlk));
 
-      if (tBlk >= 1) return;
+      if (!pinsHidden && tHero >= 0.92) {
+        pinsHidden = true;
+        if (pinL) pinL.classList.add('done');
+        if (pinR) pinR.classList.add('done');
+      }
     }
+
+    // Phase 3: Continuous liquid-metal reflection flow (chrome horizon & 3D specular point light)
+    const phase = elapsed * 0.0022;
+    if (chromeGrad) {
+      const dx = Math.sin(phase) * 26;
+      const dy = Math.cos(phase * 0.85) * 18;
+      chromeGrad.setAttribute('x1', (38 + dx).toFixed(1));
+      chromeGrad.setAttribute('y1', (26 + dy).toFixed(1));
+      chromeGrad.setAttribute('x2', (154 - dx).toFixed(1));
+      chromeGrad.setAttribute('y2', (150 - dy).toFixed(1));
+    }
+    if (metalLight) {
+      metalLight.setAttribute('x', (96 + Math.sin(phase * 1.15) * 44).toFixed(1));
+      metalLight.setAttribute('y', (54 + Math.cos(phase * 0.9) * 24).toFixed(1));
+    }
+
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);
@@ -11495,7 +11598,7 @@ function hideAppSplash(immediate = false) {
   const el = document.getElementById('appSplash');
   if (!el) return;
   const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-  const minVisibleMs = immediate ? 0 : 2450;
+  const minVisibleMs = immediate ? 0 : 2150;
   const waitMs = Math.max(0, minVisibleMs - (now - _splashStartedAt));
   setTimeout(() => {
     el.classList.add('leaving');
@@ -11504,7 +11607,7 @@ function hideAppSplash(immediate = false) {
 }
 
 // Hard failsafe so the splash screen can never remain stuck on slow/errored networks
-setTimeout(() => hideAppSplash(true), 5800);
+setTimeout(() => hideAppSplash(true), 5500);
 
 (async () => {
   try {
