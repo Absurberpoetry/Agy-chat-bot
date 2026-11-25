@@ -73,7 +73,10 @@ class TriggerEngine:
         self._compiled_regex: list[re.Pattern[str]] = []
         flags = 0 if config.keyword.case_sensitive else re.IGNORECASE
         for pattern in config.keyword.regex_patterns:
-            self._compiled_regex.append(re.compile(pattern, flags))
+            try:
+                self._compiled_regex.append(re.compile(pattern, flags))
+            except re.error as exc:
+                logging.getLogger(__name__).warning("忽略无效的关键词触发正则 (%s): %s", pattern, exc)
 
         self._last_dice_trigger: dict[str, float] = {}
         self._last_context_judge: dict[str, float] = {}
@@ -94,8 +97,18 @@ class TriggerEngine:
         if msg.is_self:
             return TriggerResult(triggered=False, reason="self_message")
 
-        # Private messages: direct reply when enabled and allowed
+        # Private messages: direct reply unless private_needs_wake is enabled
         if msg.scene == "private":
+            if self._config.private_needs_wake:
+                if self._config.keyword.enabled and self._match_keyword(msg.text):
+                    return TriggerResult(
+                        triggered=True,
+                        trigger_type="keyword",
+                        matched_triggers=["keyword"],
+                        reason="private_wake_keyword",
+                        should_wait_trailing=True,
+                    )
+                return TriggerResult(triggered=False, reason="private_needs_wake")
             return TriggerResult(
                 triggered=True,
                 trigger_type="mention",
@@ -208,10 +221,11 @@ class TriggerEngine:
             return TriggerResult(triggered=False, reason="context_reply_cooldown")
 
         self._last_context_judge[msg.session_key] = now
-        window = recent_messages[-cfg.judge_context_window :]
+        win_n = max(1, int(cfg.judge_context_window or 1))
+        window = recent_messages[-win_n:]
         decision = await self._context_judge(msg.session_key, window)
         if decision.should_reply:
-            self._last_context_reply[msg.session_key] = time.monotonic()
+            self._last_context_reply[msg.session_key] = now if now_mono is not None else time.monotonic()
             return TriggerResult(
                 triggered=True,
                 trigger_type="context_llm",

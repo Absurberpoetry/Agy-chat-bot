@@ -35,6 +35,7 @@ class _PendingCollection:
     extra_count: int = 0
     generation: int = 0
     timer_handle: asyncio.TimerHandle | None = None
+    prompt_override: str = ""
 
 
 class DebouncedReplyManager:
@@ -51,6 +52,7 @@ class DebouncedReplyManager:
         self._on_ready = on_ready
         self._pending: dict[str, _PendingCollection] = {}
         self._dispatch_tasks: set[asyncio.Task[None]] = set()
+        self._session_dispatch_tasks: dict[str, set[asyncio.Task[None]]] = {}
 
     def has_pending(self, session_key: str) -> bool:
         return session_key in self._pending
@@ -138,6 +140,7 @@ class DebouncedReplyManager:
                 extra_count=0,
                 trigger_message_ids={msg.message_id} if msg.message_id else set(),
                 followup_message_ids=set(),
+                prompt_override=trigger.prompt_override,
             )
             self._emit_snapshot(snapshot)
             return
@@ -157,6 +160,7 @@ class DebouncedReplyManager:
             deadline_mono=now_mono + self._config.max_wait_seconds,
             tracked_user_ids={msg.user_id},
             trigger_message_ids={msg.message_id} if msg.message_id else set(),
+            prompt_override=trigger.prompt_override,
         )
         self._pending[session_key] = pending
         self._reschedule(pending, now_mono)
@@ -221,6 +225,7 @@ class DebouncedReplyManager:
             extra_count=pending.extra_count,
             trigger_message_ids=pending.trigger_message_ids,
             followup_message_ids=pending.followup_message_ids,
+            prompt_override=pending.prompt_override,
         )
         self._emit_snapshot(snapshot)
 
@@ -240,6 +245,7 @@ class DebouncedReplyManager:
         extra_count: int,
         trigger_message_ids: set[str],
         followup_message_ids: set[str],
+        prompt_override: str = "",
     ) -> ContextSnapshot:
         recent = self._store.get_recent(session_key, limit=self._config.context_message_limit)
         if trigger_message not in recent:
@@ -260,15 +266,28 @@ class DebouncedReplyManager:
             messages=recent,
             trigger_message_ids=trigger_message_ids,
             followup_message_ids=followup_message_ids,
+            prompt_override=prompt_override,
         )
 
     def _emit_snapshot(self, snapshot: ContextSnapshot) -> None:
+        skey = snapshot.session_key
         task = asyncio.create_task(
             self._safe_dispatch(snapshot),
-            name=f"dispatch-{snapshot.session_key}",
+            name=f"dispatch-{skey}",
         )
         self._dispatch_tasks.add(task)
-        task.add_done_callback(self._dispatch_tasks.discard)
+        bucket = self._session_dispatch_tasks.setdefault(skey, set())
+        bucket.add(task)
+
+        def _cleanup(t: asyncio.Task[None]) -> None:
+            self._dispatch_tasks.discard(t)
+            b = self._session_dispatch_tasks.get(skey)
+            if b is not None:
+                b.discard(t)
+                if not b:
+                    self._session_dispatch_tasks.pop(skey, None)
+
+        task.add_done_callback(_cleanup)
 
     async def _safe_dispatch(self, snapshot: ContextSnapshot) -> None:
         try:
@@ -277,6 +296,22 @@ class DebouncedReplyManager:
             raise
         except Exception:
             logger.exception("[%s] 快照触发回复任务失败", snapshot.session_key)
+
+    def cancel_session(self, session_key: str) -> bool:
+        """Cancel any pending debounced collection AND active dispatch tasks for a session (e.g., when muted)."""
+        cancelled_any = False
+        pending = self._pending.pop(session_key, None)
+        if pending is not None:
+            if pending.timer_handle is not None:
+                pending.timer_handle.cancel()
+                pending.timer_handle = None
+            cancelled_any = True
+        active_tasks = list(self._session_dispatch_tasks.get(session_key, ()))
+        for t in active_tasks:
+            if not t.done():
+                t.cancel()
+                cancelled_any = True
+        return cancelled_any
 
     async def shutdown(self) -> None:
         for pending in list(self._pending.values()):

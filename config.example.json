@@ -1,30 +1,37 @@
 {
-  "bot_name": "Antigravity助手",
+  "bot_name": "AGY BOT",
+  "admins": [],
+  "active_persona_id": "",
   "platforms": [
     {
       "id": "qq_napcat_1",
       "type": "onebot_v11",
-      "enabled": true,
+      "enabled": false,
       "ws_url": "ws://127.0.0.1:3001",
-      "access_token": "CHANGE_ME_NAPCAT_TOKEN",
+      "access_token": "",
       "self_id": "",
-      "group_allowlist": ["123456789"],
-      "group_blocklist": [],
-      "private_chat_enabled": false,
-      "private_allowlist": [],
+      "user_blocklist": [],
+      "private_blocklist": [],
       "reconnect_initial_seconds": 2.0,
       "reconnect_max_seconds": 60.0,
       "rpc_timeout_seconds": 5.0
     },
     {
-      "id": "qq_napcat_2",
-      "type": "onebot_v11",
+      "id": "tg_bot_1",
+      "type": "telegram",
       "enabled": false,
-      "ws_url": "ws://127.0.0.1:3002",
+      "ws_url": "https://api.telegram.org",
       "access_token": "",
       "self_id": "",
-      "group_allowlist": [],
-      "group_blocklist": []
+      "user_blocklist": [],
+      "private_blocklist": [],
+      "reconnect_initial_seconds": 2.0,
+      "reconnect_max_seconds": 60.0,
+      "rpc_timeout_seconds": 15.0,
+      "extra": {
+        "proxy": "",
+        "use_agy_proxy": true
+      }
     },
     {
       "id": "custom_platform_ws",
@@ -33,7 +40,8 @@
       "ws_url": "ws://127.0.0.1:4001/ws",
       "access_token": "",
       "self_id": "bot_01",
-      "group_allowlist": []
+      "user_blocklist": [],
+      "private_blocklist": []
     }
   ],
   "triggers": {
@@ -48,24 +56,20 @@
     },
     "keyword": {
       "enabled": true,
-      "keywords": ["/ai", "小助手", "请问机器人"],
+      "keywords": ["/ai", "小助手"],
       "regex_patterns": [],
       "case_sensitive": false,
       "exclude_keywords": []
     },
     "dice": {
-      "enabled": true,
+      "enabled": false,
       "probability": 0.03,
       "min_message_length": 4,
       "cooldown_seconds": 180.0,
       "ignore_prefixes": ["/", "!", ".", "！"]
     },
     "context_llm": {
-      "enabled": true,
-      "min_unread_messages": 12,
-      "min_interval_seconds": 240.0,
-      "judge_context_window": 15,
-      "cooldown_after_reply_seconds": 180.0
+      "enabled": false
     }
   },
   "collector": {
@@ -75,7 +79,13 @@
     "max_extra_messages": 5,
     "track_only_trigger_user": true,
     "context_message_limit": 25,
-    "history_buffer_size": 100
+    "history_buffer_size": 100,
+    "db_context_enabled": true,
+    "compact_max_messages": 60,
+    "compact_drop_by_count": 20,
+    "compact_max_tokens": 12000,
+    "compact_max_bytes": 0,
+    "compact_drop_by_tokens": 20
   },
   "rate_limit": {
     "max_concurrent_requests": 1,
@@ -87,25 +97,53 @@
   "reply": {
     "quote_trigger_message": true,
     "at_trigger_user": false,
-    "max_reply_chars": 800
+    "reply_prefix": "",
+    "max_reply_chars": 800,
+    "segmented_reply": {
+      "enabled": false,
+      "only_llm_result": true,
+      "interval_method": "random",
+      "interval": "1.5,3.5",
+      "words_count_threshold": 10000,
+      "split_mode": "words",
+      "regex": "[\\s\\S]+?(?:\\|\\|\\||$)",
+      "split_words": ["|||"],
+      "content_cleanup_rule": ""
+    }
   },
   "agy": {
     "mode": "agy",
     "executable": "auto",
     "workspace_dir": "./bot_workspace",
     "data_dir": "./data",
-    "model": "gemini-3.8-flash-medium",
-    "judge_model": "",
+    "settings_file": "./settings.antigravity-cli.bot.json",
+    "proxy": "",
+    "model": "",
+    "fallback_models": [],
     "effort": "",
-    "agent": "",
     "sandbox": false,
     "max_warm_processes": 2,
     "max_turns_per_session": 20,
     "turn_timeout_seconds": 90.0,
-    "judge_timeout_seconds": 30.0,
     "resume_on_restart": true,
     "rate_limit_cooldown_seconds": 180.0,
-    "fatal_error_pause_seconds": 3600.0
+    "fatal_error_pause_seconds": 3600.0,
+    "subagent_enabled": true,
+    "subagent_model": "",
+    "subagent_persona_id": "",
+    "subagent_max_concurrent": 2,
+    "subagent_timeout_seconds": 240.0,
+    "subagent_handoff_to_main": true,
+    "allow_command_execution": false,
+    "model_profiles": {}
+  },
+  "webui": {
+    "enabled": true,
+    "host": "0.0.0.0",
+    "port": 8618,
+    "username": "admin",
+    "password": "admin123",
+    "log_buffer_size": 1000
   },
   "logging": {
     "level": "INFO"

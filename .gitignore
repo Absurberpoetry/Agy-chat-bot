@@ -8,7 +8,17 @@ env/
 .pytest_cache/
 config.json
 data/
+settings.antigravity-cli.bot.json
 bot_workspace/.agents/mcp_config.json
+bot_workspace/.agents/skills_disabled/
+bot_workspace/.media_cache/
+*.db
+*.db-wal
+*.db-shm
 *.log
+dist/
+_run_bg.cmd
+_task_bg.xml
+bot.pid
 .DS_Store
 Thumbs.db

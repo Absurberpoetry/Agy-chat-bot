@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable
+from pathlib import Path
 from typing import Any
 
 from ..config import PlatformConfig
-from ..models import CachedMessage, IncomingMessage
+from ..models import CachedMessage, IncomingMessage, MediaAttachment
 
 OnMessageFn = Callable[[IncomingMessage], Awaitable[None]]
+OnGroupBanFn = Callable[[str, str, bool, float, str], Awaitable[None]]
 MessageLookupFn = Callable[[str, str], CachedMessage | None]
 WsConnectFn = Callable[..., Any]
 
@@ -44,6 +46,10 @@ class PlatformAdapter(ABC):
         self.platform_name = config.type
         self._message_lookup = message_lookup
         self._ws_connect = ws_connect
+        self._on_group_ban: OnGroupBanFn | None = None
+
+    def set_group_ban_handler(self, handler: OnGroupBanFn | None) -> None:
+        self._on_group_ban = handler
 
     @abstractmethod
     async def start(self, on_message: OnMessageFn) -> None:
@@ -64,17 +70,31 @@ class PlatformAdapter(ABC):
     ) -> str | None:
         """Reply to a triggering message on this platform, returning sent message_id if known."""
 
+    async def send_image(
+        self,
+        target: IncomingMessage,
+        image: bytes | str | Path,
+        *,
+        caption: str = "",
+        quote_trigger: bool = True,
+        at_user: bool = False,
+    ) -> str | None:
+        """Send an image/GIF (bytes, base64://, URL, or local file path) to the target channel."""
+        raise NotImplementedError(f"{self.platform_name} 适配器暂不支持发送图片")
+
+    async def resolve_image_source(self, attachment: MediaAttachment) -> dict[str, str]:
+        """Optional hook for platform adapters to resolve fresh image URL/local file via RPC."""
+        return {}
+
     def is_channel_allowed(self, scene: str, channel_id: str, user_id: str) -> bool:
+        uid = str(user_id or "").strip()
+        cid = str(channel_id or "").strip()
+        if uid and uid in self.config.user_blocklist:
+            return False
         if scene == "group":
-            if channel_id in self.config.group_blocklist:
-                return False
-            if self.config.group_allowlist and channel_id not in self.config.group_allowlist:
-                return False
             return True
         if scene == "private":
-            if not self.config.private_chat_enabled:
-                return False
-            if self.config.private_allowlist and user_id not in self.config.private_allowlist:
+            if (uid and uid in self.config.private_blocklist) or (cid and cid in self.config.private_blocklist):
                 return False
             return True
         return False

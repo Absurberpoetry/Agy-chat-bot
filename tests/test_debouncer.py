@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -229,71 +230,77 @@ class DebouncerAndIntegrationTests(unittest.IsolatedAsyncioTestCase):
         self.assertGreaterEqual(snapshots[0].extra_messages_collected, 1)
 
     async def test_bot_application_end_to_end_multi_platform_and_quote_cache(self) -> None:
-        registry = AdapterRegistry()
-        registry.register_type("dummy", DummyAdapter)
+        with tempfile.TemporaryDirectory() as td:
+            tmp_root = Path(td)
+            registry = AdapterRegistry()
+            registry.register_type("dummy", DummyAdapter)
 
-        cfg = BotConfig(
-            bot_name="测试机器人",
-            platforms=[
-                PlatformConfig(id="p1", type="dummy", ws_url="ws://1", self_id="999", group_allowlist=["10001"]),
-                PlatformConfig(id="p2", type="dummy", ws_url="ws://2", self_id="888", group_allowlist=["10001"]),
-            ],
-            triggers=TriggersConfig(),
-            collector=CollectorConfig(
-                wait_triggers=["mention", "quote", "keyword"],
-                quiet_wait_seconds=0.1,
-                max_wait_seconds=1.0,
-                max_extra_messages=4,
-            ),
-            rate_limit=RateLimitConfig(
-                max_concurrent_requests=1,
-                user_cooldown_seconds=10.0,
-                channel_min_interval_seconds=0.0,
-            ),
-            reply=ReplyConfig(quote_trigger_message=True, max_reply_chars=500),
-            agy=AgyConfig(mode="mock"),
-            base_dir=ROOT,
-        )
-        runner = MockAgentRunner()
-        app = BotApplication(cfg, registry=registry, runner=runner)
+            cfg = BotConfig(
+                bot_name="测试机器人",
+                platforms=[
+                    PlatformConfig(id="p1", type="dummy", ws_url="ws://1", self_id="999"),
+                    PlatformConfig(id="p2", type="dummy", ws_url="ws://2", self_id="888"),
+                ],
+                triggers=TriggersConfig(),
+                collector=CollectorConfig(
+                    wait_triggers=["mention", "quote", "keyword"],
+                    quiet_wait_seconds=0.1,
+                    max_wait_seconds=1.0,
+                    max_extra_messages=4,
+                ),
+                rate_limit=RateLimitConfig(
+                    max_concurrent_requests=1,
+                    user_cooldown_seconds=10.0,
+                    channel_min_interval_seconds=0.0,
+                ),
+                reply=ReplyConfig(quote_trigger_message=True, max_reply_chars=500),
+                agy=AgyConfig(
+                    mode="mock",
+                    workspace_dir=str(tmp_root / "ws"),
+                    data_dir=str(tmp_root / "data"),
+                ),
+                base_dir=tmp_root,
+            )
+            runner = MockAgentRunner()
+            app = BotApplication(cfg, registry=registry, runner=runner)
 
-        # User triggers on p1, then immediately sends a follow-up within cooldown window.
-        # Cooldown MUST NOT block the follow-up message from extending/updating the pending batch.
-        await app.handle_message(_make_msg(adapter_id="p1", self_id="999", msg_id="p1_m1", user_id="u1", text="在吗", at_targets=["999"]))
-        await asyncio.sleep(0.03)
-        await app.handle_message(_make_msg(adapter_id="p1", self_id="999", msg_id="p1_m2", user_id="u1", text="我补充第二句"))
+            # User triggers on p1, then immediately sends a follow-up within cooldown window.
+            # Cooldown MUST NOT block the follow-up message from extending/updating the pending batch.
+            await app.handle_message(_make_msg(adapter_id="p1", self_id="999", msg_id="p1_m1", user_id="u1", text="在吗", at_targets=["999"]))
+            await asyncio.sleep(0.03)
+            await app.handle_message(_make_msg(adapter_id="p1", self_id="999", msg_id="p1_m2", user_id="u1", text="我补充第二句"))
 
-        # Simultaneously, platform p2 triggers independently!
-        await app.handle_message(_make_msg(adapter_id="p2", self_id="888", msg_id="p2_m1", user_id="u2", text="p2测试", at_targets=["888"]))
+            # Simultaneously, platform p2 triggers independently!
+            await app.handle_message(_make_msg(adapter_id="p2", self_id="888", msg_id="p2_m1", user_id="u2", text="p2测试", at_targets=["888"]))
 
-        await asyncio.sleep(0.25)
+            await asyncio.sleep(0.25)
 
-        p1_adapter = registry.get("p1")
-        p2_adapter = registry.get("p2")
-        assert isinstance(p1_adapter, DummyAdapter)
-        assert isinstance(p2_adapter, DummyAdapter)
+            p1_adapter = registry.get("p1")
+            p2_adapter = registry.get("p2")
+            assert isinstance(p1_adapter, DummyAdapter)
+            assert isinstance(p2_adapter, DummyAdapter)
 
-        self.assertEqual(len(p1_adapter.replies), 1)
-        self.assertEqual(len(p2_adapter.replies), 1)
-        # Bot's prompt for p1 must include the follow-up text!
-        p1_calls = [p for sk, p in runner.calls if sk.startswith("p1:")]
-        self.assertEqual(len(p1_calls), 1)
-        self.assertIn("我补充第二句", p1_calls[0])
+            self.assertEqual(len(p1_adapter.replies), 1)
+            self.assertEqual(len(p2_adapter.replies), 1)
+            # Bot's prompt for p1 must include the follow-up text!
+            p1_calls = [p for sk, p in runner.calls if sk.startswith("p1:")]
+            self.assertEqual(len(p1_calls), 1)
+            self.assertIn("我补充第二句", p1_calls[0])
 
-        # Bot's own sent reply ID (`bot_sent_1`) should now be cached in ContextStore for future quote detection!
-        cached = app.context_store.lookup_message("p1", "bot_sent_1")
-        self.assertIsNotNone(cached)
-        assert cached is not None
-        self.assertEqual(cached.user_id, "999")
+            # Bot's own sent reply ID (`bot_sent_1`) should now be cached in ContextStore for future quote detection!
+            cached = app.context_store.lookup_message("p1", "bot_sent_1")
+            self.assertIsNotNone(cached)
+            assert cached is not None
+            self.assertEqual(cached.user_id, "999")
 
-        # Duplicate echoed message_sent with same message_id should NOT duplicate channel history!
-        echo = _make_msg(adapter_id="p1", self_id="999", msg_id="bot_sent_1", user_id="999", text="echo")
-        echo.is_self = True
-        await app.handle_message(echo)
-        recent_ids = [m.message_id for m in app.context_store.get_recent("p1:group:10001", limit=20)]
-        self.assertEqual(recent_ids.count("bot_sent_1"), 1)
+            # Duplicate echoed message_sent with same message_id should NOT duplicate channel history!
+            echo = _make_msg(adapter_id="p1", self_id="999", msg_id="bot_sent_1", user_id="999", text="echo")
+            echo.is_self = True
+            await app.handle_message(echo)
+            recent_ids = [m.message_id for m in app.context_store.get_recent("p1:group:10001", limit=20)]
+            self.assertEqual(recent_ids.count("bot_sent_1"), 1)
 
-        await app.shutdown()
+            await app.shutdown()
 
     def test_load_example_config_and_generic_ws_normalize(self) -> None:
         cfg = load_config(ROOT / "config.example.json")

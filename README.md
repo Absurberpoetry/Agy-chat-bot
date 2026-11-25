@@ -1,67 +1,114 @@
-# Antigravity 多平台正向 WebSocket 群聊机器人
+# AGY BOT
 
-基于**官方未修改 Antigravity CLI（`agy --input-format stream-json --output-format stream-json`）**的多平台正向 WebSocket 对话机器人，面向 Windows 与 Ubuntu 跨平台部署设计。
-
-## 特性亮点
-1. **100% 官方原生工具与客户端身份**：请求由官方 `agy` 二进制直接发出；机器人人设与防注入规则写在隔离工作区 [bot_workspace/GEMINI.md](bot_workspace/GEMINI.md)，后续可扩展至 `bot_workspace/.agents/mcp_config.json`。
-2. **多平台正向 WebSocket 并发接入**：通过 `platforms` 数组可同时连入多个 NapCat（OneBot v11）实例或其他自定义 `generic_ws` 平台，断线指数退避重连，统一按 `(adapter_id, scene, channel_id)` 隔离会话。
-3. **5 种触发机制（严格区分 `@` 与 `引用`）**：
-   - `1. mention`（消息被 @）：精确识别显式 `@机器人`，**排除 QQ 引用机器人消息时自动附加的那 1 个 `@机器人`**。
-   - `2. quote`（消息被引用）：单独识别“引用/回复机器人消息”（通过本地缓存 + OneBot `get_msg` 查询原发送者）。
-   - `3. keyword`（关键词 / 正则触发）。
-   - `4. dice`（随机投骰子触发，带最小长度、指令前缀过滤与群冷却）。
-   - `5. context_llm`（模型根据上下文语境选择是否插话，使用独立 `agy -p --output-format json --json-schema` 结构化判断，不污染主群聊记忆，带未读条数与最小时间间隔双重限流）。
-4. **触发后延迟追发收集（防抖窗口）**：
-   - 命中 `wait_triggers`（默认 `mention` / `quote` / `keyword`）后，开始跟踪触发用户在群内的后续连发。
-   - 每次该用户再发消息就重置静默等待计时器（`quiet_wait_seconds`），直到他停下超过设定时间（或达到 `max_extra_messages` / `max_wait_seconds` 上限），再截取**截至当前时间之前的群聊上下文**一次性送入 `agy` 思考回复（期间其他群友的插话同样会进入上下文缓存，但不会重置触发用户的静默计时）。
-5. **群聊并发限制与防封熔断**：
-   - 全局 `max_concurrent_requests = 1` 信号量串行调度 + 排队上限；
-   - 用户级冷却 CD + 单群每分钟回复配额；
-   - 检测到 `429` 限流或 `403/ToS` 报错自动开启熔断冷却，避免循环轰炸。
+基于**官方原生 Antigravity CLI（`agy --input-format stream-json --output-format stream-json`）**的多平台正向 WebSocket 聊天机器人，无需中间桥接层（如 ACP），直接将官方 `agy` CLI 接入 QQ（NapCat / OneBot v11）及其他自定义 WebSocket 聊天客户端，面向 Windows 与 Linux 跨平台部署设计。
 
 ---
 
-## 快速开始（Windows / Ubuntu 通用）
+## 核心特性
 
-### 1. 前置准备
-1. 安装并登录官方 **Antigravity CLI (`agy`)**：
-   - 终端运行一次 `agy` 完成登录（如果要在活跃公开群使用，建议在登录时选择 **Google Cloud Project → Pay As You Go** 按量计费，避免消费级订阅风控）。
-   - 运行 `agy models` 确认你账号可用的模型 slug。
-2. 配置安全权限，防止群友提示词注入操控本机：
-   - 参考 [settings.antigravity-cli.example.json](settings.antigravity-cli.example.json)，在以下路径配置拒绝高危终端命令与越权读写规则：
-     - Windows: `%USERPROFILE%\.gemini\antigravity-cli\settings.json`
-     - Ubuntu: `~/.gemini/antigravity-cli/settings.json`
-   - > 注意：`~/.gemini/antigravity-cli/settings.json` 对当前系统用户的所有 `agy` 会话生效；如果这台电脑同时还要自己用 `agy` 交互式写代码，可以把 `command(*)` 放进 `"ask"`（交互时人工点确认，headless 群聊下自动拒批）或只在专用机器人账号/用户下写死 `"deny"`。
-3. 在 NapCat WebUI 中新增一个 **WebSocket 服务器（正向 WS）**，例如监听 `ws://127.0.0.1:3001`，记下 `Token`。
+### 1. 100% 原生 `agy` CLI 执行与工具生态
+- **官方原生运行**：由 Python 主控进程直接管理官方 `agy` 子进程，账号鉴权、模型请求、客户端标识、工具调用全部走官方原生链路。
+- **原生 Skill & MCP 生态**：
+  - **Skill**：遵循官方 `bot_workspace/.agents/skills/<name>/SKILL.md` 格式，自动发现并渐进式加载，支持 `.md` / `.zip` 导入与可视化启停。
+  - **MCP**：遵循官方 `mcpServers` 标准，自动同步到主工作区与子代理独立工作区，并自动放行隔离权限白名单；支持 Stdio 本地命令、Streamable HTTP 远程服务与在线 `initialize` 握手探测。
+- **隔离权限护栏**：通过 `--settings ./settings.antigravity-cli.bot.json` 隔离机器人的工具权限，不污染宿主机全局 `~/.gemini/antigravity-cli/settings.json`。
 
-### 2. 安装 Python 依赖（建议 Python 3.11+）
+### 2. SQLite 持久化记忆、前缀缓存与双触发压缩
+- **全量落库不丢记忆**：群聊与私聊消息、模型回复统一持久化至 `data/chat_history.db`（WAL 模式），重启服务上下文无感续接。
+- **暖进程池 + 增量前缀缓存**：常驻 LRU 暖进程池（`max_warm_processes`）保留活跃 CLI 会话，同一压缩周期内仅增量投喂新增消息，稳定命中模型 KV 前缀缓存并实现 0ms 启动响应。
+- **按条数 / Token / 字节双触发压缩**：支持全局及**单模型独立配置**压缩上限与丢弃条数，超限时将早期对话归档移出当前窗口并干净重建新进程；内置只读 **`chat_history` MCP** 供模型随时回查被压缩移出的历史消息。
+
+### 3. 独立后台并发子代理（不阻塞群聊）
+- 将生图等耗时 MCP 任务派发给独立的一次性后台子代理并发执行，期间群聊照常对话，完成后自动交回主代理按人设润色并发送图片。
+- **独立平级工作区 (`data/subagent_workspace/`)**：避免子代理误加载主聊完整人设导致冷启误拒与格式冲突，并支持在 WebUI 中为子代理自由选择 **纯净工具模式 / 人格工坊专属人格 / 跟随主代理**。
+
+### 4. 多客户端接入、回复编排与防打扰
+- **多客户端正向 WS**：支持同时接入多个 NapCat（OneBot v11）实例与通用 `generic_ws` 客户端，WebUI 内置实时「测试连接」握手与 `get_login_info` 探测弹窗。
+- **触发与回复控制**：支持 `@提及`、引用回复、关键词/正则、随机插话、可视化定时主动触发，配合「连发消息合并等待」、拟人分段气泡发送、回复频率控制与 429/403 自动熔断保护。
+- **防打扰机制**：未显式 `@机器人` 激活的新群默认静默；若在群内被禁言自动恢复静默直至解禁后再次被 `@`。
+
+### 5. 现代化 WebUI 控制台（支持电脑端与手机端）
+- 内置完整控制台（默认端口 `8618`）：工作台实时对话与日志流、命名模型配置、人设工坊、插件管理、Skill & MCP 管理，以及**网页内置 `agy` CLI 交互终端**（支持远程 OAuth 登录链接自动捕获、手机端粘滞 `Ctrl` 修饰键与移动端全面适配）。
+
+---
+
+## 扩展体系分工
+
+本项目严格区分 **AI 能力扩展** 与 **聊天网关扩展**，各司其职、互不耦合：
+
+| 扩展类型 | 格式标准 | 运行层 | 适用场景 |
+|---|---|---|---|
+| **Skill & MCP** | **100% `agy` 官方原生格式** | `agy` CLI 内核 | 让**模型主动判断并调用**的能力：画图、查库、联网接口、脚本工具、社区现成 Skill / MCP |
+| **Python 插件 (`./plugins/`)** | 本项目轻量 Python SDK | Python 聊天网关层 | **0 Token 快捷命令**（`/签到` `/菜单`）、消息前置拦截、主动推送、`before_llm` / `after_llm` 上下文加工 |
+
+Python 插件开发指南见 [plugins/README.md](plugins/README.md)。
+
+---
+
+## 快速开始（Windows / Linux）
+
+详细新手图文步骤请参阅 [使用说明.md](使用说明.md)。
+
+### 1. 一键安装与初始化
+- **Windows（纯 CMD / 双击即可，无需 PowerShell）**：
+  ```cmd
+  install.bat
+  ```
+- **Linux / Ubuntu**：
+  ```bash
+  bash install.sh
+  ```
+
+脚本会自动创建 `.venv`、安装 `requirements.txt`，并生成 `config.json` 与 `settings.antigravity-cli.bot.json`。
+
+### 2. 编辑 `config.json`
+- 填写 `platforms` 中要启用的客户端（QQ OneBot v11 填 `ws_url` 与 `access_token`；Telegram 启用 `tg_bot_1` 填 Bot Token）；
+- 如需代理访问 Google / Telegram，填写 `agy.proxy`（例如 `http://127.0.0.1:7890`）；
+- 公网部署请修改 `webui.username` 与 `webui.password`（默认 `admin` / `admin123`）。
+
+### 3. 启动与后台保活
+- **Windows**：
+  - 前台启动：`start.bat`（离线干跑验证：`start.bat --dry-run`）
+  - 后台持久保活（SSH 断开不掉线，统一日志 `bot.log`）：`start_background.bat`
+  - 停止后台服务：`stop.bat`
+- **Linux / Ubuntu**：
+  - 前台启动：`bash start.sh`
+  - 后台运行：`bash start.sh -d`（停止：`bash start.sh stop`）
+
+启动后访问 `http://127.0.0.1:8618`（或服务器 IP:8618）登录 WebUI，在 **全局配置 → 平台** 中点 **「测试连接」** 验证客户端连通性。
+
+---
+
+## 运行测试
+
 ```bash
-python -m venv .venv
-# Windows PowerShell: .\.venv\Scripts\Activate.ps1
-# Ubuntu: source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-### 3. 配置并启动
-```bash
-cp config.example.json config.json
-```
-编辑 `config.json`：
-- 填写 `platforms[0].ws_url`、`access_token` 和 `group_allowlist`（**强烈建议先填 1 个测试群**）。
-- 可选：`self_id` 留空时会在连接 NapCat 后通过 `get_login_info` 自动获取。
-- `agy.model` 填 `agy models` 里存在的模型名（留空则用 CLI 默认模型）。
-
-#### 先用 `--dry-run` 离线验证流程（不消耗任何额度）
-```bash
-python run.py --dry-run
-```
-在测试群里依次测试：纯 `@机器人`、仅引用机器人消息（看日志 `trigger_type=quote` 而非 `mention`）、关键词、连发 3 条等几秒后回复，确认无误后再正式启动：
-
-```bash
-python run.py
+python -m unittest discover -s tests -p "test_*.py"
 ```
 
 ---
 
-## 下一步接入第三方插件（生图 / 脚本）
-对话与限流稳定后，把生图接口或固定脚本封装为本地 MCP Server，填入 [bot_workspace/.agents/mcp_config.example.json](bot_workspace/.agents/mcp_config.example.json) 并重命名为 `mcp_config.json`，同时在 `settings.json` 的 `permissions.allow` 中精确放行对应 `mcp(server/tool)` 白名单即可，依旧保持 `command(*)` 禁用。
+## 目录结构
+
+```text
+├── run.py                                  # 启动入口
+├── config.example.json                     # 配置文件模板（复制为 config.json）
+├── settings.antigravity-cli.example.json   # 机器人隔离权限模板
+├── bot_workspace/                          # 主代理 agy 工作区（GEMINI.md / .agents/）
+├── data/                                   # 运行期数据（SQLite 库 / 人设库 / 子代理工作区，不提交仓库）
+├── plugins/                                # 聊天网关 Python 插件目录
+├── src/agy_bot/
+│   ├── app.py                              # 主控调度（消息流、防抖、压缩、子代理）
+│   ├── adapters/                           # OneBot v11 (NapCat) 与通用 WS 适配器
+│   ├── collector/                          # SQLite 群聊上下文存储、双触发压缩与防抖
+│   ├── runner/                             # 官方 agy CLI stream-json 暖进程池与子代理调度
+│   ├── plugins/                            # Python 聊天网关插件 SDK 与加载器
+│   ├── webui/                              # WebUI 后端 API、CLI PTY 终端与前端控制台
+│   └── mcp_history_server.py               # 内置只读 SQLite 历史消息检索 MCP 服务
+└── tests/                                  # 单元与集成测试套件
+```
+
+---
+
+## 安全与使用提示
+- 开源/提交代码前请勿提交 `config.json`、`data/`、`settings.antigravity-cli.bot.json`、`.media_cache/` 及 `*.log`（已加入 `.gitignore`）。
+- 群聊场景下若开启 `allow_command_execution`，请务必结合 **身份与权限** 做好群友工具隔离，并保持 `settings.antigravity-cli.bot.json` 中的红线拦截规则。

@@ -275,6 +275,48 @@ class AgyRunnerTests(unittest.IsolatedAsyncioTestCase):
             self.assertFalse(decision.should_reply)
             await runner.shutdown()
 
+    async def test_settings_file_and_proxy_env_forwarded(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            fake_agy = tmp_path / "fake_agy.py"
+            fake_agy.write_text(_FAKE_AGY_SCRIPT, encoding="utf-8")
+            settings_path = tmp_path / "settings.bot.json"
+            settings_path.write_text('{"permissions": {"deny": ["command(*)"]}}', encoding="utf-8")
+
+            captured: list[tuple[tuple[str, ...], dict[str, str]]] = []
+
+            async def spawn_fake(*args, cwd=None, env=None):
+                captured.append((tuple(args), dict(env or {})))
+                cmd = [sys.executable, str(fake_agy), *args[1:]]
+                return await asyncio.create_subprocess_exec(
+                    *cmd,
+                    stdin=asyncio.subprocess.PIPE,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    cwd=cwd,
+                    env=env,
+                    limit=10 * 1024 * 1024,
+                )
+
+            runner = AgyRunner(
+                AgyConfig(mode="agy", executable="fake_agy", proxy="http://127.0.0.1:7890"),
+                RateLimitConfig(max_concurrent_requests=1, max_queue_size=4),
+                workspace_dir=tmp_path / "workspace",
+                data_dir=tmp_path / "data",
+                settings_file=settings_path,
+                process_factory=spawn_fake,
+            )
+            res = await runner.ask("qq_1:group:1", "hello")
+            self.assertTrue(res.ok)
+            self.assertEqual(len(captured), 1)
+            args, env = captured[0]
+            self.assertIn("--settings", args)
+            self.assertEqual(args[args.index("--settings") + 1], str(settings_path))
+            self.assertEqual(env.get("HTTP_PROXY"), "http://127.0.0.1:7890")
+            self.assertEqual(env.get("HTTPS_PROXY"), "http://127.0.0.1:7890")
+            self.assertEqual(env.get("ALL_PROXY"), "http://127.0.0.1:7890")
+            await runner.shutdown()
+
 
 if __name__ == "__main__":
     unittest.main()
