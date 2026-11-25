@@ -1938,7 +1938,7 @@
     .wb-usage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 
-  /* ===== WebUI Boot Splash Loader ===== */
+  /* ===== WebUI Spatial Monochrome Boot Splash Loader ===== */
   #appSplash {
     position: fixed;
     inset: 0;
@@ -1946,131 +1946,322 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg);
-    transition: opacity .38s cubic-bezier(.22, 1, .36, 1), transform .38s cubic-bezier(.22, 1, .36, 1), filter .38s cubic-bezier(.22, 1, .36, 1);
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 64% 56% at 50% 44%, #282a31 0%, #1a1c21 38%, #111216 74%, #09090c 100%);
+    transition: opacity .52s cubic-bezier(.22, 1, .36, 1), transform .52s cubic-bezier(.22, 1, .36, 1), filter .52s cubic-bezier(.22, 1, .36, 1);
   }
-  #appSplash::before {
-    content: "";
+  [data-theme="light"] #appSplash {
+    background:
+      radial-gradient(ellipse 64% 56% at 50% 44%, #2c2e35 0%, #1d1f25 40%, #121318 76%, #0a0b0e 100%);
+  }
+  /* Deep architectural spatial backdrop: subtle radial depth rings + drafting hairlines */
+  .splash-space-grid {
     position: absolute;
     inset: 0;
-    background: radial-gradient(circle at 50% 46%, rgba(236, 236, 239, 0.065), transparent 52%);
+    pointer-events: none;
+    background-image:
+      linear-gradient(to right, rgba(255, 255, 255, 0.032) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.032) 1px, transparent 1px);
+    background-size: 72px 72px;
+    background-position: center center;
+    -webkit-mask-image: radial-gradient(circle at 50% 46%, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.35) 42%, transparent 74%);
+    mask-image: radial-gradient(circle at 50% 46%, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.35) 42%, transparent 74%);
+    animation: spGridDrift 12s ease-in-out infinite alternate;
+  }
+  .splash-space-axes {
+    position: absolute;
+    inset: 0;
     pointer-events: none;
   }
-  [data-theme="light"] #appSplash::before {
-    background: radial-gradient(circle at 50% 46%, rgba(24, 24, 28, 0.055), transparent 52%);
+  .splash-space-axes::before,
+  .splash-space-axes::after {
+    content: "";
+    position: absolute;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.09), transparent);
   }
+  .splash-space-axes::before {
+    left: 12%;
+    right: 12%;
+    top: 46%;
+    height: 1px;
+  }
+  .splash-space-axes::after {
+    top: 12%;
+    bottom: 12%;
+    left: 50%;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  }
+  /* Concentric depth halos creating spatial Z-axis recession */
+  .splash-depth-ring {
+    position: absolute;
+    top: 46%;
+    left: 50%;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.045);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .splash-depth-ring.r1 { width: 280px; height: 280px; border-color: rgba(255, 255, 255, 0.065); animation: spDepthPulse 5.4s ease-in-out infinite; }
+  .splash-depth-ring.r2 { width: 460px; height: 460px; border-style: dashed; border-color: rgba(255, 255, 255, 0.038); animation: spDepthPulse 7.2s ease-in-out infinite reverse; }
+  .splash-depth-ring.r3 { width: 680px; height: 680px; border-color: rgba(255, 255, 255, 0.022); }
+
   #appSplash.leaving {
     opacity: 0;
-    transform: scale(1.028);
-    filter: blur(6px);
+    transform: scale(1.045);
+    filter: blur(8px);
     pointer-events: none;
+  }
+  #appSplash.leaving .sp-shard-left {
+    transform: translate(-14px, -10px);
+    transition: transform .48s cubic-bezier(.22, 1, .36, 1);
+  }
+  #appSplash.leaving .sp-shard-right {
+    transform: translate(14px, 10px);
+    transition: transform .48s cubic-bezier(.22, 1, .36, 1);
+  }
+  #appSplash.leaving .sp-shard-bar {
+    transform: translateX(18px);
+    transition: transform .48s cubic-bezier(.22, 1, .36, 1);
   }
   #appSplash.gone {
     display: none;
   }
-  .splash-core {
+
+  .splash-stage {
     position: relative;
+    z-index: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
-    padding: 28px 34px;
-    border-radius: 20px;
-    background: var(--glass-2);
-    border: 1px solid var(--glass-2-border);
-    box-shadow: var(--glass-3-shadow);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    animation: splashEnter .42s cubic-bezier(.22, 1, .36, 1) both;
+    gap: 24px;
+    perspective: 1100px;
+    transform: translateY(-16px);
   }
-  .splash-emblem {
+  .splash-emblem-3d {
     position: relative;
-    width: 64px;
-    height: 64px;
+    width: 196px;
+    height: 196px;
     display: flex;
     align-items: center;
     justify-content: center;
+    transform-style: preserve-3d;
+    animation: spStageBreath 6.4s ease-in-out infinite;
   }
-  .splash-halo {
+  /* Offset matte-black & charcoal architectural backdrop planes (错落叠加) */
+  .sp-plane {
     position: absolute;
-    inset: 4px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    animation: splashPulse 2.1s ease-in-out infinite;
+    pointer-events: none;
+    border-radius: 3px;
   }
+  .sp-plane-back {
+    width: 118px;
+    height: 118px;
+    background: linear-gradient(145deg, rgba(8, 9, 12, 0.86), rgba(18, 19, 24, 0.62));
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 28px 60px rgba(0, 0, 0, 0.65);
+    transform: translate3d(-14px, -10px, -40px) rotate(-6deg);
+    animation: spPlaneA 5.2s cubic-bezier(.4, 0, .2, 1) infinite alternate;
+  }
+  .sp-plane-mid {
+    width: 112px;
+    height: 112px;
+    background: linear-gradient(135deg, rgba(215, 218, 228, 0.075), rgba(15, 16, 20, 0.45));
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.5);
+    transform: translate3d(15px, 12px, -18px) rotate(4deg);
+    animation: spPlaneB 5.8s cubic-bezier(.4, 0, .2, 1) infinite alternate;
+  }
+  .sp-plane-slice {
+    width: 146px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(235, 238, 246, 0.42), rgba(255, 255, 255, 0.08), transparent);
+    transform: translate3d(0, 2px, 24px) rotate(-28deg);
+    animation: spSliceScan 3.4s cubic-bezier(.4, 0, .2, 1) infinite;
+  }
+
   .splash-svg {
-    width: 56px;
-    height: 56px;
-    color: var(--text-strong);
+    position: relative;
+    z-index: 3;
+    width: 176px;
+    height: 176px;
     overflow: visible;
+    filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.62));
   }
-  .splash-ring-outer {
-    transform-origin: 32px 32px;
-    animation: splashOrbit 4.4s linear infinite;
+  .sp-ring-a {
+    transform-origin: 88px 88px;
+    animation: spOrbitCW 14s linear infinite;
   }
-  .splash-ring-inner {
-    transform-origin: 32px 32px;
-    animation: splashOrbitRev 6.8s linear infinite;
+  .sp-ring-b {
+    transform-origin: 88px 88px;
+    animation: spOrbitCCW 19s linear infinite;
   }
-  .splash-dot {
-    transform-origin: 32px 32px;
-    animation: splashOrbit 2.4s cubic-bezier(.45, .05, .55, .95) infinite;
+  .sp-shard-left {
+    animation: spAssembleLeft .72s cubic-bezier(.22, 1, .36, 1) both, spFloatLeft 4.2s ease-in-out .72s infinite alternate;
+  }
+  .sp-shard-right {
+    animation: spAssembleRight .78s cubic-bezier(.22, 1, .36, 1) .08s both, spFloatRight 4.6s ease-in-out .86s infinite alternate;
+  }
+  .sp-shard-bar-shadow {
+    animation: spAssembleBar .82s cubic-bezier(.22, 1, .36, 1) .14s both, spFloatBarBack 3.8s ease-in-out .96s infinite alternate;
+  }
+  .sp-shard-bar {
+    animation: spAssembleBar .86s cubic-bezier(.22, 1, .36, 1) .18s both, spFloatBar 3.8s ease-in-out 1.04s infinite alternate;
+  }
+  .sp-chip-1 {
+    animation: spChipFloat1 3.9s ease-in-out infinite alternate;
+  }
+  .sp-chip-2 {
+    animation: spChipFloat2 4.5s ease-in-out infinite alternate;
+  }
+  .sp-chip-3 {
+    animation: spChipFloat3 3.4s ease-in-out infinite alternate;
+  }
+  .sp-glint-dot {
+    transform-origin: 88px 88px;
+    animation: spOrbitCW 5.6s cubic-bezier(.45, .05, .55, .95) infinite;
+  }
+
+  .splash-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 11px;
+    animation: spMetaFade .68s cubic-bezier(.22, 1, .36, 1) .16s both;
   }
   .splash-brand {
-    font-size: 15px;
-    font-weight: 800;
-    letter-spacing: 0.16em;
-    color: var(--text-strong);
-    padding-left: 0.16em;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.38em;
+    padding-left: 0.38em;
+    color: #E2E4EB;
+    text-transform: uppercase;
   }
-  .splash-bar {
+  /* Segmented 3-part hairline indicator (分割) */
+  .splash-seg-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 156px;
+  }
+  .splash-seg {
     position: relative;
-    width: 152px;
-    height: 2.5px;
-    border-radius: 999px;
-    background: var(--border);
+    flex: 1;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.11);
     overflow: hidden;
   }
-  .splash-bar-fill {
+  .splash-seg:nth-child(2) { flex: 1.5; }
+  .splash-seg::after {
+    content: "";
     position: absolute;
-    inset: 0 auto 0 0;
-    width: 44%;
-    border-radius: 999px;
-    background: linear-gradient(90deg, transparent, var(--text-strong), transparent);
-    animation: splashSweep 1.25s cubic-bezier(.4, 0, .2, 1) infinite;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, #ECEEF4, transparent);
+    transform: translateX(-120%);
+    animation: spSegPulse 1.55s cubic-bezier(.4, 0, .2, 1) infinite;
   }
+  .splash-seg:nth-child(2)::after { animation-delay: 0.24s; }
+  .splash-seg:nth-child(3)::after { animation-delay: 0.48s; }
+
   .splash-status {
-    font-size: 12px;
+    font-family: var(--font-mono);
+    font-size: 11px;
     font-weight: 500;
-    color: var(--text-2);
-    letter-spacing: 0.03em;
-    min-height: 18px;
+    color: #8A8D99;
+    letter-spacing: 0.08em;
+    min-height: 16px;
   }
-  @keyframes splashEnter {
-    from { opacity: 0; transform: translateY(8px) scale(0.97); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+
+  @keyframes spGridDrift {
+    from { transform: scale(1) translate3d(0, 0, 0); opacity: 0.85; }
+    to { transform: scale(1.035) translate3d(0, -6px, 0); opacity: 1; }
   }
-  @keyframes splashOrbit {
+  @keyframes spDepthPulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(0.985); opacity: 0.65; }
+    50% { transform: translate(-50%, -50%) scale(1.02); opacity: 1; }
+  }
+  @keyframes spStageBreath {
+    0%, 100% { transform: rotateX(4deg) rotateY(-5deg) translateY(0px); }
+    50% { transform: rotateX(-3deg) rotateY(5deg) translateY(-4px); }
+  }
+  @keyframes spPlaneA {
+    from { transform: translate3d(-16px, -12px, -44px) rotate(-7deg); }
+    to { transform: translate3d(-10px, -6px, -36px) rotate(-4deg); }
+  }
+  @keyframes spPlaneB {
+    from { transform: translate3d(16px, 14px, -20px) rotate(5deg); }
+    to { transform: translate3d(10px, 7px, -12px) rotate(2deg); }
+  }
+  @keyframes spSliceScan {
+    0%, 100% { opacity: 0.25; transform: translate3d(-8px, 6px, 24px) rotate(-28deg) scaleX(0.92); }
+    50% { opacity: 0.78; transform: translate3d(8px, -4px, 28px) rotate(-28deg) scaleX(1.06); }
+  }
+  @keyframes spOrbitCW {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
   }
-  @keyframes splashOrbitRev {
+  @keyframes spOrbitCCW {
     from { transform: rotate(360deg); }
     to { transform: rotate(0deg); }
   }
-  @keyframes splashPulse {
-    0%, 100% { transform: scale(0.94); opacity: 0.35; }
-    50% { transform: scale(1.12); opacity: 0.8; }
+  @keyframes spAssembleLeft {
+    from { opacity: 0; transform: translate(-14px, -10px); }
+    to { opacity: 1; transform: translate(0, 0); }
   }
-  @keyframes splashSweep {
-    0% { transform: translateX(-110%); }
-    100% { transform: translateX(340%); }
+  @keyframes spAssembleRight {
+    from { opacity: 0; transform: translate(14px, 10px); }
+    to { opacity: 1; transform: translate(0, 0); }
+  }
+  @keyframes spAssembleBar {
+    from { opacity: 0; transform: translateX(-16px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes spFloatLeft {
+    from { transform: translate(0px, 0px); }
+    to { transform: translate(-2.5px, -3px); }
+  }
+  @keyframes spFloatRight {
+    from { transform: translate(0px, 0px); }
+    to { transform: translate(2.5px, 3px); }
+  }
+  @keyframes spFloatBar {
+    from { transform: translate(0px, 0px); }
+    to { transform: translate(4px, -1.5px); }
+  }
+  @keyframes spFloatBarBack {
+    from { transform: translate(0px, 0px); }
+    to { transform: translate(-3px, 1.5px); }
+  }
+  @keyframes spChipFloat1 {
+    from { transform: translate(0px, 0px); opacity: 0.55; }
+    to { transform: translate(5px, -6px); opacity: 0.95; }
+  }
+  @keyframes spChipFloat2 {
+    from { transform: translate(0px, 0px); opacity: 0.4; }
+    to { transform: translate(-6px, 5px); opacity: 0.85; }
+  }
+  @keyframes spChipFloat3 {
+    from { transform: translate(0px, 0px); opacity: 0.45; }
+    to { transform: translate(4px, 4px); opacity: 0.9; }
+  }
+  @keyframes spMetaFade {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes spSegPulse {
+    0% { transform: translateX(-120%); }
+    100% { transform: translateX(220%); }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .ag-orbit-cw, .ag-orbit-ccw, .ag-levitate, .ag-shard-1, .ag-shard-2, .ag-shard-3,
     .ag-pulse-ring, .ag-drift-1, .ag-drift-2, .ag-drift-3,
-    .splash-core, .splash-halo, .splash-ring-outer, .splash-ring-inner, .splash-dot, .splash-bar-fill { animation: none !important; }
+    .splash-space-grid, .splash-depth-ring, .splash-emblem-3d, .sp-plane-back, .sp-plane-mid, .sp-plane-slice,
+    .sp-ring-a, .sp-ring-b, .sp-shard-left, .sp-shard-right, .sp-shard-bar-shadow, .sp-shard-bar,
+    .sp-chip-1, .sp-chip-2, .sp-chip-3, .sp-glint-dot, .splash-meta, .splash-seg::after { animation: none !important; }
     .sh-hl, .sh-active-hl, .view.active, .msg-wrap, #toast, #appSplash { transition: none !important; animation: none !important; }
   }
 </style>
@@ -2080,23 +2271,110 @@
 <!-- Full-Screen Morphing Geometric Matrix Canvas (Trajectory expressed via glyph morphs, no mouse tail!) -->
 <canvas id="matrixCanvas" aria-hidden="true"></canvas>
 
-<!-- Boot Splash Loader -->
+<!-- Spatial Monochrome Boot Splash Loader -->
 <div id="appSplash" role="status" aria-live="polite" aria-label="正在加载控制台">
-  <div class="splash-core">
-    <div class="splash-emblem" aria-hidden="true">
-      <div class="splash-halo"></div>
-      <svg class="splash-svg" viewBox="0 0 64 64" fill="none">
-        <circle class="splash-ring-outer" cx="32" cy="32" r="27" stroke="currentColor" stroke-width="1.6" stroke-opacity="0.28" stroke-dasharray="28 9 10 9" stroke-linecap="round"/>
-        <circle class="splash-ring-inner" cx="32" cy="32" r="21" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.18" stroke-dasharray="14 12" stroke-linecap="round"/>
-        <path d="M32 16.5L21 43h5.4l2.4-6.2h6.4L37.6 43H43L32 16.5zm-1.7 15.2L32 27.1l1.7 4.6h-3.4z" fill="currentColor"/>
-        <g class="splash-dot">
-          <circle cx="51.2" cy="18.2" r="3" fill="currentColor"/>
+  <div class="splash-space-grid" aria-hidden="true"></div>
+  <div class="splash-space-axes" aria-hidden="true"></div>
+  <div class="splash-depth-ring r1" aria-hidden="true"></div>
+  <div class="splash-depth-ring r2" aria-hidden="true"></div>
+  <div class="splash-depth-ring r3" aria-hidden="true"></div>
+
+  <div class="splash-stage">
+    <div class="splash-emblem-3d" aria-hidden="true">
+      <div class="sp-plane sp-plane-back"></div>
+      <div class="sp-plane sp-plane-mid"></div>
+      <div class="sp-plane sp-plane-slice"></div>
+
+      <svg class="splash-svg" viewBox="0 0 176 176" fill="none">
+        <defs>
+          <linearGradient id="spObsidianLeft" x1="34" y1="30" x2="96" y2="140" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#1E2027"/>
+            <stop offset="52%" stop-color="#0D0E12"/>
+            <stop offset="100%" stop-color="#060709"/>
+          </linearGradient>
+          <linearGradient id="spSlateRight" x1="84" y1="32" x2="142" y2="144" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#CFD3DF" stop-opacity="0.34"/>
+            <stop offset="50%" stop-color="#4A4E5A" stop-opacity="0.62"/>
+            <stop offset="100%" stop-color="#181A20" stop-opacity="0.88"/>
+          </linearGradient>
+          <linearGradient id="spEdgeHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#F2F4F8" stop-opacity="0.72"/>
+            <stop offset="55%" stop-color="#7E8290" stop-opacity="0.28"/>
+            <stop offset="100%" stop-color="#22242B" stop-opacity="0.1"/>
+          </linearGradient>
+          <linearGradient id="spBarSilver" x1="56" y1="98" x2="122" y2="108" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FFFFFF"/>
+            <stop offset="65%" stop-color="#C8CCD6"/>
+            <stop offset="100%" stop-color="#7F8390"/>
+          </linearGradient>
+        </defs>
+
+        <!-- Segmented outer spatial arcs (分割轨道) -->
+        <g class="sp-ring-a">
+          <circle cx="88" cy="88" r="76" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="1" stroke-dasharray="62 22 14 26 92 24" stroke-linecap="butt"/>
+          <line x1="88" y1="8" x2="88" y2="16" stroke="#FFFFFF" stroke-opacity="0.32" stroke-width="1"/>
+          <line x1="88" y1="160" x2="88" y2="168" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="1"/>
+        </g>
+        <g class="sp-ring-b">
+          <circle cx="88" cy="88" r="61" stroke="#A6AAB6" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="28 18 46 34" stroke-linecap="butt"/>
+        </g>
+
+        <!-- Staggered architectural corner registration marks -->
+        <path d="M26 40V26H40" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="1"/>
+        <path d="M150 136V150H136" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="1"/>
+
+        <!-- Layer 1: Left obsidian monolith wing (黑灰层次底层) -->
+        <g class="sp-shard-left">
+          <polygon points="86,32 42,134 62,134 94,54" fill="url(#spObsidianLeft)" stroke="url(#spEdgeHighlight)" stroke-width="1.1"/>
+          <!-- Inner subtle split bevel line -->
+          <line x1="83" y1="42" x2="50" y2="128" stroke="#FFFFFF" stroke-opacity="0.16" stroke-width="0.9"/>
+        </g>
+
+        <!-- Layer 2: Right translucent smoke-gray overlapping wing (半透灰叠加层) -->
+        <g class="sp-shard-right">
+          <polygon points="82,38 134,138 113,138 76,62" fill="url(#spSlateRight)" stroke="#E4E6EE" stroke-opacity="0.32" stroke-width="1"/>
+          <!-- Dark shadow overlap notch at apex -->
+          <polygon points="82,38 94,54 88,68 76,62" fill="#07080B" fill-opacity="0.58"/>
+        </g>
+
+        <!-- Layer 3: Detached split crossbar — back dark slab + front silver wedge (分割错落横梁) -->
+        <g class="sp-shard-bar-shadow">
+          <polygon points="56,105 110,97 107,108 53,115" fill="#07080B" fill-opacity="0.88" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="0.8"/>
+        </g>
+        <g class="sp-shard-bar">
+          <polygon points="65,98 121,91 118,98 62,105" fill="url(#spBarSilver)"/>
+        </g>
+
+        <!-- Layer 4: Floating staggered geometric micro-blocks (错落悬浮微块) -->
+        <g class="sp-chip-1">
+          <rect x="122" y="42" width="14" height="5" fill="#D8DBE4" fill-opacity="0.72"/>
+          <rect x="128" y="49" width="8" height="3" fill="#090A0D" stroke="#FFFFFF" stroke-opacity="0.28" stroke-width="0.8"/>
+        </g>
+        <g class="sp-chip-2">
+          <rect x="34" y="106" width="11" height="4" fill="#090A0D" stroke="#FFFFFF" stroke-opacity="0.26" stroke-width="0.8"/>
+          <rect x="40" y="99" width="7" height="2.5" fill="#9A9EA9" fill-opacity="0.55"/>
+        </g>
+        <g class="sp-chip-3">
+          <rect x="124" y="114" width="6" height="6" fill="#1C1E25" stroke="#E4E7F0" stroke-opacity="0.34" stroke-width="0.8"/>
+        </g>
+
+        <!-- Orbital specular point -->
+        <g class="sp-glint-dot">
+          <circle cx="141.7" cy="34.3" r="2.6" fill="#F2F4F8"/>
+          <circle cx="141.7" cy="34.3" r="6" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="0.9"/>
         </g>
       </svg>
     </div>
-    <div class="splash-brand">AGY CLI BOT</div>
-    <div class="splash-bar"><div class="splash-bar-fill"></div></div>
-    <div class="splash-status" id="splashStatus">正在连接控制台...</div>
+
+    <div class="splash-meta">
+      <div class="splash-brand">AGY CLI BOT</div>
+      <div class="splash-seg-bar" aria-hidden="true">
+        <div class="splash-seg"></div>
+        <div class="splash-seg"></div>
+        <div class="splash-seg"></div>
+      </div>
+      <div class="splash-status" id="splashStatus">正在连接控制台...</div>
+    </div>
   </div>
 </div>
 
@@ -11090,11 +11368,11 @@ function hideAppSplash(immediate = false) {
   const el = document.getElementById('appSplash');
   if (!el) return;
   const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-  const minVisibleMs = immediate ? 0 : 460;
+  const minVisibleMs = immediate ? 0 : 950;
   const waitMs = Math.max(0, minVisibleMs - (now - _splashStartedAt));
   setTimeout(() => {
     el.classList.add('leaving');
-    setTimeout(() => { el.classList.add('gone'); }, 400);
+    setTimeout(() => { el.classList.add('gone'); }, 540);
   }, waitMs);
 }
 
