@@ -2,7 +2,7 @@
 
 基于官方原生 Antigravity CLI（`agy`）的轻量多平台聊天机器人。
 
-它直接调用官方 `agy` CLI 的 `stream-json` 协议，无需中间桥接层，可将 Antigravity 接入 QQ（NapCat / LLBot OneBot v11）、Telegram 及自定义 WebSocket 客户端，并自带可视化 WebUI 控制台，支持 Windows 与 Linux 部署。
+它直接调用官方 `agy` CLI 的 `stream-json` 协议，无需中间桥接层，可将 Antigravity 接入 QQ（NapCat / LLBot OneBot v11）、Telegram 及自定义 WebSocket 客户端，并自带可视化 WebUI 控制台，支持 Windows 部署，linux部署尚待验证。
 
 ## 主要功能
 
