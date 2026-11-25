@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>AGY CLI BOT</title>
+<script>try{var _t=localStorage.getItem('agy_wb_theme');if(_t==='light'||_t==='dark')document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.loli.net">
 <link rel="stylesheet" href="https://fonts.loli.net/css2?family=Nunito:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&display=swap">
 <style>
@@ -1937,10 +1938,140 @@
     .wb-usage-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
 
+  /* ===== WebUI Boot Splash Loader ===== */
+  #appSplash {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    transition: opacity .38s cubic-bezier(.22, 1, .36, 1), transform .38s cubic-bezier(.22, 1, .36, 1), filter .38s cubic-bezier(.22, 1, .36, 1);
+  }
+  #appSplash::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 46%, rgba(236, 236, 239, 0.065), transparent 52%);
+    pointer-events: none;
+  }
+  [data-theme="light"] #appSplash::before {
+    background: radial-gradient(circle at 50% 46%, rgba(24, 24, 28, 0.055), transparent 52%);
+  }
+  #appSplash.leaving {
+    opacity: 0;
+    transform: scale(1.028);
+    filter: blur(6px);
+    pointer-events: none;
+  }
+  #appSplash.gone {
+    display: none;
+  }
+  .splash-core {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 28px 34px;
+    border-radius: 20px;
+    background: var(--glass-2);
+    border: 1px solid var(--glass-2-border);
+    box-shadow: var(--glass-3-shadow);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    animation: splashEnter .42s cubic-bezier(.22, 1, .36, 1) both;
+  }
+  .splash-emblem {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .splash-halo {
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    animation: splashPulse 2.1s ease-in-out infinite;
+  }
+  .splash-svg {
+    width: 56px;
+    height: 56px;
+    color: var(--text-strong);
+    overflow: visible;
+  }
+  .splash-ring-outer {
+    transform-origin: 32px 32px;
+    animation: splashOrbit 4.4s linear infinite;
+  }
+  .splash-ring-inner {
+    transform-origin: 32px 32px;
+    animation: splashOrbitRev 6.8s linear infinite;
+  }
+  .splash-dot {
+    transform-origin: 32px 32px;
+    animation: splashOrbit 2.4s cubic-bezier(.45, .05, .55, .95) infinite;
+  }
+  .splash-brand {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    color: var(--text-strong);
+    padding-left: 0.16em;
+  }
+  .splash-bar {
+    position: relative;
+    width: 152px;
+    height: 2.5px;
+    border-radius: 999px;
+    background: var(--border);
+    overflow: hidden;
+  }
+  .splash-bar-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 44%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, transparent, var(--text-strong), transparent);
+    animation: splashSweep 1.25s cubic-bezier(.4, 0, .2, 1) infinite;
+  }
+  .splash-status {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-2);
+    letter-spacing: 0.03em;
+    min-height: 18px;
+  }
+  @keyframes splashEnter {
+    from { opacity: 0; transform: translateY(8px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes splashOrbit {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes splashOrbitRev {
+    from { transform: rotate(360deg); }
+    to { transform: rotate(0deg); }
+  }
+  @keyframes splashPulse {
+    0%, 100% { transform: scale(0.94); opacity: 0.35; }
+    50% { transform: scale(1.12); opacity: 0.8; }
+  }
+  @keyframes splashSweep {
+    0% { transform: translateX(-110%); }
+    100% { transform: translateX(340%); }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .ag-orbit-cw, .ag-orbit-ccw, .ag-levitate, .ag-shard-1, .ag-shard-2, .ag-shard-3,
-    .ag-pulse-ring, .ag-drift-1, .ag-drift-2, .ag-drift-3 { animation: none !important; }
-    .sh-hl, .sh-active-hl, .view.active, .msg-wrap, #toast { transition: none !important; animation: none !important; }
+    .ag-pulse-ring, .ag-drift-1, .ag-drift-2, .ag-drift-3,
+    .splash-core, .splash-halo, .splash-ring-outer, .splash-ring-inner, .splash-dot, .splash-bar-fill { animation: none !important; }
+    .sh-hl, .sh-active-hl, .view.active, .msg-wrap, #toast, #appSplash { transition: none !important; animation: none !important; }
   }
 </style>
 </head>
@@ -1948,6 +2079,26 @@
 
 <!-- Full-Screen Morphing Geometric Matrix Canvas (Trajectory expressed via glyph morphs, no mouse tail!) -->
 <canvas id="matrixCanvas" aria-hidden="true"></canvas>
+
+<!-- Boot Splash Loader -->
+<div id="appSplash" role="status" aria-live="polite" aria-label="正在加载控制台">
+  <div class="splash-core">
+    <div class="splash-emblem" aria-hidden="true">
+      <div class="splash-halo"></div>
+      <svg class="splash-svg" viewBox="0 0 64 64" fill="none">
+        <circle class="splash-ring-outer" cx="32" cy="32" r="27" stroke="currentColor" stroke-width="1.6" stroke-opacity="0.28" stroke-dasharray="28 9 10 9" stroke-linecap="round"/>
+        <circle class="splash-ring-inner" cx="32" cy="32" r="21" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.18" stroke-dasharray="14 12" stroke-linecap="round"/>
+        <path d="M32 16.5L21 43h5.4l2.4-6.2h6.4L37.6 43H43L32 16.5zm-1.7 15.2L32 27.1l1.7 4.6h-3.4z" fill="currentColor"/>
+        <g class="splash-dot">
+          <circle cx="51.2" cy="18.2" r="3" fill="currentColor"/>
+        </g>
+      </svg>
+    </div>
+    <div class="splash-brand">AGY CLI BOT</div>
+    <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+    <div class="splash-status" id="splashStatus">正在连接控制台...</div>
+  </div>
+</div>
 
 <!-- Login -->
 <div id="loginOverlay" style="display:none">
@@ -10925,8 +11076,44 @@ async function initApp() {
   }, 300000);
 }
 
+const _splashStartedAt = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+let _splashDismissed = false;
+
+function setSplashStatus(text) {
+  const el = document.getElementById('splashStatus');
+  if (el && text) el.textContent = text;
+}
+
+function hideAppSplash(immediate = false) {
+  if (_splashDismissed) return;
+  _splashDismissed = true;
+  const el = document.getElementById('appSplash');
+  if (!el) return;
+  const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+  const minVisibleMs = immediate ? 0 : 460;
+  const waitMs = Math.max(0, minVisibleMs - (now - _splashStartedAt));
+  setTimeout(() => {
+    el.classList.add('leaving');
+    setTimeout(() => { el.classList.add('gone'); }, 400);
+  }, waitMs);
+}
+
+// Hard failsafe so the splash screen can never remain stuck on slow/errored networks
+setTimeout(() => hideAppSplash(true), 5000);
+
 (async () => {
-  if (await checkAuth()) initApp();
+  try {
+    setSplashStatus('正在校验登录状态...');
+    if (await checkAuth()) {
+      setSplashStatus('正在加载工作台数据...');
+      await initApp();
+    }
+    setSplashStatus('准备就绪');
+  } catch (e) {
+    console.error('WebUI bootstrap error:', e);
+  } finally {
+    hideAppSplash(false);
+  }
 })();
 </script>
 </body>
