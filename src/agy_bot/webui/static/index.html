@@ -1948,12 +1948,12 @@
     justify-content: center;
     overflow: hidden;
     background:
-      radial-gradient(ellipse 64% 56% at 50% 44%, #282a31 0%, #1a1c21 38%, #111216 74%, #09090c 100%);
-    transition: opacity .52s cubic-bezier(.22, 1, .36, 1), transform .52s cubic-bezier(.22, 1, .36, 1), filter .52s cubic-bezier(.22, 1, .36, 1);
+      radial-gradient(ellipse 62% 54% at 50% 45%, #2d3038 0%, #1d1f25 36%, #121318 72%, #090a0d 100%);
+    transition: opacity .56s cubic-bezier(.22, 1, .36, 1), transform .56s cubic-bezier(.22, 1, .36, 1), filter .56s cubic-bezier(.22, 1, .36, 1);
   }
   [data-theme="light"] #appSplash {
     background:
-      radial-gradient(ellipse 64% 56% at 50% 44%, #2c2e35 0%, #1d1f25 40%, #121318 76%, #0a0b0e 100%);
+      radial-gradient(ellipse 62% 54% at 50% 45%, #30333c 0%, #1f2128 38%, #13151a 74%, #0a0b0e 100%);
   }
   /* Deep architectural spatial backdrop: subtle radial depth rings + drafting hairlines */
   .splash-space-grid {
@@ -1961,13 +1961,13 @@
     inset: 0;
     pointer-events: none;
     background-image:
-      linear-gradient(to right, rgba(255, 255, 255, 0.032) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(255, 255, 255, 0.032) 1px, transparent 1px);
-    background-size: 72px 72px;
+      linear-gradient(to right, rgba(255, 255, 255, 0.036) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.036) 1px, transparent 1px);
+    background-size: 68px 68px;
     background-position: center center;
-    -webkit-mask-image: radial-gradient(circle at 50% 46%, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.35) 42%, transparent 74%);
-    mask-image: radial-gradient(circle at 50% 46%, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.35) 42%, transparent 74%);
-    animation: spGridDrift 12s ease-in-out infinite alternate;
+    -webkit-mask-image: radial-gradient(circle at 50% 46%, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.36) 44%, transparent 76%);
+    mask-image: radial-gradient(circle at 50% 46%, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.36) 44%, transparent 76%);
+    animation: spGridDrift 10s ease-in-out infinite alternate;
   }
   .splash-space-axes {
     position: absolute;
@@ -1978,52 +1978,69 @@
   .splash-space-axes::after {
     content: "";
     position: absolute;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.09), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.11), transparent);
   }
   .splash-space-axes::before {
-    left: 12%;
-    right: 12%;
+    left: 10%;
+    right: 10%;
     top: 46%;
     height: 1px;
+    animation: spAxisExpandX .75s cubic-bezier(.22, 1, .36, 1) both;
   }
   .splash-space-axes::after {
-    top: 12%;
-    bottom: 12%;
+    top: 10%;
+    bottom: 10%;
     left: 50%;
     width: 1px;
-    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+    background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.095), transparent);
+    animation: spAxisExpandY .75s cubic-bezier(.22, 1, .36, 1) .08s both;
   }
-  /* Concentric depth halos creating spatial Z-axis recession */
+  /* Concentric depth halos + central studio ambient glow */
   .splash-depth-ring {
     position: absolute;
     top: 46%;
     left: 50%;
     border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     transform: translate(-50%, -50%);
     pointer-events: none;
   }
-  .splash-depth-ring.r1 { width: 280px; height: 280px; border-color: rgba(255, 255, 255, 0.065); animation: spDepthPulse 5.4s ease-in-out infinite; }
-  .splash-depth-ring.r2 { width: 460px; height: 460px; border-style: dashed; border-color: rgba(255, 255, 255, 0.038); animation: spDepthPulse 7.2s ease-in-out infinite reverse; }
-  .splash-depth-ring.r3 { width: 680px; height: 680px; border-color: rgba(255, 255, 255, 0.022); }
+  .splash-depth-ring.r0 {
+    width: 220px;
+    height: 220px;
+    border: none;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.095) 0%, rgba(255, 255, 255, 0.02) 48%, transparent 72%);
+    animation: spHaloBreath 3.6s ease-in-out infinite;
+  }
+  .splash-depth-ring.r1 { width: 292px; height: 292px; border-color: rgba(255, 255, 255, 0.075); animation: spDepthPulse 4.6s ease-in-out infinite; }
+  .splash-depth-ring.r2 { width: 472px; height: 472px; border-style: dashed; border-color: rgba(255, 255, 255, 0.045); animation: spDepthSpin 38s linear infinite; }
+  .splash-depth-ring.r3 { width: 690px; height: 690px; border-color: rgba(255, 255, 255, 0.025); }
 
   #appSplash.leaving {
     opacity: 0;
-    transform: scale(1.045);
+    transform: scale(1.05);
     filter: blur(8px);
     pointer-events: none;
   }
   #appSplash.leaving .sp-shard-left {
-    transform: translate(-14px, -10px);
-    transition: transform .48s cubic-bezier(.22, 1, .36, 1);
+    transform: translate(-18px, -14px);
+    transition: transform .5s cubic-bezier(.22, 1, .36, 1);
   }
-  #appSplash.leaving .sp-shard-right {
-    transform: translate(14px, 10px);
-    transition: transform .48s cubic-bezier(.22, 1, .36, 1);
+  #appSplash.leaving .sp-shard-right-top {
+    transform: translate(16px, -12px);
+    transition: transform .5s cubic-bezier(.22, 1, .36, 1);
   }
-  #appSplash.leaving .sp-shard-bar {
-    transform: translateX(18px);
-    transition: transform .48s cubic-bezier(.22, 1, .36, 1);
+  #appSplash.leaving .sp-shard-right-bot {
+    transform: translate(18px, 14px);
+    transition: transform .5s cubic-bezier(.22, 1, .36, 1);
+  }
+  #appSplash.leaving .sp-shard-bar-white {
+    transform: translateX(24px);
+    transition: transform .5s cubic-bezier(.22, 1, .36, 1);
+  }
+  #appSplash.leaving .sp-shard-bar-black {
+    transform: translateX(-20px);
+    transition: transform .5s cubic-bezier(.22, 1, .36, 1);
   }
   #appSplash.gone {
     display: none;
@@ -2035,233 +2052,377 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 24px;
-    perspective: 1100px;
+    gap: 26px;
+    perspective: 980px;
     transform: translateY(-16px);
   }
   .splash-emblem-3d {
     position: relative;
-    width: 196px;
-    height: 196px;
+    width: 212px;
+    height: 212px;
     display: flex;
     align-items: center;
     justify-content: center;
     transform-style: preserve-3d;
-    animation: spStageBreath 6.4s ease-in-out infinite;
+    animation: spStageOrbit3D 5.8s cubic-bezier(.42, 0, .58, 1) infinite;
   }
-  /* Offset matte-black & charcoal architectural backdrop planes (错落叠加) */
+
+  /* Offset matte-black & frosted-gray 3D depth slabs behind white hero logo (多维错落叠加) */
   .sp-plane {
     position: absolute;
     pointer-events: none;
     border-radius: 3px;
   }
   .sp-plane-back {
-    width: 118px;
-    height: 118px;
-    background: linear-gradient(145deg, rgba(8, 9, 12, 0.86), rgba(18, 19, 24, 0.62));
-    border: 1px solid rgba(255, 255, 255, 0.07);
-    box-shadow: 0 28px 60px rgba(0, 0, 0, 0.65);
-    transform: translate3d(-14px, -10px, -40px) rotate(-6deg);
-    animation: spPlaneA 5.2s cubic-bezier(.4, 0, .2, 1) infinite alternate;
+    width: 124px;
+    height: 124px;
+    background: linear-gradient(148deg, #07080a 0%, #13151a 100%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 32px 68px rgba(0, 0, 0, 0.72);
+    transform: translate3d(-16px, -12px, -44px) rotate(-8deg);
+    animation: spPlaneBackIn .72s cubic-bezier(.16, 1, .3, 1) both, spPlaneA 4.4s ease-in-out .72s infinite alternate;
   }
   .sp-plane-mid {
-    width: 112px;
-    height: 112px;
-    background: linear-gradient(135deg, rgba(215, 218, 228, 0.075), rgba(15, 16, 20, 0.45));
-    border: 1px solid rgba(255, 255, 255, 0.11);
+    width: 118px;
+    height: 118px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.085), rgba(20, 22, 28, 0.56));
+    border: 1px solid rgba(255, 255, 255, 0.22);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.5);
-    transform: translate3d(15px, 12px, -18px) rotate(4deg);
-    animation: spPlaneB 5.8s cubic-bezier(.4, 0, .2, 1) infinite alternate;
+    box-shadow: 0 20px 44px rgba(0, 0, 0, 0.52);
+    transform: translate3d(17px, 14px, -20px) rotate(5deg);
+    animation: spPlaneMidIn .78s cubic-bezier(.16, 1, .3, 1) .08s both, spPlaneB 4.8s ease-in-out .86s infinite alternate;
   }
+  /* Floating front thin wireframe plane on +Z for real depth parallax */
+  .sp-plane-front-wire {
+    width: 138px;
+    height: 138px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    transform: translate3d(6px, -5px, 24px) rotate(-3deg);
+    animation: spPlaneFrontIn .86s cubic-bezier(.16, 1, .3, 1) .14s both, spPlaneFrontDrift 5.2s ease-in-out 1s infinite alternate;
+  }
+  /* Diagonal optical split beam sweeping across the white emblem */
   .sp-plane-slice {
-    width: 146px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(235, 238, 246, 0.42), rgba(255, 255, 255, 0.08), transparent);
-    transform: translate3d(0, 2px, 24px) rotate(-28deg);
-    animation: spSliceScan 3.4s cubic-bezier(.4, 0, .2, 1) infinite;
+    width: 186px;
+    height: 1.5px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.14) 24%, rgba(255, 255, 255, 0.92) 50%, rgba(255, 255, 255, 0.14) 76%, transparent 100%);
+    transform: translate3d(0, 0, 32px) rotate(-28deg);
+    animation: spSliceScan 2.4s cubic-bezier(.4, 0, .2, 1) infinite;
   }
 
   .splash-svg {
     position: relative;
     z-index: 3;
-    width: 176px;
-    height: 176px;
+    width: 192px;
+    height: 192px;
     overflow: visible;
-    filter: drop-shadow(0 18px 34px rgba(0, 0, 0, 0.62));
+    filter: drop-shadow(0 16px 32px rgba(0, 0, 0, 0.58));
   }
   .sp-ring-a {
-    transform-origin: 88px 88px;
-    animation: spOrbitCW 14s linear infinite;
+    transform-origin: 96px 96px;
+    animation: spOrbitCW 9.5s linear infinite;
+  }
+  .sp-ring-a-path {
+    stroke-dasharray: 76 24 16 24 110 26 22 24;
+    animation: spArcDraw 1.05s cubic-bezier(.22, 1, .36, 1) both;
   }
   .sp-ring-b {
-    transform-origin: 88px 88px;
-    animation: spOrbitCCW 19s linear infinite;
+    transform-origin: 96px 96px;
+    animation: spOrbitCCW 13.5s linear infinite;
+  }
+  .sp-ring-c {
+    transform-origin: 96px 96px;
+    animation: spOrbitCW 22s linear infinite;
+  }
+
+  /* 4 Architectural corner brackets snapping inward */
+  .sp-brk-tl { animation: spBrkTL .68s cubic-bezier(.16, 1, .3, 1) .06s both, spBrkPulse 3.2s ease-in-out .8s infinite alternate; }
+  .sp-brk-tr { animation: spBrkTR .68s cubic-bezier(.16, 1, .3, 1) .12s both, spBrkPulse 3.2s ease-in-out .95s infinite alternate; }
+  .sp-brk-bl { animation: spBrkBL .68s cubic-bezier(.16, 1, .3, 1) .12s both, spBrkPulse 3.2s ease-in-out 1.1s infinite alternate; }
+  .sp-brk-br { animation: spBrkBR .68s cubic-bezier(.16, 1, .3, 1) .06s both, spBrkPulse 3.2s ease-in-out 1.25s infinite alternate; }
+
+  /* Sculptural White Hero Shards + Black/Gray Inlays (分割 + 错落 + 叠加) */
+  .sp-shard-shadow-plate {
+    animation: spPlateIn .76s cubic-bezier(.16, 1, .3, 1) .08s both, spPlateFloat 3.6s ease-in-out .86s infinite alternate;
   }
   .sp-shard-left {
-    animation: spAssembleLeft .72s cubic-bezier(.22, 1, .36, 1) both, spFloatLeft 4.2s ease-in-out .72s infinite alternate;
+    animation: spAssembleLeft .76s cubic-bezier(.16, 1, .3, 1) .06s both, spFloatLeft 3.4s cubic-bezier(.45, 0, .55, 1) .86s infinite alternate;
   }
-  .sp-shard-right {
-    animation: spAssembleRight .78s cubic-bezier(.22, 1, .36, 1) .08s both, spFloatRight 4.6s ease-in-out .86s infinite alternate;
+  .sp-shard-right-top {
+    animation: spAssembleRightTop .8s cubic-bezier(.16, 1, .3, 1) .14s both, spShearTop 3.6s cubic-bezier(.45, 0, .55, 1) .98s infinite alternate;
   }
-  .sp-shard-bar-shadow {
-    animation: spAssembleBar .82s cubic-bezier(.22, 1, .36, 1) .14s both, spFloatBarBack 3.8s ease-in-out .96s infinite alternate;
+  .sp-shard-right-bot {
+    animation: spAssembleRightBot .84s cubic-bezier(.16, 1, .3, 1) .2s both, spShearBot 3.6s cubic-bezier(.45, 0, .55, 1) 1.08s infinite alternate;
   }
-  .sp-shard-bar {
-    animation: spAssembleBar .86s cubic-bezier(.22, 1, .36, 1) .18s both, spFloatBar 3.8s ease-in-out 1.04s infinite alternate;
+  .sp-shard-bar-black {
+    animation: spBarBlackIn .78s cubic-bezier(.16, 1, .3, 1) .24s both, spBarBlackGlide 3.0s ease-in-out 1.05s infinite alternate;
   }
-  .sp-chip-1 {
-    animation: spChipFloat1 3.9s ease-in-out infinite alternate;
+  .sp-shard-bar-white {
+    animation: spBarWhiteIn .82s cubic-bezier(.16, 1, .3, 1) .28s both, spBarWhiteGlide 3.0s ease-in-out 1.12s infinite alternate;
   }
-  .sp-chip-2 {
-    animation: spChipFloat2 4.5s ease-in-out infinite alternate;
+  .sp-sheen-bar {
+    animation: spSheenSweep 2.6s cubic-bezier(.4, 0, .2, 1) .55s infinite;
   }
-  .sp-chip-3 {
-    animation: spChipFloat3 3.4s ease-in-out infinite alternate;
+
+  /* Staggered floating white / black / gray micro-chips */
+  .sp-chip-1 { animation: spChipIn .6s ease-out .22s both, spChipFloat1 2.9s ease-in-out .82s infinite alternate; }
+  .sp-chip-2 { animation: spChipIn .6s ease-out .28s both, spChipFloat2 3.3s ease-in-out .88s infinite alternate; }
+  .sp-chip-3 { animation: spChipIn .6s ease-out .34s both, spChipFloat3 2.7s ease-in-out .94s infinite alternate; }
+  .sp-chip-4 { animation: spChipIn .6s ease-out .38s both, spChipFloat4 3.5s ease-in-out .98s infinite alternate; }
+
+  .sp-glint-outer {
+    transform-origin: 96px 96px;
+    animation: spOrbitCW 4.2s cubic-bezier(.45, .05, .55, .95) infinite;
   }
-  .sp-glint-dot {
-    transform-origin: 88px 88px;
-    animation: spOrbitCW 5.6s cubic-bezier(.45, .05, .55, .95) infinite;
+  .sp-glint-inner {
+    transform-origin: 96px 96px;
+    animation: spOrbitCCW 6.2s linear infinite;
   }
 
   .splash-meta {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 11px;
-    animation: spMetaFade .68s cubic-bezier(.22, 1, .36, 1) .16s both;
+    gap: 12px;
+    animation: spMetaFade .78s cubic-bezier(.16, 1, .3, 1) .18s both;
   }
   .splash-brand {
-    font-size: 12.5px;
-    font-weight: 700;
-    letter-spacing: 0.38em;
-    padding-left: 0.38em;
-    color: #E2E4EB;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.42em;
+    padding-left: 0.42em;
+    color: #F4F5F8;
     text-transform: uppercase;
+    animation: spTrackIn .88s cubic-bezier(.16, 1, .3, 1) .15s both;
   }
-  /* Segmented 3-part hairline indicator (分割) */
+  /* Segmented 4-part architectural progress bar (分割) */
   .splash-seg-bar {
     display: flex;
     align-items: center;
-    gap: 6px;
-    width: 156px;
+    gap: 5px;
+    width: 172px;
   }
   .splash-seg {
     position: relative;
     flex: 1;
     height: 2px;
-    background: rgba(255, 255, 255, 0.11);
+    background: rgba(255, 255, 255, 0.13);
     overflow: hidden;
   }
-  .splash-seg:nth-child(2) { flex: 1.5; }
+  .splash-seg:nth-child(2) { flex: 1.8; }
+  .splash-seg:nth-child(3) { flex: 0.7; }
   .splash-seg::after {
     content: "";
     position: absolute;
     inset: 0;
-    background: linear-gradient(90deg, transparent, #ECEEF4, transparent);
+    background: linear-gradient(90deg, transparent, #FFFFFF, transparent);
     transform: translateX(-120%);
-    animation: spSegPulse 1.55s cubic-bezier(.4, 0, .2, 1) infinite;
+    animation: spSegPulse 1.4s cubic-bezier(.4, 0, .2, 1) infinite;
   }
-  .splash-seg:nth-child(2)::after { animation-delay: 0.24s; }
-  .splash-seg:nth-child(3)::after { animation-delay: 0.48s; }
+  .splash-seg:nth-child(2)::after { animation-delay: 0.18s; }
+  .splash-seg:nth-child(3)::after { animation-delay: 0.36s; }
+  .splash-seg:nth-child(4)::after { animation-delay: 0.52s; }
 
   .splash-status {
     font-family: var(--font-mono);
     font-size: 11px;
     font-weight: 500;
-    color: #8A8D99;
-    letter-spacing: 0.08em;
+    color: #9A9EAB;
+    letter-spacing: 0.1em;
     min-height: 16px;
   }
 
   @keyframes spGridDrift {
-    from { transform: scale(1) translate3d(0, 0, 0); opacity: 0.85; }
-    to { transform: scale(1.035) translate3d(0, -6px, 0); opacity: 1; }
+    from { transform: scale(1) translate3d(0, 0, 0); opacity: 0.84; }
+    to { transform: scale(1.045) translate3d(0, -8px, 0); opacity: 1; }
+  }
+  @keyframes spAxisExpandX {
+    from { transform: scaleX(0); opacity: 0; }
+    to { transform: scaleX(1); opacity: 1; }
+  }
+  @keyframes spAxisExpandY {
+    from { transform: scaleY(0); opacity: 0; }
+    to { transform: scaleY(1); opacity: 1; }
+  }
+  @keyframes spHaloBreath {
+    0%, 100% { transform: translate(-50%, -50%) scale(0.92); opacity: 0.7; }
+    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
   }
   @keyframes spDepthPulse {
-    0%, 100% { transform: translate(-50%, -50%) scale(0.985); opacity: 0.65; }
-    50% { transform: translate(-50%, -50%) scale(1.02); opacity: 1; }
+    0%, 100% { transform: translate(-50%, -50%) scale(0.98); opacity: 0.6; }
+    50% { transform: translate(-50%, -50%) scale(1.03); opacity: 1; }
   }
-  @keyframes spStageBreath {
-    0%, 100% { transform: rotateX(4deg) rotateY(-5deg) translateY(0px); }
-    50% { transform: rotateX(-3deg) rotateY(5deg) translateY(-4px); }
+  @keyframes spDepthSpin {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+  @keyframes spStageOrbit3D {
+    0%   { transform: rotateX(6deg) rotateY(-8deg) translateY(0px); }
+    25%  { transform: rotateX(-4deg) rotateY(7deg) translateY(-5px); }
+    50%  { transform: rotateX(-6deg) rotateY(4deg) translateY(-2px); }
+    75%  { transform: rotateX(5deg) rotateY(-5deg) translateY(-6px); }
+    100% { transform: rotateX(6deg) rotateY(-8deg) translateY(0px); }
+  }
+  @keyframes spPlaneBackIn {
+    from { opacity: 0; transform: translate3d(-34px, -26px, -68px) rotate(-18deg) scale(0.84); }
+    to   { opacity: 1; transform: translate3d(-16px, -12px, -44px) rotate(-8deg) scale(1); }
+  }
+  @keyframes spPlaneMidIn {
+    from { opacity: 0; transform: translate3d(34px, 28px, -40px) rotate(16deg) scale(0.84); }
+    to   { opacity: 1; transform: translate3d(17px, 14px, -20px) rotate(5deg) scale(1); }
+  }
+  @keyframes spPlaneFrontIn {
+    from { opacity: 0; transform: translate3d(20px, -18px, 44px) rotate(8deg) scale(1.12); }
+    to   { opacity: 1; transform: translate3d(6px, -5px, 24px) rotate(-3deg) scale(1); }
   }
   @keyframes spPlaneA {
-    from { transform: translate3d(-16px, -12px, -44px) rotate(-7deg); }
-    to { transform: translate3d(-10px, -6px, -36px) rotate(-4deg); }
+    from { transform: translate3d(-18px, -14px, -46px) rotate(-9deg); }
+    to   { transform: translate3d(-9px, -6px, -36px) rotate(-4deg); }
   }
   @keyframes spPlaneB {
-    from { transform: translate3d(16px, 14px, -20px) rotate(5deg); }
-    to { transform: translate3d(10px, 7px, -12px) rotate(2deg); }
+    from { transform: translate3d(18px, 15px, -22px) rotate(6deg); }
+    to   { transform: translate3d(10px, 7px, -12px) rotate(2deg); }
+  }
+  @keyframes spPlaneFrontDrift {
+    from { transform: translate3d(7px, -6px, 26px) rotate(-3.5deg); }
+    to   { transform: translate3d(-4px, 5px, 20px) rotate(2deg); }
   }
   @keyframes spSliceScan {
-    0%, 100% { opacity: 0.25; transform: translate3d(-8px, 6px, 24px) rotate(-28deg) scaleX(0.92); }
-    50% { opacity: 0.78; transform: translate3d(8px, -4px, 28px) rotate(-28deg) scaleX(1.06); }
+    0%   { opacity: 0; transform: translate3d(-44px, 24px, 32px) rotate(-28deg) scaleX(0.55); }
+    35%  { opacity: 0.92; transform: translate3d(0px, 0px, 34px) rotate(-28deg) scaleX(1.06); }
+    70%  { opacity: 0.25; transform: translate3d(42px, -22px, 32px) rotate(-28deg) scaleX(0.75); }
+    100% { opacity: 0; transform: translate3d(56px, -30px, 32px) rotate(-28deg) scaleX(0.45); }
   }
   @keyframes spOrbitCW {
     from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    to   { transform: rotate(360deg); }
   }
   @keyframes spOrbitCCW {
     from { transform: rotate(360deg); }
-    to { transform: rotate(0deg); }
+    to   { transform: rotate(0deg); }
+  }
+  @keyframes spArcDraw {
+    from { stroke-dashoffset: 380; opacity: 0; }
+    to   { stroke-dashoffset: 0; opacity: 1; }
+  }
+  @keyframes spBrkTL {
+    from { opacity: 0; transform: translate(-18px, -18px); }
+    to   { opacity: 1; transform: translate(0, 0); }
+  }
+  @keyframes spBrkTR {
+    from { opacity: 0; transform: translate(18px, -18px); }
+    to   { opacity: 1; transform: translate(0, 0); }
+  }
+  @keyframes spBrkBL {
+    from { opacity: 0; transform: translate(-18px, 18px); }
+    to   { opacity: 1; transform: translate(0, 0); }
+  }
+  @keyframes spBrkBR {
+    from { opacity: 0; transform: translate(18px, 18px); }
+    to   { opacity: 1; transform: translate(0, 0); }
+  }
+  @keyframes spBrkPulse {
+    from { opacity: 0.32; }
+    to   { opacity: 0.78; }
+  }
+  @keyframes spPlateIn {
+    from { opacity: 0; transform: translate(-10px, 12px) scale(0.92); }
+    to   { opacity: 1; transform: translate(0, 0) scale(1); }
+  }
+  @keyframes spPlateFloat {
+    from { transform: translate(0px, 0px); }
+    to   { transform: translate(-3.5px, 3px); }
   }
   @keyframes spAssembleLeft {
-    from { opacity: 0; transform: translate(-14px, -10px); }
-    to { opacity: 1; transform: translate(0, 0); }
+    from { opacity: 0; transform: translate(-22px, 32px); }
+    to   { opacity: 1; transform: translate(0, 0); }
   }
-  @keyframes spAssembleRight {
-    from { opacity: 0; transform: translate(14px, 10px); }
-    to { opacity: 1; transform: translate(0, 0); }
+  @keyframes spAssembleRightTop {
+    from { opacity: 0; transform: translate(18px, -24px); }
+    to   { opacity: 1; transform: translate(0, 0); }
   }
-  @keyframes spAssembleBar {
-    from { opacity: 0; transform: translateX(-16px); }
-    to { opacity: 1; transform: translateX(0); }
+  @keyframes spAssembleRightBot {
+    from { opacity: 0; transform: translate(26px, 24px); }
+    to   { opacity: 1; transform: translate(0, 0); }
   }
   @keyframes spFloatLeft {
     from { transform: translate(0px, 0px); }
-    to { transform: translate(-2.5px, -3px); }
+    to   { transform: translate(-3px, -3.5px); }
   }
-  @keyframes spFloatRight {
+  @keyframes spShearTop {
     from { transform: translate(0px, 0px); }
-    to { transform: translate(2.5px, 3px); }
+    to   { transform: translate(3.5px, -3px); }
   }
-  @keyframes spFloatBar {
+  @keyframes spShearBot {
     from { transform: translate(0px, 0px); }
-    to { transform: translate(4px, -1.5px); }
+    to   { transform: translate(4.5px, 3.5px); }
   }
-  @keyframes spFloatBarBack {
+  @keyframes spBarBlackIn {
+    from { opacity: 0; transform: translateX(-28px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes spBarWhiteIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes spBarBlackGlide {
     from { transform: translate(0px, 0px); }
-    to { transform: translate(-3px, 1.5px); }
+    to   { transform: translate(-5px, 1.5px); }
+  }
+  @keyframes spBarWhiteGlide {
+    from { transform: translate(0px, 0px); }
+    to   { transform: translate(6px, -2px); }
+  }
+  @keyframes spSheenSweep {
+    0%   { transform: translateX(-140px); opacity: 0; }
+    20%  { opacity: 0.7; }
+    65%  { opacity: 0.55; }
+    100% { transform: translateX(170px); opacity: 0; }
+  }
+  @keyframes spChipIn {
+    from { opacity: 0; transform: scale(0.5); }
+    to   { opacity: 1; transform: scale(1); }
   }
   @keyframes spChipFloat1 {
-    from { transform: translate(0px, 0px); opacity: 0.55; }
-    to { transform: translate(5px, -6px); opacity: 0.95; }
+    from { transform: translate(0px, 0px); }
+    to   { transform: translate(7px, -8px); }
   }
   @keyframes spChipFloat2 {
-    from { transform: translate(0px, 0px); opacity: 0.4; }
-    to { transform: translate(-6px, 5px); opacity: 0.85; }
+    from { transform: translate(0px, 0px); }
+    to   { transform: translate(-8px, 6px); }
   }
   @keyframes spChipFloat3 {
-    from { transform: translate(0px, 0px); opacity: 0.45; }
-    to { transform: translate(4px, 4px); opacity: 0.9; }
+    from { transform: translate(0px, 0px); }
+    to   { transform: translate(6px, 6px); }
+  }
+  @keyframes spChipFloat4 {
+    from { transform: translate(0px, 0px); }
+    to   { transform: translate(-6px, -7px); }
   }
   @keyframes spMetaFade {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes spTrackIn {
+    from { letter-spacing: 0.62em; opacity: 0; }
+    to   { letter-spacing: 0.42em; opacity: 1; }
   }
   @keyframes spSegPulse {
-    0% { transform: translateX(-120%); }
+    0%   { transform: translateX(-120%); }
     100% { transform: translateX(220%); }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .ag-orbit-cw, .ag-orbit-ccw, .ag-levitate, .ag-shard-1, .ag-shard-2, .ag-shard-3,
     .ag-pulse-ring, .ag-drift-1, .ag-drift-2, .ag-drift-3,
-    .splash-space-grid, .splash-depth-ring, .splash-emblem-3d, .sp-plane-back, .sp-plane-mid, .sp-plane-slice,
-    .sp-ring-a, .sp-ring-b, .sp-shard-left, .sp-shard-right, .sp-shard-bar-shadow, .sp-shard-bar,
-    .sp-chip-1, .sp-chip-2, .sp-chip-3, .sp-glint-dot, .splash-meta, .splash-seg::after { animation: none !important; }
+    .splash-space-grid, .splash-space-axes::before, .splash-space-axes::after, .splash-depth-ring,
+    .splash-emblem-3d, .sp-plane-back, .sp-plane-mid, .sp-plane-front-wire, .sp-plane-slice,
+    .sp-ring-a, .sp-ring-a-path, .sp-ring-b, .sp-ring-c,
+    .sp-brk-tl, .sp-brk-tr, .sp-brk-bl, .sp-brk-br,
+    .sp-shard-shadow-plate, .sp-shard-left, .sp-shard-right-top, .sp-shard-right-bot,
+    .sp-shard-bar-black, .sp-shard-bar-white, .sp-sheen-bar,
+    .sp-chip-1, .sp-chip-2, .sp-chip-3, .sp-chip-4,
+    .sp-glint-outer, .sp-glint-inner, .splash-meta, .splash-brand, .splash-seg::after { animation: none !important; }
     .sh-hl, .sh-active-hl, .view.active, .msg-wrap, #toast, #appSplash { transition: none !important; animation: none !important; }
   }
 </style>
@@ -2275,6 +2436,7 @@
 <div id="appSplash" role="status" aria-live="polite" aria-label="正在加载控制台">
   <div class="splash-space-grid" aria-hidden="true"></div>
   <div class="splash-space-axes" aria-hidden="true"></div>
+  <div class="splash-depth-ring r0" aria-hidden="true"></div>
   <div class="splash-depth-ring r1" aria-hidden="true"></div>
   <div class="splash-depth-ring r2" aria-hidden="true"></div>
   <div class="splash-depth-ring r3" aria-hidden="true"></div>
@@ -2283,85 +2445,136 @@
     <div class="splash-emblem-3d" aria-hidden="true">
       <div class="sp-plane sp-plane-back"></div>
       <div class="sp-plane sp-plane-mid"></div>
+      <div class="sp-plane sp-plane-front-wire"></div>
       <div class="sp-plane sp-plane-slice"></div>
 
-      <svg class="splash-svg" viewBox="0 0 176 176" fill="none">
+      <svg class="splash-svg" viewBox="0 0 192 192" fill="none">
         <defs>
-          <linearGradient id="spObsidianLeft" x1="34" y1="30" x2="96" y2="140" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#1E2027"/>
-            <stop offset="52%" stop-color="#0D0E12"/>
-            <stop offset="100%" stop-color="#060709"/>
-          </linearGradient>
-          <linearGradient id="spSlateRight" x1="84" y1="32" x2="142" y2="144" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stop-color="#CFD3DF" stop-opacity="0.34"/>
-            <stop offset="50%" stop-color="#4A4E5A" stop-opacity="0.62"/>
-            <stop offset="100%" stop-color="#181A20" stop-opacity="0.88"/>
-          </linearGradient>
-          <linearGradient id="spEdgeHighlight" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#F2F4F8" stop-opacity="0.72"/>
-            <stop offset="55%" stop-color="#7E8290" stop-opacity="0.28"/>
-            <stop offset="100%" stop-color="#22242B" stop-opacity="0.1"/>
-          </linearGradient>
-          <linearGradient id="spBarSilver" x1="56" y1="98" x2="122" y2="108" gradientUnits="userSpaceOnUse">
+          <!-- Pure architectural white gradients for hero logo -->
+          <linearGradient id="spWhiteHero" x1="42" y1="30" x2="104" y2="152" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stop-color="#FFFFFF"/>
-            <stop offset="65%" stop-color="#C8CCD6"/>
-            <stop offset="100%" stop-color="#7F8390"/>
+            <stop offset="56%" stop-color="#ECEEF3"/>
+            <stop offset="100%" stop-color="#CFD3DE"/>
           </linearGradient>
+          <linearGradient id="spWhiteUpper" x1="88" y1="34" x2="124" y2="96" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FFFFFF"/>
+            <stop offset="100%" stop-color="#D9DDE6"/>
+          </linearGradient>
+          <linearGradient id="spWhiteLower" x1="108" y1="92" x2="148" y2="152" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#F6F7FA"/>
+            <stop offset="58%" stop-color="#D7DBE4"/>
+            <stop offset="100%" stop-color="#A6ABB8"/>
+          </linearGradient>
+          <!-- Brushed cool-gray & deep obsidian accents -->
+          <linearGradient id="spGrayPlate" x1="60" y1="54" x2="132" y2="144" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#6A6F7D" stop-opacity="0.65"/>
+            <stop offset="100%" stop-color="#22252D" stop-opacity="0.78"/>
+          </linearGradient>
+          <linearGradient id="spBlackAccent" x1="56" y1="104" x2="122" y2="122" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#1A1C22"/>
+            <stop offset="55%" stop-color="#090A0D"/>
+            <stop offset="100%" stop-color="#040406"/>
+          </linearGradient>
+          <linearGradient id="spSheenGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0"/>
+            <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.88"/>
+            <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+          </linearGradient>
+          <clipPath id="spLogoClip">
+            <polygon points="94,32 44,148 67,148 103,58"/>
+            <polygon points="91,39 118,92 98,96 84,64"/>
+            <polygon points="103,103 123,99 148,148 124,148"/>
+          </clipPath>
         </defs>
 
-        <!-- Segmented outer spatial arcs (分割轨道) -->
+        <!-- Multi-layer segmented orbital arcs (分割旋转轨道) -->
         <g class="sp-ring-a">
-          <circle cx="88" cy="88" r="76" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="1" stroke-dasharray="62 22 14 26 92 24" stroke-linecap="butt"/>
-          <line x1="88" y1="8" x2="88" y2="16" stroke="#FFFFFF" stroke-opacity="0.32" stroke-width="1"/>
-          <line x1="88" y1="160" x2="88" y2="168" stroke="#FFFFFF" stroke-opacity="0.2" stroke-width="1"/>
+          <circle class="sp-ring-a-path" cx="96" cy="96" r="84" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="1.15" stroke-linecap="butt"/>
+          <line x1="96" y1="6" x2="96" y2="16" stroke="#FFFFFF" stroke-opacity="0.65" stroke-width="1.2"/>
+          <line x1="96" y1="176" x2="96" y2="186" stroke="#FFFFFF" stroke-opacity="0.32" stroke-width="1.1"/>
+          <line x1="6" y1="96" x2="14" y2="96" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="1"/>
         </g>
         <g class="sp-ring-b">
-          <circle cx="88" cy="88" r="61" stroke="#A6AAB6" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="28 18 46 34" stroke-linecap="butt"/>
+          <circle cx="96" cy="96" r="68" stroke="#C6CAD6" stroke-opacity="0.26" stroke-width="1" stroke-dasharray="36 16 12 20 52 28" stroke-linecap="butt"/>
+        </g>
+        <g class="sp-ring-c">
+          <circle cx="96" cy="96" r="52" stroke="#08090C" stroke-opacity="0.65" stroke-width="2.2" stroke-dasharray="18 28 32 42"/>
         </g>
 
-        <!-- Staggered architectural corner registration marks -->
-        <path d="M26 40V26H40" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="1"/>
-        <path d="M150 136V150H136" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="1"/>
+        <!-- 4 Snap-in architectural corner brackets -->
+        <path class="sp-brk-tl" d="M26 42V26H42" stroke="#FFFFFF" stroke-opacity="0.45" stroke-width="1.1"/>
+        <path class="sp-brk-tr" d="M166 42V26H150" stroke="#A6AAB6" stroke-opacity="0.32" stroke-width="1"/>
+        <path class="sp-brk-bl" d="M26 150V166H42" stroke="#A6AAB6" stroke-opacity="0.32" stroke-width="1"/>
+        <path class="sp-brk-br" d="M166 150V166H150" stroke="#FFFFFF" stroke-opacity="0.45" stroke-width="1.1"/>
 
-        <!-- Layer 1: Left obsidian monolith wing (黑灰层次底层) -->
+        <!-- Layer 1: Recessed matte-gray & black offset shadow plate (灰黑底层叠加) -->
+        <g class="sp-shard-shadow-plate">
+          <polygon points="88,42 52,144 74,144 98,74 120,144 140,144" fill="url(#spGrayPlate)" stroke="#07080B" stroke-opacity="0.7" stroke-width="1"/>
+          <polygon points="94,32 103,58 93,76 85,56" fill="#07080B" fill-opacity="0.72"/>
+        </g>
+
+        <!-- Layer 2: Hero Left Pure-White Monolith Wing (主白色左翼 + 极细黑灰折痕) -->
         <g class="sp-shard-left">
-          <polygon points="86,32 42,134 62,134 94,54" fill="url(#spObsidianLeft)" stroke="url(#spEdgeHighlight)" stroke-width="1.1"/>
-          <!-- Inner subtle split bevel line -->
-          <line x1="83" y1="42" x2="50" y2="128" stroke="#FFFFFF" stroke-opacity="0.16" stroke-width="0.9"/>
+          <polygon points="94,32 44,148 67,148 103,58" fill="url(#spWhiteHero)"/>
+          <!-- Crisp obsidian cutout notch & hairline ridge for sculpted contrast -->
+          <polygon points="91,41 96,54 71,118 65,114" fill="#101217" fill-opacity="0.16"/>
+          <line x1="94" y1="32" x2="44" y2="148" stroke="#FFFFFF" stroke-opacity="0.95" stroke-width="1.1"/>
+          <polygon points="44,148 54,148 59,135 49,135" fill="#0B0C10"/>
         </g>
 
-        <!-- Layer 2: Right translucent smoke-gray overlapping wing (半透灰叠加层) -->
-        <g class="sp-shard-right">
-          <polygon points="82,38 134,138 113,138 76,62" fill="url(#spSlateRight)" stroke="#E4E6EE" stroke-opacity="0.32" stroke-width="1"/>
-          <!-- Dark shadow overlap notch at apex -->
-          <polygon points="82,38 94,54 88,68 76,62" fill="#07080B" fill-opacity="0.58"/>
+        <!-- Layer 3: Sliced Right Wing — Upper White Prism (分割右翼上半段 + 顶角黑点缀) -->
+        <g class="sp-shard-right-top">
+          <polygon points="91,39 118,92 98,96 84,64" fill="url(#spWhiteUpper)" stroke="#090A0D" stroke-opacity="0.35" stroke-width="0.9"/>
+          <!-- Dark overlap intersection wedge at apex -->
+          <polygon points="91,39 103,58 94,72 84,64" fill="#0A0B0F" fill-opacity="0.88"/>
         </g>
 
-        <!-- Layer 3: Detached split crossbar — back dark slab + front silver wedge (分割错落横梁) -->
-        <g class="sp-shard-bar-shadow">
-          <polygon points="56,105 110,97 107,108 53,115" fill="#07080B" fill-opacity="0.88" stroke="#FFFFFF" stroke-opacity="0.14" stroke-width="0.8"/>
-        </g>
-        <g class="sp-shard-bar">
-          <polygon points="65,98 121,91 118,98 62,105" fill="url(#spBarSilver)"/>
+        <!-- Layer 4: Sliced Right Wing — Detached Lower White Prism (错落分割右翼下半段 + 灰边叠层) -->
+        <g class="sp-shard-right-bot">
+          <polygon points="103,103 123,99 148,148 124,148" fill="url(#spWhiteLower)"/>
+          <polygon points="103,103 123,99 126,105 106,109" fill="#525663"/>
+          <polygon points="138,148 148,148 143,138 133,138" fill="#0A0B0E"/>
         </g>
 
-        <!-- Layer 4: Floating staggered geometric micro-blocks (错落悬浮微块) -->
+        <!-- Specular sheen gliding across the assembled white monolith -->
+        <g clip-path="url(#spLogoClip)" opacity="0.72">
+          <rect class="sp-sheen-bar" x="30" y="16" width="38" height="160" transform="skewX(-22)" fill="url(#spSheenGrad)"/>
+        </g>
+
+        <!-- Layer 5: Interlocking Black & Pure-White Split Crossbars (黑白交错横梁) -->
+        <g class="sp-shard-bar-black">
+          <polygon points="54,113 118,103 115,115 51,124" fill="url(#spBlackAccent)" stroke="#FFFFFF" stroke-opacity="0.28" stroke-width="0.85"/>
+        </g>
+        <g class="sp-shard-bar-white">
+          <polygon points="70,104 132,95 129,103 67,112" fill="#FFFFFF"/>
+          <rect x="73" y="103" width="12" height="2" transform="rotate(-8.2 73 103)" fill="#0B0C10" fill-opacity="0.65"/>
+        </g>
+
+        <!-- Layer 6: Staggered White / Black / Gray Floating Micro-Blocks (多层次错落点缀) -->
         <g class="sp-chip-1">
-          <rect x="122" y="42" width="14" height="5" fill="#D8DBE4" fill-opacity="0.72"/>
-          <rect x="128" y="49" width="8" height="3" fill="#090A0D" stroke="#FFFFFF" stroke-opacity="0.28" stroke-width="0.8"/>
+          <rect x="132" y="42" width="18" height="5.5" fill="#FFFFFF"/>
+          <rect x="140" y="50" width="10" height="3.5" fill="#090A0D" stroke="#FFFFFF" stroke-opacity="0.45" stroke-width="0.8"/>
         </g>
         <g class="sp-chip-2">
-          <rect x="34" y="106" width="11" height="4" fill="#090A0D" stroke="#FFFFFF" stroke-opacity="0.26" stroke-width="0.8"/>
-          <rect x="40" y="99" width="7" height="2.5" fill="#9A9EA9" fill-opacity="0.55"/>
+          <rect x="34" y="114" width="14" height="4.5" fill="#090A0D" stroke="#FFFFFF" stroke-opacity="0.42" stroke-width="0.8"/>
+          <rect x="42" y="106" width="10" height="3" fill="#FFFFFF" fill-opacity="0.88"/>
         </g>
         <g class="sp-chip-3">
-          <rect x="124" y="114" width="6" height="6" fill="#1C1E25" stroke="#E4E7F0" stroke-opacity="0.34" stroke-width="0.8"/>
+          <rect x="136" y="122" width="7" height="7" fill="#FFFFFF" fill-opacity="0.92"/>
+          <rect x="140" y="126" width="7" height="7" fill="#090A0D" fill-opacity="0.82" stroke="#9EA2B0" stroke-width="0.8"/>
+        </g>
+        <g class="sp-chip-4">
+          <rect x="46" y="48" width="9" height="3" fill="#8C909E" fill-opacity="0.72"/>
+          <rect x="42" y="53" width="5" height="5" fill="#FFFFFF" fill-opacity="0.82"/>
         </g>
 
-        <!-- Orbital specular point -->
-        <g class="sp-glint-dot">
-          <circle cx="141.7" cy="34.3" r="2.6" fill="#F2F4F8"/>
-          <circle cx="141.7" cy="34.3" r="6" stroke="#FFFFFF" stroke-opacity="0.22" stroke-width="0.9"/>
+        <!-- Dual counter-orbiting satellites (白点 + 黑核银环) -->
+        <g class="sp-glint-outer">
+          <circle cx="155.4" cy="36.6" r="3.2" fill="#FFFFFF"/>
+          <circle cx="155.4" cy="36.6" r="7.5" stroke="#FFFFFF" stroke-opacity="0.34" stroke-width="1"/>
+        </g>
+        <g class="sp-glint-inner">
+          <circle cx="48" cy="144" r="3.6" fill="#090A0D" stroke="#FFFFFF" stroke-opacity="0.72" stroke-width="1.2"/>
         </g>
       </svg>
     </div>
@@ -2369,6 +2582,7 @@
     <div class="splash-meta">
       <div class="splash-brand">AGY CLI BOT</div>
       <div class="splash-seg-bar" aria-hidden="true">
+        <div class="splash-seg"></div>
         <div class="splash-seg"></div>
         <div class="splash-seg"></div>
         <div class="splash-seg"></div>
@@ -11368,11 +11582,11 @@ function hideAppSplash(immediate = false) {
   const el = document.getElementById('appSplash');
   if (!el) return;
   const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
-  const minVisibleMs = immediate ? 0 : 950;
+  const minVisibleMs = immediate ? 0 : 1550;
   const waitMs = Math.max(0, minVisibleMs - (now - _splashStartedAt));
   setTimeout(() => {
     el.classList.add('leaving');
-    setTimeout(() => { el.classList.add('gone'); }, 540);
+    setTimeout(() => { el.classList.add('gone'); }, 580);
   }, waitMs);
 }
 
