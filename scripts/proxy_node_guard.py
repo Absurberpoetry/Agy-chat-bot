@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Proxy Node Guard for AGY CLI BOT (port 7890).
+"""Proxy Node Guard for AgyChat Bot (port 7890).
 
 Automatically benchmarks all proxy nodes on the local Clash/Mihomo core listening on port 7890
 against Google Antigravity upstream (`cloudcode-pa.googleapis.com`), verifies real Antigravity
@@ -30,7 +30,7 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from agy_bot.proxy_guard import (  # noqa: E402
+from agychat_bot.proxy_guard import (  # noqa: E402
     ProbeOutcome,
     ProxyControllerInfo,
     benchmark_all_nodes,

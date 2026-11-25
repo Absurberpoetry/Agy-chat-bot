@@ -14,11 +14,11 @@ from typing import Any
 
 from aiohttp.test_utils import TestClient, TestServer
 
-from agy_bot.adapters.generic_ws import GenericWSAdapter
-from agy_bot.adapters.onebot_v11 import OneBotV11Adapter
-from agy_bot.app import BotApplication, _format_ts, _is_safe_public_http_url
-from agy_bot.channel_guard import ChannelActivationStore
-from agy_bot.config import (
+from agychat_bot.adapters.generic_ws import GenericWSAdapter
+from agychat_bot.adapters.onebot_v11 import OneBotV11Adapter
+from agychat_bot.app import BotApplication, _format_ts, _is_safe_public_http_url
+from agychat_bot.channel_guard import ChannelActivationStore
+from agychat_bot.config import (
     BotConfig,
     ContentSafetyConfig,
     PlatformConfig,
@@ -30,21 +30,21 @@ from agy_bot.config import (
     KeywordTriggerConfig,
     load_config_from_dict,
 )
-from agy_bot.extensions import SkillsManager, parse_skill_md, render_skill_md
-from agy_bot.media import (
+from agychat_bot.extensions import SkillsManager, parse_skill_md, render_skill_md
+from agychat_bot.media import (
     looks_like_image_bytes,
     materialize_image,
     prune_media_cache,
     sanitize_jpeg_segments,
 )
-from agy_bot.models import IncomingMessage, MediaAttachment, RunnerResult
-from agy_bot.plugins.manager import _normalize_reply
-from agy_bot.proxy_guard import parse_controller_from_cmdline
-from agy_bot.reply_formatter import apply_content_safety, split_and_clean_reply, truncate_reply
-from agy_bot.triggers.engine import TriggerEngine
-from agy_bot.triggers.scheduler import _parse_cron_field, cron_matches
-from agy_bot.triggers.script_runner import ScriptTriggerEvaluator
-from agy_bot.webui.server import WebUIServer
+from agychat_bot.models import IncomingMessage, MediaAttachment, RunnerResult
+from agychat_bot.plugins.manager import _normalize_reply
+from agychat_bot.proxy_guard import parse_controller_from_cmdline
+from agychat_bot.reply_formatter import apply_content_safety, split_and_clean_reply, truncate_reply
+from agychat_bot.triggers.engine import TriggerEngine
+from agychat_bot.triggers.scheduler import _parse_cron_field, cron_matches
+from agychat_bot.triggers.script_runner import ScriptTriggerEvaluator
+from agychat_bot.webui.server import WebUIServer
 
 _TINY_PNG = (
     b"\x89PNG\r\n\x1a\n"

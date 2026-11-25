@@ -123,7 +123,7 @@ class PluginContext:
         self.plugin_id = plugin_id
         self._plugin_config = plugin_config
         self.data_dir = data_dir
-        self.logger = logging.getLogger(f"agy_bot.plugin.{plugin_id}")
+        self.logger = logging.getLogger(f"agychat_bot.plugin.{plugin_id}")
 
     @property
     def bot_config(self) -> BotConfig:
@@ -267,7 +267,7 @@ class PluginContext:
 
 
 class BotPlugin:
-    """Base class for external AGY CLI BOT plugins."""
+    """Base class for external AgyChat Bot plugins."""
 
     id: str = ""
     name: str = ""

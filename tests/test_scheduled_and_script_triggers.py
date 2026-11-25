@@ -13,9 +13,9 @@ from aiohttp.test_utils import TestClient, TestServer
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from agy_bot.adapters.base import OnMessageFn, PlatformAdapter
-from agy_bot.app import BotApplication
-from agy_bot.config import (
+from agychat_bot.adapters.base import OnMessageFn, PlatformAdapter
+from agychat_bot.app import BotApplication
+from agychat_bot.config import (
     PlatformConfig,
     ScheduledTaskConfig,
     ScheduledTriggerConfig,
@@ -24,12 +24,12 @@ from agy_bot.config import (
     config_to_dict,
     load_config_from_dict,
 )
-from agy_bot.models import IncomingMessage
-from agy_bot.runner import BaseAgentRunner
-from agy_bot.models import JudgeDecision, RunnerResult
-from agy_bot.triggers.scheduler import cron_matches, validate_cron
-from agy_bot.triggers.script_runner import ScriptTriggerEvaluator
-from agy_bot.webui.server import WebUIServer
+from agychat_bot.models import IncomingMessage
+from agychat_bot.runner import BaseAgentRunner
+from agychat_bot.models import JudgeDecision, RunnerResult
+from agychat_bot.triggers.scheduler import cron_matches, validate_cron
+from agychat_bot.triggers.script_runner import ScriptTriggerEvaluator
+from agychat_bot.webui.server import WebUIServer
 
 
 class _FakeAdapter(PlatformAdapter):

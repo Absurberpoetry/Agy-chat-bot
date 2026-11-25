@@ -17,10 +17,10 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from agy_bot.app import BotApplication  # noqa: E402
-from agy_bot.config import load_config  # noqa: E402
-from agy_bot.first_run import ensure_webui_credentials  # noqa: E402
-from agy_bot.webui.log_buffer import LogRingBufferHandler  # noqa: E402
+from agychat_bot.app import BotApplication  # noqa: E402
+from agychat_bot.config import load_config  # noqa: E402
+from agychat_bot.first_run import ensure_webui_credentials  # noqa: E402
+from agychat_bot.webui.log_buffer import LogRingBufferHandler  # noqa: E402
 
 _WIN_JOB_HANDLE: int = 0
 _WIN_CTRL_HANDLER_REF: object | None = None
@@ -201,7 +201,7 @@ async def _run_with_clean_shutdown(app: BotApplication, pid_file: Path, my_pid: 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="AGY CLI BOT - Multi-platform bot powered by official Antigravity CLI",
+        description="AgyChat Bot - Multi-platform bot powered by official Antigravity CLI",
     )
     parser.add_argument(
         "-c",

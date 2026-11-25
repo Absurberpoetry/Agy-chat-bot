@@ -12,11 +12,11 @@ from unittest.mock import patch
 from aiohttp import WSMsgType
 from aiohttp.test_utils import TestClient, TestServer
 
-from agy_bot.app import BotApplication
-from agy_bot.config import BotConfig
-from agy_bot.models import IncomingMessage, RunnerResult
-from agy_bot.webui.cli_pty import extract_auth_urls, strip_ansi
-from agy_bot.webui.server import WebUIServer
+from agychat_bot.app import BotApplication
+from agychat_bot.config import BotConfig
+from agychat_bot.models import IncomingMessage, RunnerResult
+from agychat_bot.webui.cli_pty import extract_auth_urls, strip_ansi
+from agychat_bot.webui.server import WebUIServer
 
 
 class _DummyRunner:
@@ -120,7 +120,7 @@ class WebUIAgyCliTests(unittest.IsolatedAsyncioTestCase):
             srv = WebUIServer(app, cfg.webui)
 
             with (
-                patch("agy_bot.webui.cli_pty.get_global_agy_settings_path", return_value=fake_settings),
+                patch("agychat_bot.webui.cli_pty.get_global_agy_settings_path", return_value=fake_settings),
                 patch.object(srv._cli_manager, "_resolve_cmd_prefix", return_value=[sys.executable, "-u", str(fake_cli)]),
             ):
                 async with TestClient(TestServer(srv.web_app)) as client:

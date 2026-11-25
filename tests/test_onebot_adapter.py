@@ -9,10 +9,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from agy_bot.adapters.onebot_v11 import OneBotV11Adapter, parse_onebot_segments  # noqa: E402
-from agy_bot.collector.context_store import GroupContextStore  # noqa: E402
-from agy_bot.config import PlatformConfig  # noqa: E402
-from agy_bot.models import IncomingMessage  # noqa: E402
+from agychat_bot.adapters.onebot_v11 import OneBotV11Adapter, parse_onebot_segments  # noqa: E402
+from agychat_bot.collector.context_store import GroupContextStore  # noqa: E402
+from agychat_bot.config import PlatformConfig  # noqa: E402
+from agychat_bot.models import IncomingMessage  # noqa: E402
 
 
 class FakeWebSocket:

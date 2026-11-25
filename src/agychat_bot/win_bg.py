@@ -9,8 +9,8 @@ import time
 import xml.sax.saxutils as xml_esc
 
 
-TASK_NAME = "AGYCliBot"
-LEGACY_TASK_NAME = "AGYBot"
+TASK_NAME = "AgyChatBot"
+LEGACY_TASK_NAMES = ("AGYCliBot", "AGYBot")
 
 
 def _root_dir() -> pathlib.Path:
@@ -22,7 +22,7 @@ def _pid_file(root: pathlib.Path) -> pathlib.Path:
 
 
 def _stop_existing(root: pathlib.Path) -> None:
-    for task_name in (TASK_NAME, LEGACY_TASK_NAME):
+    for task_name in (TASK_NAME, *LEGACY_TASK_NAMES):
         subprocess.run(["schtasks", "/End", "/TN", task_name], capture_output=True)
     pf = _pid_file(root)
     if pf.is_file():
@@ -46,7 +46,7 @@ def start_bg() -> int:
         print("[错误] 未找到 config.json，请先运行 install.bat 并填写配置")
         return 1
 
-    from agy_bot.first_run import ensure_webui_credentials
+    from agychat_bot.first_run import ensure_webui_credentials
 
     if not ensure_webui_credentials(root / "config.json"):
         return 1
@@ -151,7 +151,7 @@ def start_bg() -> int:
         web_port = 8618
 
     print("========================================")
-    print(f"  AGY CLI BOT 已在后台持久启动（计划任务: {TASK_NAME}）")
+    print(f"  AgyChat Bot 已在后台持久启动（计划任务: {TASK_NAME}）")
     print("  - 无 72 小时超时限制，断开 SSH 或关闭窗口均不影响运行")
     print(f"  - 所有运行日志统一写入: {root / 'bot.log'}")
     print(f"  - WebUI 访问地址: http://127.0.0.1:{web_port}")
@@ -162,7 +162,7 @@ def start_bg() -> int:
 
 def stop_bg() -> int:
     _stop_existing(_root_dir())
-    print(f"AGY CLI BOT 已停止（计划任务 {TASK_NAME}）。")
+    print(f"AgyChat Bot 已停止（计划任务 {TASK_NAME}）。")
     return 0
 
 

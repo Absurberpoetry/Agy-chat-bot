@@ -14,8 +14,8 @@ from aiohttp.test_utils import TestClient, TestServer
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from agy_bot.app import BotApplication  # noqa: E402
-from agy_bot.config import (  # noqa: E402
+from agychat_bot.app import BotApplication  # noqa: E402
+from agychat_bot.config import (  # noqa: E402
     AgyConfig,
     BotConfig,
     PlatformConfig,
@@ -27,12 +27,12 @@ from agy_bot.config import (  # noqa: E402
     load_config,
     save_config,
 )
-from agy_bot.models import IncomingMessage  # noqa: E402
-from agy_bot.persona_store import PersonaStore  # noqa: E402
-from agy_bot.reply_formatter import compute_segment_delay, split_and_clean_reply  # noqa: E402
-from agy_bot.runner.agy_stream import AgyRunner, MockAgentRunner  # noqa: E402
-from agy_bot.webui.log_buffer import LogRingBufferHandler  # noqa: E402
-from agy_bot.webui.server import WebUIServer  # noqa: E402
+from agychat_bot.models import IncomingMessage  # noqa: E402
+from agychat_bot.persona_store import PersonaStore  # noqa: E402
+from agychat_bot.reply_formatter import compute_segment_delay, split_and_clean_reply  # noqa: E402
+from agychat_bot.runner.agy_stream import AgyRunner, MockAgentRunner  # noqa: E402
+from agychat_bot.webui.log_buffer import LogRingBufferHandler  # noqa: E402
+from agychat_bot.webui.server import WebUIServer  # noqa: E402
 
 
 class _FakeAdapter:

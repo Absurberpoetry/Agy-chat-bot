@@ -15,18 +15,18 @@ from aiohttp.test_utils import TestClient, TestServer
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from agy_bot.adapters.base import PlatformAdapter  # noqa: E402
-from agy_bot.app import BotApplication, extract_bg_tasks  # noqa: E402
-from agy_bot.config import (  # noqa: E402
+from agychat_bot.adapters.base import PlatformAdapter  # noqa: E402
+from agychat_bot.app import BotApplication, extract_bg_tasks  # noqa: E402
+from agychat_bot.config import (  # noqa: E402
     BotConfig,
     PlatformConfig,
     WebUIConfig,
     config_to_dict,
     load_config_from_dict,
 )
-from agy_bot.models import IncomingMessage, JudgeDecision, MediaAttachment, RunnerResult  # noqa: E402
-from agy_bot.runner.agy_stream import AgyRunner  # noqa: E402
-from agy_bot.webui.server import WebUIServer  # noqa: E402
+from agychat_bot.models import IncomingMessage, JudgeDecision, MediaAttachment, RunnerResult  # noqa: E402
+from agychat_bot.runner.agy_stream import AgyRunner  # noqa: E402
+from agychat_bot.webui.server import WebUIServer  # noqa: E402
 
 _TINY_PNG = (
     b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01"
@@ -407,7 +407,7 @@ class McpPromptAndAsyncSubagentTests(unittest.IsolatedAsyncioTestCase):
             await app.shutdown()
 
     async def test_agy_runner_subagent_is_not_blocked_by_main_chat_semaphore(self) -> None:
-        from agy_bot.config import AgyConfig, RateLimitConfig
+        from agychat_bot.config import AgyConfig, RateLimitConfig
 
         sub_started = asyncio.Event()
         sub_release = asyncio.Event()
@@ -551,7 +551,7 @@ class McpPromptAndAsyncSubagentTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_plugin_and_command_subagent_concurrent_execution(self) -> None:
         plugin_code = '''from __future__ import annotations
-from agy_bot.plugins import BotPlugin, PluginContext, PluginReply, command
+from agychat_bot.plugins import BotPlugin, PluginContext, PluginReply, command
 
 class MixedSpeedPlugin(BotPlugin):
     id = "mixed_speed"
@@ -651,8 +651,8 @@ class MixedSpeedPlugin(BotPlugin):
             await app.shutdown()
 
     async def test_subagent_mcp_and_plugin_structured_logging(self) -> None:
-        from agy_bot.config import AgyConfig, RateLimitConfig
-        from agy_bot.runner.agy_stream import _extract_tool_log_detail
+        from agychat_bot.config import AgyConfig, RateLimitConfig
+        from agychat_bot.runner.agy_stream import _extract_tool_log_detail
 
         # 1) MCP tool log detail extraction
         is_mcp, tool_name, detail = _extract_tool_log_detail(
@@ -784,7 +784,7 @@ class MixedSpeedPlugin(BotPlugin):
                 data_dir=base / "data",
                 process_factory=_factory,
             )
-            with self.assertLogs("agy_bot.runner.agy_stream", level="INFO") as cm:
+            with self.assertLogs("agychat_bot.runner.agy_stream", level="INFO") as cm:
                 res = await runner.run_subagent_task("log1", "draw a cat")
             self.assertTrue(res.ok)
             joined = "\n".join(cm.output)
@@ -799,13 +799,13 @@ class MixedSpeedPlugin(BotPlugin):
 
     async def test_log_buffer_boot_id_tags_and_step_index_tool_logging(self) -> None:
         import logging as _logging
-        from agy_bot.config import AgyConfig, RateLimitConfig
-        from agy_bot.runner.agy_stream import AgyRunner
-        from agy_bot.webui.log_buffer import LogRingBufferHandler
+        from agychat_bot.config import AgyConfig, RateLimitConfig
+        from agychat_bot.runner.agy_stream import AgyRunner
+        from agychat_bot.webui.log_buffer import LogRingBufferHandler
 
         handler = LogRingBufferHandler(max_entries=100)
         handler.setFormatter(_logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))
-        test_logger = _logging.getLogger("agy_bot.test_live_logs")
+        test_logger = _logging.getLogger("agychat_bot.test_live_logs")
         test_logger.setLevel(_logging.INFO)
         test_logger.addHandler(handler)
         try:
@@ -964,7 +964,7 @@ class MixedSpeedPlugin(BotPlugin):
                 data_dir=base / "data",
                 process_factory=_factory2,
             )
-            with self.assertLogs("agy_bot.runner.agy_stream", level="INFO") as cm:
+            with self.assertLogs("agychat_bot.runner.agy_stream", level="INFO") as cm:
                 res = await runner.ask("qq_1:group:7", "check image")
             self.assertTrue(res.ok)
             joined = "\n".join(cm.output)
@@ -977,8 +977,8 @@ class MixedSpeedPlugin(BotPlugin):
             await runner.shutdown()
 
     async def test_allow_command_execution_updates_settings_and_gemini_md(self) -> None:
-        from agy_bot.config import AgyConfig, RateLimitConfig, config_to_dict, load_config_from_dict
-        from agy_bot.runner.agy_stream import AgyRunner
+        from agychat_bot.config import AgyConfig, RateLimitConfig, config_to_dict, load_config_from_dict
+        from agychat_bot.runner.agy_stream import AgyRunner
 
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
@@ -1036,8 +1036,8 @@ class MixedSpeedPlugin(BotPlugin):
             await app.shutdown()
 
     async def test_subagent_empty_response_retry_ref_staging_and_segmented_handoff(self) -> None:
-        from agy_bot.config import AgyConfig, RateLimitConfig, SegmentedReplyConfig
-        from agy_bot.runner.agy_stream import AgyRunner
+        from agychat_bot.config import AgyConfig, RateLimitConfig, SegmentedReplyConfig
+        from agychat_bot.runner.agy_stream import AgyRunner
 
         # 1) AgyRunner treats 0-char subagent response as EMPTY_RESPONSE and retries automatically
         attempts = 0

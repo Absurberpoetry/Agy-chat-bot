@@ -11,14 +11,14 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from agy_bot.first_run import ensure_webui_credentials, needs_webui_credentials_setup  # noqa: E402
+from agychat_bot.first_run import ensure_webui_credentials, needs_webui_credentials_setup  # noqa: E402
 
 
 class FirstRunWebUISetupTests(unittest.TestCase):
     def _write_cfg(self, tmp: Path, webui: dict) -> Path:
         p = tmp / "config.json"
         p.write_text(
-            json.dumps({"bot_name": "AGY CLI BOT", "webui": webui}, ensure_ascii=False, indent=2),
+            json.dumps({"bot_name": "AgyChat Bot", "webui": webui}, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
         return p

@@ -11,15 +11,15 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from agy_bot.adapters.base import PlatformAdapter  # noqa: E402
-from agy_bot.adapters.onebot_v11 import OneBotV11Adapter  # noqa: E402
-from agy_bot.app import BotApplication  # noqa: E402
-from agy_bot.config import (  # noqa: E402
+from agychat_bot.adapters.base import PlatformAdapter  # noqa: E402
+from agychat_bot.adapters.onebot_v11 import OneBotV11Adapter  # noqa: E402
+from agychat_bot.app import BotApplication  # noqa: E402
+from agychat_bot.config import (  # noqa: E402
     BotConfig,
     PlatformConfig,
     load_config_from_dict,
 )
-from agy_bot.models import IncomingMessage, JudgeDecision, RunnerResult  # noqa: E402
+from agychat_bot.models import IncomingMessage, JudgeDecision, RunnerResult  # noqa: E402
 
 
 class _CaptureAdapter(PlatformAdapter):

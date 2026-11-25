@@ -14,13 +14,13 @@ from aiohttp.test_utils import TestClient, TestServer
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from agy_bot.app import BotApplication  # noqa: E402
-from agy_bot.config import AgyConfig, BotConfig, RateLimitConfig, WebUIConfig  # noqa: E402
-from agy_bot.models import RunnerResult  # noqa: E402
-from agy_bot.runner.agy_stream import AgyRunner, _extract_detailed_usage_stats  # noqa: E402
-from agy_bot.usage_store import TokenUsageStore  # noqa: E402
-from agy_bot.webui.cli_pty import parse_agy_quota_output  # noqa: E402
-from agy_bot.webui.server import WebUIServer  # noqa: E402
+from agychat_bot.app import BotApplication  # noqa: E402
+from agychat_bot.config import AgyConfig, BotConfig, RateLimitConfig, WebUIConfig  # noqa: E402
+from agychat_bot.models import RunnerResult  # noqa: E402
+from agychat_bot.runner.agy_stream import AgyRunner, _extract_detailed_usage_stats  # noqa: E402
+from agychat_bot.usage_store import TokenUsageStore  # noqa: E402
+from agychat_bot.webui.cli_pty import parse_agy_quota_output  # noqa: E402
+from agychat_bot.webui.server import WebUIServer  # noqa: E402
 
 
 _FAKE_TELEMETRY_AGY = textwrap.dedent(
@@ -473,7 +473,7 @@ class TokenUsageAnalyticsTests(unittest.IsolatedAsyncioTestCase):
             (pdir / "demo_plg.py").write_text(
                 textwrap.dedent(
                     """
-                    from agy_bot.plugins.sdk import BotPlugin, command
+                    from agychat_bot.plugins.sdk import BotPlugin, command
 
                     class DemoPlugin(BotPlugin):
                         id = "demo_plg"

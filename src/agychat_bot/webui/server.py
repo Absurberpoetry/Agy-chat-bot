@@ -34,7 +34,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _STATIC_DIR = Path(__file__).resolve().parent / "static"
-_COOKIE_NAME = "agy_bot_session"
+_COOKIE_NAME = "agychat_bot_session"
 _SESSION_TTL_SECONDS = 7 * 86400  # 7 days (well above 2-day minimum)
 _SESSION_SLIDING_THRESHOLD = 6 * 86400  # Refresh expiry when <6 days left
 _LOGIN_RATE_WINDOW_SECONDS = 300.0
@@ -59,7 +59,7 @@ async def _read_json_dict(request: web.Request) -> dict[str, Any]:
 
 
 class WebUIServer:
-    """Built-in aiohttp admin WebUI and JSON/SSE API server for AGY CLI BOT."""
+    """Built-in aiohttp admin WebUI and JSON/SSE API server for AgyChat Bot."""
 
     def __init__(
         self,
@@ -791,7 +791,7 @@ class WebUIServer:
             text=text,
             content_type="text/plain",
             charset="utf-8",
-            headers={"Content-Disposition": 'attachment; filename="agy-cli-bot.log"'},
+            headers={"Content-Disposition": 'attachment; filename="agychat-bot.log"'},
         )
 
     async def _handle_get_personas(self, request: web.Request) -> web.Response:

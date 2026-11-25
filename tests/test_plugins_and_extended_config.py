@@ -13,10 +13,10 @@ from aiohttp.test_utils import TestClient, TestServer
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from agy_bot.adapters.base import PlatformAdapter
-from agy_bot.adapters.registry import AdapterRegistry
-from agy_bot.app import BotApplication, format_context_prompt
-from agy_bot.config import (
+from agychat_bot.adapters.base import PlatformAdapter
+from agychat_bot.adapters.registry import AdapterRegistry
+from agychat_bot.app import BotApplication, format_context_prompt
+from agychat_bot.config import (
     ContentSafetyConfig,
     ModelProfileConfig,
     SegmentedReplyConfig,
@@ -24,12 +24,12 @@ from agy_bot.config import (
     load_config_from_dict,
     save_config,
 )
-from agy_bot.models import ContextSnapshot, IncomingMessage, JudgeDecision, RunnerResult
-from agy_bot.reply_formatter import apply_content_safety, compute_segment_delay
-from agy_bot.runner import AgyRunner, BaseAgentRunner
-from agy_bot.triggers import TriggerEngine
-from agy_bot.webui.log_buffer import LogRingBufferHandler
-from agy_bot.webui.server import WebUIServer
+from agychat_bot.models import ContextSnapshot, IncomingMessage, JudgeDecision, RunnerResult
+from agychat_bot.reply_formatter import apply_content_safety, compute_segment_delay
+from agychat_bot.runner import AgyRunner, BaseAgentRunner
+from agychat_bot.triggers import TriggerEngine
+from agychat_bot.webui.log_buffer import LogRingBufferHandler
+from agychat_bot.webui.server import WebUIServer
 
 
 class FakeAdapter(PlatformAdapter):
@@ -209,7 +209,7 @@ class PluginsAndExtendedConfigTests(unittest.IsolatedAsyncioTestCase):
             plugins_dir.mkdir(parents=True, exist_ok=True)
             (plugins_dir / "ext_demo.py").write_text(
                 """
-from agy_bot.plugins import BotPlugin, PluginReply, command, on_message, on_before_llm, on_after_llm
+from agychat_bot.plugins import BotPlugin, PluginReply, command, on_message, on_before_llm, on_after_llm
 
 class DemoPlugin(BotPlugin):
     id = "ext_demo"
