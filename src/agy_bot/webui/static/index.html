@@ -2336,32 +2336,33 @@
             </clipPath>
           </defs>
 
-          <!-- Phase 2 Morphing Layers (pixel-matched stroke widths to Phase 1 for invisible seam!) -->
-          <g id="spAgMorphGroup" opacity="0">
-            <!-- Staggered matte-black depth layer (offset -6, -4) -->
-            <path id="spAgBlackEcho" transform="translate(-6 -4)" fill="#07080B" fill-opacity="0.82" stroke="#1E2028" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d=""/>
-            <!-- Staggered cool-gray mid depth layer (offset +4, +5) -->
-            <path id="spAgGrayEcho" transform="translate(4 5)" fill="url(#spAgGrayLayer)" stroke="#8A90A0" stroke-opacity="0.45" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d=""/>
-            <!-- Hero Top-to-Bottom Vertical Gradient Antigravity Mark -->
-            <path id="spAgHeroPath" fill="url(#spAgVerticalGrad)" stroke="url(#spAgVerticalRim)" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round" d=""/>
-            <!-- Subtle specular sheen gliding smoothly across the vertical-gradient surface -->
-            <g clip-path="url(#spAgMorphClip)">
-              <rect class="sp-sheen-bar" x="24" y="22" width="42" height="138" transform="skewX(-22)" fill="url(#spSheenGrad)" opacity="0.55"/>
-            </g>
-          </g>
-
-          <!-- Phase 1: Upper contour drawing symmetrically outward from crown -> pinned tips (exact matching widths!) -->
-          <g id="spUpperStrokes" class="sp-upper-strokes">
+          <!-- Strict Back-to-Front Layer Order: Black Echo -> Gray Echo -> Hero White (never crosses over white!) -->
+          <g id="spAgMorphGroup" opacity="1">
+            <!-- Layer 1 (Back): Matte-black depth layer (offset -6, -4) -->
             <g transform="translate(-6 -4)">
+              <path id="spAgBlackEcho" fill="#07080B" fill-opacity="0.82" stroke="#1E2028" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d=""/>
               <path id="spUpBlkL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="#1E2028" stroke-width="2" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
               <path id="spUpBlkR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="#1E2028" stroke-width="2" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
             </g>
+
+            <!-- Layer 2 (Mid): Cool-gray depth layer (offset +4, +5) -->
             <g transform="translate(4 5)">
+              <path id="spAgGrayEcho" fill="url(#spAgGrayLayer)" stroke="#8A90A0" stroke-opacity="0.45" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" d=""/>
               <path id="spUpGryL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="#8A90A0" stroke-opacity="0.45" stroke-width="2" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
               <path id="spUpGryR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="#8A90A0" stroke-opacity="0.45" stroke-width="2" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
             </g>
-            <path id="spUpMainL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="url(#spAgVerticalRim)" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
-            <path id="spUpMainR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="url(#spAgVerticalRim)" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
+
+            <!-- Layer 3 (Front): Hero Top-to-Bottom Vertical Gradient Antigravity Mark -->
+            <g>
+              <path id="spAgHeroPath" fill="url(#spAgVerticalGrad)" stroke="url(#spAgVerticalRim)" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round" d=""/>
+              <g clip-path="url(#spAgMorphClip)">
+                <rect class="sp-sheen-bar" x="24" y="22" width="42" height="138" transform="skewX(-22)" fill="url(#spSheenGrad)" opacity="0.55"/>
+              </g>
+              <g id="spUpperStrokes" class="sp-upper-strokes">
+                <path id="spUpMainL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="url(#spAgVerticalRim)" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
+                <path id="spUpMainR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="url(#spAgVerticalRim)" stroke-width="3.2" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
+              </g>
+            </g>
           </g>
 
           <!-- Fixed endpoint anchor indicators locking at (44,142) & (148,142) -->
