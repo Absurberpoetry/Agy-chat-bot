@@ -2051,7 +2051,7 @@
     animation: spLevitate 4.4s ease-in-out 1.6s infinite;
   }
 
-  /* Minimal architectural framing: 1 matte-black depth slab + 1 hairline front frame + 1 tilted 3D orbit */
+  /* Minimal architectural framing: 1 matte-black depth slab + 1 hairline front frame */
   .sp-plane {
     position: absolute;
     pointer-events: none;
@@ -2072,28 +2072,6 @@
     border: 1px solid rgba(255, 255, 255, 0.12);
     animation: spPlaneFrontFlipIn .76s cubic-bezier(.16, 1, .3, 1) .24s both, spPlaneFrontDrift 5.8s ease-in-out 1.02s infinite alternate;
   }
-  .sp-gyro-ring {
-    position: absolute;
-    width: 196px;
-    height: 196px;
-    border-radius: 50%;
-    border: 1px dashed rgba(255, 255, 255, 0.2);
-    transform-style: preserve-3d;
-    pointer-events: none;
-    animation: spGyroIn .78s cubic-bezier(.16, 1, .3, 1) .48s both, spGyroTilt 7.4s linear 1.26s infinite;
-  }
-  .sp-gyro-ring::after {
-    content: "";
-    position: absolute;
-    top: -2.5px;
-    left: 50%;
-    width: 5px;
-    height: 5px;
-    margin-left: -2.5px;
-    border-radius: 50%;
-    background: #FFFFFF;
-    box-shadow: 0 0 8px rgba(255, 255, 255, 0.72);
-  }
 
   /* Pseudo-3D tilt wrapper for the morphing Antigravity mark */
   .sp-ag-tilt {
@@ -2109,16 +2087,6 @@
     height: 192px;
     overflow: visible;
     filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.54));
-  }
-
-  /* Minimal single outer segmented arc */
-  .sp-ring-a {
-    transform-origin: 96px 96px;
-    animation: spFadeIn .4s ease-out .22s both, spOrbitCW 13s linear .24s infinite;
-  }
-  .sp-ring-a-path {
-    stroke-dasharray: 84 26 18 32 104 34;
-    animation: spArcDraw .86s cubic-bezier(.22, 1, .36, 1) .22s both;
   }
 
   /* Phase 1 & 2 are unified inside one single rAF timeline — zero CSS/JS handoff pause! */
@@ -2337,52 +2305,29 @@
     <div class="splash-emblem-3d" aria-hidden="true">
       <div class="sp-plane sp-plane-back"></div>
       <div class="sp-plane sp-plane-front-wire"></div>
-      <div class="sp-gyro-ring"></div>
 
       <div class="sp-ag-tilt">
         <svg class="splash-svg" viewBox="0 0 192 192" fill="none">
           <defs>
-            <!-- Flowing Liquid Metal / Molten Chrome Horizon Gradient (animated in rAF!) -->
-            <linearGradient id="spLiquidChrome" x1="36" y1="28" x2="156" y2="152" gradientUnits="userSpaceOnUse">
+            <!-- Clean Top-to-Bottom Layered Depth Gradient (纯白顶光 -> 柔和浅灰 -> 沉稳冷灰底) -->
+            <linearGradient id="spAgVerticalGrad" x1="96" y1="34" x2="96" y2="146" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stop-color="#FFFFFF"/>
-              <stop offset="22%" stop-color="#EDF0F7"/>
-              <stop offset="42%" stop-color="#9CA2B3"/>
-              <stop offset="53%" stop-color="#343844"/>
-              <stop offset="64%" stop-color="#B9BFCB"/>
-              <stop offset="82%" stop-color="#FFFFFF"/>
-              <stop offset="100%" stop-color="#CDD2DF"/>
+              <stop offset="38%" stop-color="#ECEFF5"/>
+              <stop offset="72%" stop-color="#C2C7D4"/>
+              <stop offset="100%" stop-color="#8A90A0"/>
             </linearGradient>
-            <!-- Liquid Metal Chrome Rim Stroke -->
-            <linearGradient id="spChromeRim" x1="44" y1="34" x2="148" y2="146" gradientUnits="userSpaceOnUse">
+            <linearGradient id="spAgVerticalRim" x1="96" y1="34" x2="96" y2="146" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stop-color="#FFFFFF"/>
-              <stop offset="45%" stop-color="#CFD5E2"/>
-              <stop offset="72%" stop-color="#6B7180"/>
-              <stop offset="100%" stop-color="#F6F8FC"/>
+              <stop offset="55%" stop-color="#E2E6F0"/>
+              <stop offset="100%" stop-color="#9EA4B4"/>
             </linearGradient>
-            <!-- Volumetric 3D Liquid-Metal Specular Bevel Filter -->
-            <filter id="spLiquidMetalFx" x="-16%" y="-16%" width="132%" height="132%" color-interpolation-filters="sRGB">
-              <feGaussianBlur in="SourceAlpha" stdDeviation="3.4" result="blur"/>
-              <feSpecularLighting in="blur" surfaceScale="5.8" specularConstant="1.15" specularExponent="26" lighting-color="#FFFFFF" result="specOut">
-                <fePointLight id="spMetalLight" x="74" y="42" z="78"/>
-              </feSpecularLighting>
-              <feComposite in="specOut" in2="SourceAlpha" operator="in" result="specClip"/>
-              <feComponentTransfer in="specClip" result="specSoft">
-                <feFuncA type="linear" slope="0.62"/>
-              </feComponentTransfer>
-              <feMerge>
-                <feMergeNode in="SourceGraphic"/>
-                <feMergeNode in="specSoft"/>
-              </feMerge>
-            </filter>
-            <linearGradient id="spAgGrayLayer" x1="48" y1="40" x2="148" y2="146" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stop-color="#7B8192" stop-opacity="0.62"/>
-              <stop offset="55%" stop-color="#2D303A" stop-opacity="0.72"/>
-              <stop offset="100%" stop-color="#5C6170" stop-opacity="0.58"/>
+            <linearGradient id="spAgGrayLayer" x1="96" y1="36" x2="96" y2="148" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#8A90A0" stop-opacity="0.58"/>
+              <stop offset="100%" stop-color="#2A2D36" stop-opacity="0.72"/>
             </linearGradient>
             <linearGradient id="spSheenGrad" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0"/>
-              <stop offset="42%" stop-color="#FFFFFF" stop-opacity="0.92"/>
-              <stop offset="58%" stop-color="#D8DFEE" stop-opacity="0.75"/>
+              <stop offset="50%" stop-color="#FFFFFF" stop-opacity="0.62"/>
               <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
             </linearGradient>
             <clipPath id="spAgMorphClip">
@@ -2390,38 +2335,32 @@
             </clipPath>
           </defs>
 
-          <!-- Single delicate segmented outer orbital arc -->
-          <g class="sp-ring-a">
-            <circle class="sp-ring-a-path" cx="96" cy="96" r="82" stroke="#FFFFFF" stroke-opacity="0.18" stroke-width="1" stroke-linecap="butt"/>
-          </g>
-
-          <!-- Phase 2 Liquid-Metal Morphing Layers (seamlessly overlapped with Phase 1 — zero pause!) -->
+          <!-- Phase 2 Morphing Layers (top-to-bottom depth gradient, zero pause!) -->
           <g id="spAgMorphGroup" opacity="0">
             <!-- Staggered matte-black depth layer (offset -6, -4) -->
-            <path id="spAgBlackEcho" transform="translate(-6 -4)" fill="#07080B" fill-opacity="0.82" stroke="#262933" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" d=""/>
-            <!-- Staggered smoked-chrome mid depth layer (offset +4, +5) -->
-            <path id="spAgGrayEcho" transform="translate(4 5)" fill="url(#spAgGrayLayer)" stroke="#9DA3B3" stroke-opacity="0.34" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" d=""/>
-            <!-- Hero Liquid-Metal Chrome Antigravity Mark -->
-            <path id="spAgHeroPath" filter="url(#spLiquidMetalFx)" fill="url(#spLiquidChrome)" stroke="url(#spChromeRim)" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round" d=""/>
-            <!-- Subtle dark liquid-metal caustic inner rim + gliding specular sheen -->
+            <path id="spAgBlackEcho" transform="translate(-6 -4)" fill="#07080B" fill-opacity="0.82" stroke="#1E2028" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" d=""/>
+            <!-- Staggered cool-gray mid depth layer (offset +4, +5) -->
+            <path id="spAgGrayEcho" transform="translate(4 5)" fill="url(#spAgGrayLayer)" stroke="#9DA3B3" stroke-opacity="0.28" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round" d=""/>
+            <!-- Hero Top-to-Bottom Vertical Gradient Antigravity Mark -->
+            <path id="spAgHeroPath" fill="url(#spAgVerticalGrad)" stroke="url(#spAgVerticalRim)" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round" d=""/>
+            <!-- Subtle specular sheen gliding smoothly across the vertical-gradient surface -->
             <g clip-path="url(#spAgMorphClip)">
-              <path id="spAgInnerHighlight" fill="none" stroke="#FFFFFF" stroke-opacity="0.72" stroke-width="1.6" transform="translate(-1.5 -2)" d=""/>
-              <rect class="sp-sheen-bar" x="24" y="22" width="44" height="138" transform="skewX(-24)" fill="url(#spSheenGrad)" opacity="0.68"/>
+              <rect class="sp-sheen-bar" x="24" y="22" width="42" height="138" transform="skewX(-22)" fill="url(#spSheenGrad)" opacity="0.55"/>
             </g>
           </g>
 
-          <!-- Phase 1: Upper liquid-chrome contour drawing symmetrically outward from crown -> pinned tips (driven by same rAF clock!) -->
+          <!-- Phase 1: Upper contour drawing symmetrically outward from crown -> pinned tips -->
           <g id="spUpperStrokes" class="sp-upper-strokes">
             <g transform="translate(-6 -4)">
               <path id="spUpBlkL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="#08090D" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
               <path id="spUpBlkR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="#08090D" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
             </g>
             <g transform="translate(4 5)">
-              <path id="spUpGryL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="#858B9C" stroke-opacity="0.68" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
-              <path id="spUpGryR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="#858B9C" stroke-opacity="0.68" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
+              <path id="spUpGryL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="#858B9C" stroke-opacity="0.65" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
+              <path id="spUpGryR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="#858B9C" stroke-opacity="0.65" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
             </g>
-            <path id="spUpMainL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="url(#spChromeRim)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
-            <path id="spUpMainR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="url(#spChromeRim)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
+            <path id="spUpMainL" d="M 96 36 C 86 36 78 44 72 68 C 65 96 57 134 44 142" stroke="url(#spAgVerticalRim)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
+            <path id="spUpMainR" d="M 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142" stroke="url(#spAgVerticalRim)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="145" stroke-dashoffset="145"/>
           </g>
 
           <!-- Fixed endpoint anchor indicators locking at (44,142) & (148,142) -->
@@ -11429,7 +11368,6 @@ let _splashDismissed = false;
 (function startSplashAntigravityMorph() {
   const grp = document.getElementById('spAgMorphGroup');
   const hero = document.getElementById('spAgHeroPath');
-  const innerHi = document.getElementById('spAgInnerHighlight');
   const gray = document.getElementById('spAgGrayEcho');
   const blk = document.getElementById('spAgBlackEcho');
   const clip = document.getElementById('spAgClipPath');
@@ -11442,8 +11380,6 @@ let _splashDismissed = false;
   const upBlkR = document.getElementById('spUpBlkR');
   const pinL = document.getElementById('spPinL');
   const pinR = document.getElementById('spPinR');
-  const chromeGrad = document.getElementById('spLiquidChrome');
-  const metalLight = document.getElementById('spMetalLight');
   if (!grp || !hero || !gray || !blk || !clip) return;
 
   const OUTER = 'M 44 142 C 57 134 65 96 72 68 C 78 44 86 36 96 36 C 106 36 114 44 120 68 C 127 96 135 134 148 142';
@@ -11487,7 +11423,6 @@ let _splashDismissed = false;
   if (reduced) {
     const d1 = buildPath(1);
     hero.setAttribute('d', d1);
-    if (innerHi) innerHi.setAttribute('d', d1);
     gray.setAttribute('d', d1);
     blk.setAttribute('d', d1);
     clip.setAttribute('d', d1);
@@ -11555,7 +11490,6 @@ let _splashDismissed = false;
 
       const dHero = buildPath(tHero);
       hero.setAttribute('d', dHero);
-      if (innerHi) innerHi.setAttribute('d', dHero);
       clip.setAttribute('d', dHero);
       gray.setAttribute('d', buildPath(tGray));
       blk.setAttribute('d', buildPath(tBlk));
@@ -11565,21 +11499,7 @@ let _splashDismissed = false;
         if (pinL) pinL.classList.add('done');
         if (pinR) pinR.classList.add('done');
       }
-    }
-
-    // Phase 3: Continuous liquid-metal reflection flow (chrome horizon & 3D specular point light)
-    const phase = elapsed * 0.0022;
-    if (chromeGrad) {
-      const dx = Math.sin(phase) * 26;
-      const dy = Math.cos(phase * 0.85) * 18;
-      chromeGrad.setAttribute('x1', (38 + dx).toFixed(1));
-      chromeGrad.setAttribute('y1', (26 + dy).toFixed(1));
-      chromeGrad.setAttribute('x2', (154 - dx).toFixed(1));
-      chromeGrad.setAttribute('y2', (150 - dy).toFixed(1));
-    }
-    if (metalLight) {
-      metalLight.setAttribute('x', (96 + Math.sin(phase * 1.15) * 44).toFixed(1));
-      metalLight.setAttribute('y', (54 + Math.cos(phase * 0.9) * 24).toFixed(1));
+      if (tBlk >= 1) return;
     }
 
     requestAnimationFrame(tick);
