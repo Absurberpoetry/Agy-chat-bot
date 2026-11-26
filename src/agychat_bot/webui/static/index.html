@@ -429,8 +429,34 @@
   .log-viewport {
     flex: 1; min-height: 0; overflow-y: auto; padding: 12px 16px;
     font-family: var(--font-mono); font-size: 12.5px; line-height: 1.65; color: var(--text);
+    -webkit-overflow-scrolling: touch;
+    contain: layout style;
   }
-  .log-row { display: grid; grid-template-columns: 66px 42px 1fr; gap: 8px; padding: 2.5px 6px; border-radius: 5px; transition: background .12s; }
+  .log-row { display: grid; grid-template-columns: 66px 42px 1fr; gap: 8px; padding: 2.5px 6px; border-radius: 5px; transition: background .12s; contain: layout style; }
+  .log-more-bar {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 6px 8px 10px; margin-bottom: 4px;
+    border-bottom: 1px dashed var(--border); font-size: 11.5px; color: var(--text-3);
+  }
+  .wb-mobile-tabs {
+    display: none;
+    align-items: center; gap: 6px; padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--glass-2);
+    flex-shrink: 0;
+  }
+  .wb-mobile-tab {
+    flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 7px 12px; border-radius: 9px; font-size: 13px; font-weight: 700;
+    border: 1px solid var(--border); background: transparent; color: var(--text-2);
+  }
+  .wb-mobile-tab.active {
+    background: var(--text-strong); color: var(--bg); border-color: var(--text-strong);
+  }
+  .wb-mobile-badge {
+    font-family: var(--font-mono); font-size: 11px; padding: 1px 6px; border-radius: 999px;
+    background: rgba(128,128,128,0.22); color: inherit;
+  }
   .log-row:hover { background: var(--shared-bg); }
   .log-ts { color: var(--text-3); user-select: none; }
   .log-lvl { font-weight: 700; font-size: 11px; letter-spacing: 0.02em; }
@@ -1090,9 +1116,17 @@
   /* ===== Agy CLI Interactive Terminal & Settings Studio ===== */
   .cli-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.48fr) minmax(350px, 1fr);
+    grid-template-columns: minmax(0, 1.45fr) minmax(420px, 1fr);
+    width: 100%;
+    flex: 1;
+    min-width: 0;
     height: 100%;
     overflow: hidden;
+  }
+  @media (min-width: 1680px) {
+    .cli-grid {
+      grid-template-columns: minmax(0, 1.52fr) minmax(520px, 1fr);
+    }
   }
   .cli-left {
     display: flex;
@@ -1268,7 +1302,8 @@
     .workspace { overflow: visible; }
     .view.active { height: auto; }
     .workbench { grid-template-columns: 1fr; height: auto; }
-    .wb-right { border-left: none; border-top: 1px solid var(--border); height: 480px; }
+    .wb-right { border-left: none; border-top: 1px solid var(--border); height: auto; min-height: 0; }
+    .log-viewport { height: 460px; min-height: 300px; }
     .chat-stream { min-height: 360px; }
     .studio-grid { grid-template-columns: 1fr; height: auto; }
     .studio-left { border-right: none; border-bottom: 1px solid var(--border); }
@@ -1330,23 +1365,33 @@
     button { min-height: 34px; }
     button.sm { min-height: 32px; padding: 5px 10px; }
 
-    /* Workbench: Chat + Realtime Logs */
+    /* Workbench: Mobile 1-Tap Switcher (Chat <-> Realtime Logs) + Zero Blur Lag */
+    .wb-right, .wb-strip, .term-hd, .msg-bubble, .chat-composer, .cli-left, .cli-right {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+    .wb-mobile-tabs { display: flex; }
+    .workbench { display: flex; flex-direction: column; width: 100%; min-height: calc(100dvh - 102px); }
+    .workbench[data-mobile-pane="chat"] .wb-right { display: none; }
+    .workbench[data-mobile-pane="logs"] .wb-left { display: none; }
+    .workbench[data-mobile-pane="chat"] .wb-left { flex: 1; min-height: calc(100dvh - 156px); }
+    .workbench[data-mobile-pane="logs"] .wb-right { display: flex; flex: 1; height: auto; min-height: calc(100dvh - 156px); border-top: none; }
     .wb-strip { padding: 8px 12px; gap: 8px; }
     .wb-meta-right { width: 100%; justify-content: space-between; }
-    .chat-stream { padding: 12px; min-height: 260px; max-height: 54vh; gap: 10px; }
+    .chat-stream { padding: 12px; min-height: 260px; max-height: none; flex: 1; gap: 10px; }
     .msg-wrap { max-width: 90%; }
     .msg-bubble { font-size: 14px; padding: 9px 12px; }
     .chat-composer {
       margin: 0 10px calc(10px + env(safe-area-inset-bottom, 0px));
       padding: 6px 8px 6px 12px;
     }
-    .wb-right { height: 420px; }
+    .wb-right { height: auto; }
     .term-hd, .term-subbar { padding: 8px 10px; gap: 6px; }
     .term-pills { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
     .term-pills::-webkit-scrollbar { display: none; }
     .term-pill { flex-shrink: 0; }
     .term-search { flex: 1 1 120px; width: auto !important; min-width: 100px; font-size: 14px !important; }
-    .log-viewport { padding: 10px; font-size: 11.5px; }
+    .log-viewport { padding: 10px; font-size: 11.5px; height: min(64dvh, 540px); min-height: 320px; }
     .log-row { grid-template-columns: 54px 36px 1fr; gap: 6px; padding: 3px 4px; }
 
     /* Global Settings */
@@ -2614,7 +2659,17 @@
 <main class="workspace">
   <!-- ================= VIEW 1: OPEN BORDERLESS SPLIT WORKBENCH ================= -->
   <section id="view-workbench" class="view active">
-    <div class="workbench">
+    <div class="workbench" id="workbenchRoot" data-mobile-pane="logs">
+      <!-- Mobile-only 1-tap switcher between Realtime Logs & Chat Sandbox -->
+      <div class="wb-mobile-tabs" id="wbMobileTabs">
+        <button type="button" class="wb-mobile-tab active" data-mp="logs" onclick="switchMobileWbPane('logs')">
+          <span>实时日志</span>
+          <span class="wb-mobile-badge" id="wbMobileLogBadge">0</span>
+        </button>
+        <button type="button" class="wb-mobile-tab" data-mp="chat" onclick="switchMobileWbPane('chat')">
+          <span>对话调试</span>
+        </button>
+      </div>
       <!-- Left: Open Trigger Strip + Open Chat Canvas -->
       <div class="wb-left">
         <div class="wb-strip" style="justify-content:flex-end">
@@ -2723,7 +2778,7 @@
             </div>
           </div>
           <div class="sh-container" id="termActions" style="display:inline-flex;align-items:center;gap:2px">
-            <input id="logSearch" class="term-search" placeholder="筛选..." oninput="renderLogs()">
+            <input id="logSearch" class="term-search" placeholder="筛选..." oninput="scheduleRenderLogs()">
             <button class="term-pill term-act" onclick="manualRefreshLogs()" title="立即同步最新日志">刷新</button>
             <button class="term-pill term-act" id="btnAutoScroll" onclick="toggleAutoScroll()">追底: 开</button>
             <button class="term-pill term-act" onclick="clearLogs()">清屏</button>
@@ -3942,7 +3997,7 @@
               走代理
               <span class="switch"><input type="checkbox" id="cliOptProxy" checked><span class="track"></span><span class="thumb"></span></span>
             </label>
-            <select id="cliOptCwd" style="height:28px;font-size:12px;padding:0 8px" title="CLI 启动工作目录">
+            <select id="cliOptCwd" style="width:auto;min-width:136px;height:28px;font-size:12px;padding:0 10px" title="CLI 启动工作目录">
               <option value="workspace">bot_workspace</option>
               <option value="base">项目根目录</option>
             </select>
@@ -4235,6 +4290,9 @@ const MatrixBG = (() => {
   const canvas = document.getElementById('matrixCanvas');
   const ctx = canvas.getContext('2d');
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isMobileLite = window.matchMedia('(max-width: 768px), (pointer: coarse)').matches;
+  const staticOnly = reducedMotion || isMobileLite;
+  let manualClock = false;
 
   const SPACING = 36;
   let W = 0, H = 0, dpr = 1, cols = 0, rows = 0;
@@ -4309,7 +4367,7 @@ const MatrixBG = (() => {
     energy = new Float32Array(cols * rows);
     spinDir = new Float32Array(cols * rows);
     initFloaters();
-    if (reducedMotion) drawFrame(0);
+    if (staticOnly) drawFrame(0);
   }
 
   function excitePoint(px, py, radius, strength, dirSign) {
@@ -4593,6 +4651,7 @@ const MatrixBG = (() => {
   }
 
   function loop(now) {
+    if (manualClock) return;
     if (!document.hidden) {
       const dt = Math.min((now - lastTs) / 1000, 0.05);
       lastTs = now;
@@ -4604,9 +4663,25 @@ const MatrixBG = (() => {
   }
 
   resize();
-  if (!reducedMotion) requestAnimationFrame(loop);
+  if (!staticOnly) requestAnimationFrame(loop);
+  else drawFrame(0);
 
-  return { refreshTheme: () => { if (reducedMotion) drawFrame(0); } };
+  const apiObj = {
+    refreshTheme: () => { if (staticOnly || manualClock) drawFrame(0); },
+    setManualClock: (on) => {
+      manualClock = !!on;
+      if (!manualClock && !staticOnly) {
+        lastTs = performance.now();
+        requestAnimationFrame(loop);
+      }
+    },
+    stepDeterministic: (dtSec) => {
+      manualClock = true;
+      drawFrame(Math.max(0, Math.min(0.1, Number(dtSec) || 0)));
+    },
+  };
+  window.MatrixBG = apiObj;
+  return apiObj;
 })();
 
 /* ============================================================================
@@ -5002,17 +5077,104 @@ function deriveLogTags(entry) {
   return tags;
 }
 
+const IS_MOBILE_VIEW = () => window.matchMedia('(max-width: 768px)').matches;
+let logRenderLimit = IS_MOBILE_VIEW() ? 160 : 400;
+let pendingLogQueue = [];
+let logFlushRaf = 0;
+let logSearchDebounceTimer = null;
+
+function switchMobileWbPane(pane) {
+  const root = document.getElementById('workbenchRoot');
+  if (!root) return;
+  const target = pane === 'chat' ? 'chat' : 'logs';
+  root.setAttribute('data-mobile-pane', target);
+  document.querySelectorAll('#wbMobileTabs .wb-mobile-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.mp === target);
+  });
+  if (target === 'logs' && autoScrollLogs) {
+    requestAnimationFrame(() => {
+      const box = document.getElementById('logBox');
+      if (box) box.scrollTop = box.scrollHeight;
+    });
+  }
+}
+
+function initMobileWbDefaults() {
+  if (!IS_MOBILE_VIEW()) return;
+  const panel = document.getElementById('wbUsagePanel');
+  const btn = document.getElementById('btnToggleWbUsage');
+  if (panel && !panel.classList.contains('collapsed')) {
+    panel.classList.add('collapsed');
+    if (btn) btn.textContent = '展开';
+  }
+}
+initMobileWbDefaults();
+
 function resetLogBufferForBoot(newBootId) {
   logBootId = newBootId || '';
   lastLogSeq = 0;
   allLogs = [];
   seenLogKeys.clear();
+  pendingLogQueue = [];
+  if (logFlushRaf) { cancelAnimationFrame(logFlushRaf); logFlushRaf = 0; }
   const box = document.getElementById('logBox');
   if (box) box.innerHTML = '';
   updateLogCountMeta();
 }
 
-function ingestLogEntry(entry) {
+function buildLogRowEl(e) {
+  const row = document.createElement('div');
+  row.className = `log-row ${e.level}`;
+  const shortTime = (e.time || '').slice(11) || e.time || '';
+  const shortLvl = e.level === 'WARNING' ? 'WARN' : e.level;
+  const tags = Array.isArray(e.tags) ? e.tags : deriveLogTags(e);
+  const tagHtml = tags.map(t => `<span class="log-tag log-tag-${esc(t)}">${esc(LOG_TAG_LABELS[t] || t)}</span>`).join('');
+  row.innerHTML = `<span class="log-ts">${esc(shortTime)}</span><span class="log-lvl ${esc(e.level)}">${esc(shortLvl)}</span><span class="log-msg">${tagHtml}${esc(e.message)}</span>`;
+  return row;
+}
+
+function scheduleLogFlush() {
+  if (logFlushRaf) return;
+  logFlushRaf = requestAnimationFrame(() => {
+    logFlushRaf = 0;
+    flushPendingLogs();
+  });
+}
+
+function flushPendingLogs() {
+  if (!pendingLogQueue.length) return;
+  const batch = pendingLogQueue;
+  pendingLogQueue = [];
+  const box = document.getElementById('logBox');
+  if (!box) return;
+  const cap = logRenderLimit;
+  const matched = [];
+  for (let i = 0; i < batch.length; i++) {
+    if (matchLog(batch[i])) matched.push(batch[i]);
+  }
+  if (!matched.length) {
+    updateLogCountMeta();
+    return;
+  }
+  const slice = matched.length > cap ? matched.slice(matched.length - cap) : matched;
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < slice.length; i++) {
+    frag.appendChild(buildLogRowEl(slice[i]));
+  }
+  box.appendChild(frag);
+  // Trim excess oldest DOM nodes in a single tight pass (skip optional .log-more-bar)
+  let rowsCount = box.querySelectorAll(':scope > .log-row').length;
+  while (rowsCount > cap) {
+    const firstRow = box.querySelector(':scope > .log-row');
+    if (!firstRow) break;
+    firstRow.remove();
+    rowsCount--;
+  }
+  if (autoScrollLogs) box.scrollTop = box.scrollHeight;
+  updateLogCountMeta();
+}
+
+function ingestLogEntry(entry, { deferRender = false } = {}) {
   if (!entry || typeof entry !== 'object') return false;
   const bid = String(entry.boot_id || logBootId || '');
   if (bid && logBootId && bid !== logBootId) {
@@ -5029,50 +5191,56 @@ function ingestLogEntry(entry) {
   }
   entry.tags = deriveLogTags(entry);
   allLogs.push(entry);
-  if (allLogs.length > 1500) {
+  const maxMem = IS_MOBILE_VIEW() ? 600 : 1200;
+  if (allLogs.length > maxMem) {
     const old = allLogs.shift();
     if (old && old.seq) seenLogKeys.delete(`${old.boot_id || ''}:${old.seq}`);
   }
-  appendLogRow(entry);
+  pendingLogQueue.push(entry);
+  if (!deferRender) scheduleLogFlush();
   return true;
 }
 
 function updateLogCountMeta() {
   const el = document.getElementById('logCountMeta');
-  if (!el) return;
-  const shown = document.getElementById('logBox')?.childElementCount || 0;
-  el.textContent = shown === allLogs.length ? `${allLogs.length} 条` : `${shown} / ${allLogs.length} 条`;
+  const shown = document.querySelectorAll('#logBox > .log-row').length;
+  if (el) {
+    el.textContent = shown === allLogs.length ? `${allLogs.length} 条` : `显示 ${shown} / ${allLogs.length} 条`;
+  }
+  const badge = document.getElementById('wbMobileLogBadge');
+  if (badge) badge.textContent = String(allLogs.length);
 }
 
 async function syncLogsIncremental({ forceFull = false } = {}) {
   if (logSyncInFlight) return;
   logSyncInFlight = true;
   try {
+    const fetchLimit = IS_MOBILE_VIEW() ? 200 : 400;
     const qs = forceFull || !lastLogSeq
-      ? '/api/logs?limit=400'
-      : `/api/logs?limit=400&since_seq=${encodeURIComponent(lastLogSeq)}`;
+      ? `/api/logs?limit=${fetchLimit}`
+      : `/api/logs?limit=${fetchLimit}&since_seq=${encodeURIComponent(lastLogSeq)}`;
     const res = await api(qs);
     const srvBoot = String(res.boot_id || '');
     const srvLatest = Number(res.latest_seq || 0);
     if (srvBoot && logBootId && srvBoot !== logBootId) {
       resetLogBufferForBoot(srvBoot);
-      const fullRes = await api('/api/logs?limit=400');
-      (fullRes.data || []).forEach(ingestLogEntry);
-      updateLogCountMeta();
+      const fullRes = await api(`/api/logs?limit=${fetchLimit}`);
+      (fullRes.data || []).forEach(e => ingestLogEntry(e, { deferRender: true }));
+      flushPendingLogs();
       return;
     }
     if (srvBoot && !logBootId) logBootId = srvBoot;
     if (srvLatest > 0 && lastLogSeq > srvLatest) {
       resetLogBufferForBoot(srvBoot);
-      const fullRes = await api('/api/logs?limit=400');
-      (fullRes.data || []).forEach(ingestLogEntry);
-      updateLogCountMeta();
+      const fullRes = await api(`/api/logs?limit=${fetchLimit}`);
+      (fullRes.data || []).forEach(e => ingestLogEntry(e, { deferRender: true }));
+      flushPendingLogs();
       return;
     }
     const items = res.data || [];
     if (items.length) {
-      items.forEach(ingestLogEntry);
-      updateLogCountMeta();
+      items.forEach(e => ingestLogEntry(e, { deferRender: true }));
+      flushPendingLogs();
     }
   } catch {} finally {
     logSyncInFlight = false;
@@ -5134,7 +5302,6 @@ function openLogEventSource() {
     try {
       const entry = JSON.parse(ev.data);
       if (ingestLogEntry(entry)) {
-        updateLogCountMeta();
         const mTxt = String(entry.message || '');
         if (mTxt.includes('推理完成') || mTxt.includes('子代理进程执行成功')) {
           scheduleUsageRefresh();
@@ -5153,11 +5320,14 @@ function connectLogStream() {
   if (logSyncTimer) clearInterval(logSyncTimer);
   logSyncTimer = setInterval(() => {
     if (document.hidden) return;
-    syncLogsIncremental({ forceFull: false });
-    if (Date.now() - lastLogEventAt > 22000) {
-      openLogEventSource();
+    const sseHealthy = logSource && logSource.readyState === EventSource.OPEN && (Date.now() - lastLogEventAt < 20000);
+    if (!sseHealthy) {
+      syncLogsIncremental({ forceFull: false });
+      if (Date.now() - lastLogEventAt > 24000) {
+        openLogEventSource();
+      }
     }
-  }, 3000);
+  }, 8000);
 }
 
 document.addEventListener('visibilitychange', () => {
@@ -5207,25 +5377,41 @@ function matchLog(e) {
 
 function appendLogRow(e) {
   if (!matchLog(e)) return;
-  const box = document.getElementById('logBox');
-  if (!box) return;
-  const row = document.createElement('div');
-  row.className = `log-row ${e.level}`;
-  const shortTime = (e.time || '').slice(11) || e.time;
-  const shortLvl = e.level === 'WARNING' ? 'WARN' : e.level;
-  const tags = Array.isArray(e.tags) ? e.tags : deriveLogTags(e);
-  const tagHtml = tags.map(t => `<span class="log-tag log-tag-${esc(t)}">${esc(LOG_TAG_LABELS[t] || t)}</span>`).join('');
-  row.innerHTML = `<span class="log-ts">${esc(shortTime)}</span><span class="log-lvl ${esc(e.level)}">${esc(shortLvl)}</span><span class="log-msg">${tagHtml}${esc(e.message)}</span>`;
-  box.appendChild(row);
-  if (box.childElementCount > 1200) box.removeChild(box.firstChild);
-  if (autoScrollLogs) box.scrollTop = box.scrollHeight;
+  pendingLogQueue.push(e);
+  scheduleLogFlush();
+}
+
+function loadOlderLogsInView() {
+  logRenderLimit += 200;
+  renderLogs();
+}
+
+function scheduleRenderLogs() {
+  clearTimeout(logSearchDebounceTimer);
+  logSearchDebounceTimer = setTimeout(renderLogs, 160);
 }
 
 function renderLogs() {
   const box = document.getElementById('logBox');
   if (!box) return;
+  pendingLogQueue = [];
+  if (logFlushRaf) { cancelAnimationFrame(logFlushRaf); logFlushRaf = 0; }
+  const matched = allLogs.filter(matchLog);
+  const hiddenCount = Math.max(0, matched.length - logRenderLimit);
+  const visible = hiddenCount > 0 ? matched.slice(hiddenCount) : matched;
+  const frag = document.createDocumentFragment();
+  if (hiddenCount > 0) {
+    const bar = document.createElement('div');
+    bar.className = 'log-more-bar';
+    bar.innerHTML = `<span>已折叠较早的 ${hiddenCount} 条日志以保证流畅</span><button type="button" class="term-pill term-act" onclick="loadOlderLogsInView()">加载更早 +200</button>`;
+    frag.appendChild(bar);
+  }
+  for (let i = 0; i < visible.length; i++) {
+    frag.appendChild(buildLogRowEl(visible[i]));
+  }
   box.innerHTML = '';
-  allLogs.filter(matchLog).forEach(appendLogRow);
+  box.appendChild(frag);
+  if (autoScrollLogs) box.scrollTop = box.scrollHeight;
   updateLogCountMeta();
 }
 
