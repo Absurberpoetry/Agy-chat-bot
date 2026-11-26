@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from agychat_bot.config import (  # noqa: E402
+from agy_chat_bot.config import (  # noqa: E402
     ContextLLMTriggerConfig,
     DiceTriggerConfig,
     KeywordTriggerConfig,
@@ -16,8 +16,8 @@ from agychat_bot.config import (  # noqa: E402
     QuoteTriggerConfig,
     TriggersConfig,
 )
-from agychat_bot.models import IncomingMessage, JudgeDecision  # noqa: E402
-from agychat_bot.triggers.engine import TriggerEngine  # noqa: E402
+from agy_chat_bot.models import IncomingMessage, JudgeDecision  # noqa: E402
+from agy_chat_bot.triggers.engine import TriggerEngine  # noqa: E402
 
 
 def _make_msg(

@@ -768,7 +768,7 @@ def render_plugin_template(plugin_id: str) -> str:
     cls_name = "".join(part.capitalize() for part in re.split(r"[^a-zA-Z0-9]+", plugin_id) if part) or "Custom"
     return f'''from __future__ import annotations
 
-from agychat_bot.plugins import BotPlugin, PluginContext, PluginReply, command, on_after_llm, on_before_llm, on_message
+from agy_chat_bot.plugins import BotPlugin, PluginContext, PluginReply, command, on_after_llm, on_before_llm, on_message
 
 
 class {cls_name}Plugin(BotPlugin):

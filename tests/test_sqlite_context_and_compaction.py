@@ -12,10 +12,10 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from agychat_bot.adapters.base import PlatformAdapter  # noqa: E402
-from agychat_bot.app import BotApplication, format_context_prompt, format_delta_prompt  # noqa: E402
-from agychat_bot.collector import GroupContextStore  # noqa: E402
-from agychat_bot.config import (  # noqa: E402
+from agy_chat_bot.adapters.base import PlatformAdapter  # noqa: E402
+from agy_chat_bot.app import BotApplication, format_context_prompt, format_delta_prompt  # noqa: E402
+from agy_chat_bot.collector import GroupContextStore  # noqa: E402
+from agy_chat_bot.config import (  # noqa: E402
     AgyConfig,
     BotConfig,
     CollectorConfig,
@@ -24,8 +24,8 @@ from agychat_bot.config import (  # noqa: E402
     config_to_dict,
     load_config_from_dict,
 )
-from agychat_bot.models import IncomingMessage, MediaAttachment  # noqa: E402
-from agychat_bot.runner.agy_stream import AgyRunner  # noqa: E402
+from agy_chat_bot.models import IncomingMessage, MediaAttachment  # noqa: E402
+from agy_chat_bot.runner.agy_stream import AgyRunner  # noqa: E402
 
 
 class _RecordingAdapter(PlatformAdapter):
@@ -451,7 +451,7 @@ class SqliteContextAndCompactionTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(win.archived_count, 2)
 
             # Spawn the actual stdio MCP server subprocess
-            server_script = ROOT / "src" / "agychat_bot" / "mcp_history_server.py"
+            server_script = ROOT / "src" / "agy_chat_bot" / "mcp_history_server.py"
             proc = await asyncio.create_subprocess_exec(
                 sys.executable,
                 str(server_script),
@@ -471,7 +471,7 @@ class SqliteContextAndCompactionTests(unittest.IsolatedAsyncioTestCase):
 
                 # 1. initialize
                 r_init = await _rpc({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {}})
-                self.assertEqual(r_init["result"]["serverInfo"]["name"], "agychat-bot-chat-history")
+                self.assertEqual(r_init["result"]["serverInfo"]["name"], "agy-chat-bot-chat-history")
 
                 # 2. tools/list
                 r_list = await _rpc({"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}})

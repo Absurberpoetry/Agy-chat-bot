@@ -9,13 +9,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from agychat_bot.adapters import AdapterRegistry  # noqa: E402
-from agychat_bot.adapters.base import PlatformAdapter  # noqa: E402
-from agychat_bot.adapters.generic_ws import GenericWSAdapter  # noqa: E402
-from agychat_bot.app import BotApplication  # noqa: E402
-from agychat_bot.collector.context_store import GroupContextStore  # noqa: E402
-from agychat_bot.collector.debouncer import DebouncedReplyManager  # noqa: E402
-from agychat_bot.config import (  # noqa: E402
+from agy_chat_bot.adapters import AdapterRegistry  # noqa: E402
+from agy_chat_bot.adapters.base import PlatformAdapter  # noqa: E402
+from agy_chat_bot.adapters.generic_ws import GenericWSAdapter  # noqa: E402
+from agy_chat_bot.app import BotApplication  # noqa: E402
+from agy_chat_bot.collector.context_store import GroupContextStore  # noqa: E402
+from agy_chat_bot.collector.debouncer import DebouncedReplyManager  # noqa: E402
+from agy_chat_bot.config import (  # noqa: E402
     AgyConfig,
     BotConfig,
     CollectorConfig,
@@ -25,8 +25,8 @@ from agychat_bot.config import (  # noqa: E402
     TriggersConfig,
     load_config,
 )
-from agychat_bot.models import ContextSnapshot, IncomingMessage, TriggerResult  # noqa: E402
-from agychat_bot.runner import MockAgentRunner  # noqa: E402
+from agy_chat_bot.models import ContextSnapshot, IncomingMessage, TriggerResult  # noqa: E402
+from agy_chat_bot.runner import MockAgentRunner  # noqa: E402
 
 
 def _make_msg(

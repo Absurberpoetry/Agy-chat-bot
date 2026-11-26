@@ -14,10 +14,10 @@ from aiohttp import web
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from agychat_bot.adapters.onebot_v11 import OneBotV11Adapter  # noqa: E402
-from agychat_bot.app import BotApplication  # noqa: E402
-from agychat_bot.config import BotConfig, PlatformConfig  # noqa: E402
-from agychat_bot.models import IncomingMessage, JudgeDecision, RunnerResult  # noqa: E402
+from agy_chat_bot.adapters.onebot_v11 import OneBotV11Adapter  # noqa: E402
+from agy_chat_bot.app import BotApplication  # noqa: E402
+from agy_chat_bot.config import BotConfig, PlatformConfig  # noqa: E402
+from agy_chat_bot.models import IncomingMessage, JudgeDecision, RunnerResult  # noqa: E402
 
 _PNG_BYTES = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC"

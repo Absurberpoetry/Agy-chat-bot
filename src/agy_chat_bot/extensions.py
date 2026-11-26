@@ -931,7 +931,7 @@ class McpManager:
             "params": {
                 "protocolVersion": "2024-11-05",
                 "capabilities": {},
-                "clientInfo": {"name": "agychat-bot-webui", "version": "1.0.0"},
+                "clientInfo": {"name": "agy-chat-bot-webui", "version": "1.0.0"},
             },
         }
         inited_notif = {

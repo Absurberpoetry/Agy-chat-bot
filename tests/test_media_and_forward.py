@@ -14,13 +14,13 @@ from aiohttp import web
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from agychat_bot.adapters.onebot_v11 import OneBotV11Adapter  # noqa: E402
-from agychat_bot.app import BotApplication, format_context_prompt  # noqa: E402
-from agychat_bot.collector.context_store import GroupContextStore  # noqa: E402
-from agychat_bot.config import BotConfig, ModelProfileConfig, PlatformConfig  # noqa: E402
-from agychat_bot.media import detect_image_ext, materialize_image, materialize_snapshot_images  # noqa: E402
-from agychat_bot.models import ContextSnapshot, IncomingMessage, MediaAttachment, RunnerResult  # noqa: E402
-from agychat_bot.runner.agy_stream import AgyRunner  # noqa: E402
+from agy_chat_bot.adapters.onebot_v11 import OneBotV11Adapter  # noqa: E402
+from agy_chat_bot.app import BotApplication, format_context_prompt  # noqa: E402
+from agy_chat_bot.collector.context_store import GroupContextStore  # noqa: E402
+from agy_chat_bot.config import BotConfig, ModelProfileConfig, PlatformConfig  # noqa: E402
+from agy_chat_bot.media import detect_image_ext, materialize_image, materialize_snapshot_images  # noqa: E402
+from agy_chat_bot.models import ContextSnapshot, IncomingMessage, MediaAttachment, RunnerResult  # noqa: E402
+from agy_chat_bot.runner.agy_stream import AgyRunner  # noqa: E402
 
 # Tiny valid 1x1 PNG & 1x1 GIF & fake JPEG header bytes
 _PNG_BYTES = base64.b64decode(
@@ -82,7 +82,7 @@ class _FakeRunner:
         return RunnerResult(ok=True, response="收到图片和聊天记录了")
 
     async def judge_context(self, session_key: str, messages: list[IncomingMessage]):
-        from agychat_bot.models import JudgeDecision
+        from agy_chat_bot.models import JudgeDecision
 
         return JudgeDecision(should_reply=False)
 
@@ -487,7 +487,7 @@ class MediaAndForwardTests(unittest.IsolatedAsyncioTestCase):
 
     def test_sanitize_reference_image_strips_android_exif_and_iccp_chunks(self) -> None:
         import struct
-        from agychat_bot.media import sanitize_reference_image
+        from agy_chat_bot.media import sanitize_reference_image
 
         def _chunk(ctype: bytes, data: bytes) -> bytes:
             return struct.pack(">I", len(data)) + ctype + data + b"\x00\x00\x00\x00"

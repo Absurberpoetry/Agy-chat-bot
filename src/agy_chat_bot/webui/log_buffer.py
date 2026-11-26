@@ -48,8 +48,8 @@ def classify_log_tags(logger_name: str, message: str) -> list[str]:
 
     if (
         "[插件" in msg
-        or "agychat_bot.plugin" in lname
-        or "agychat_bot.plugins" in lname
+        or "agy_chat_bot.plugin" in lname
+        or "agy_chat_bot.plugins" in lname
         or "外部插件" in msg
     ):
         tags.append("plugin")

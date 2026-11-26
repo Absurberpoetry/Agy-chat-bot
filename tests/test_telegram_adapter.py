@@ -9,17 +9,17 @@ from typing import Any
 
 from aiohttp import web
 
-from agychat_bot.adapters.registry import AdapterRegistry
-from agychat_bot.adapters.telegram import (
+from agy_chat_bot.adapters.registry import AdapterRegistry
+from agy_chat_bot.adapters.telegram import (
     TelegramAdapter,
     normalize_telegram_api_base,
     probe_telegram_bot,
     resolve_telegram_proxy,
 )
-from agychat_bot.channel_guard import is_strict_explicit_at_bot
-from agychat_bot.config import PlatformConfig, config_to_dict, load_config_from_dict
-from agychat_bot.models import IncomingMessage, MediaAttachment
-from agychat_bot.webui.cli_pty import parse_agy_quota_output
+from agy_chat_bot.channel_guard import is_strict_explicit_at_bot
+from agy_chat_bot.config import PlatformConfig, config_to_dict, load_config_from_dict
+from agy_chat_bot.models import IncomingMessage, MediaAttachment
+from agy_chat_bot.webui.cli_pty import parse_agy_quota_output
 
 
 _TINY_PNG = (

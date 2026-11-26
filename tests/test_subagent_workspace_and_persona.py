@@ -13,11 +13,11 @@ SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
-from agychat_bot.app import BotApplication
-from agychat_bot.config import AgyConfig, RateLimitConfig, config_to_dict, load_config_from_dict
-from agychat_bot.persona_store import SUBAGENT_FOLLOW_MAIN
-from agychat_bot.runner.agy_stream import AgyRunner, MockAgentRunner
-from agychat_bot.webui.server import WebUIServer
+from agy_chat_bot.app import BotApplication
+from agy_chat_bot.config import AgyConfig, RateLimitConfig, config_to_dict, load_config_from_dict
+from agy_chat_bot.persona_store import SUBAGENT_FOLLOW_MAIN
+from agy_chat_bot.runner.agy_stream import AgyRunner, MockAgentRunner
+from agy_chat_bot.webui.server import WebUIServer
 from aiohttp import web as aiohttp_web
 from aiohttp.test_utils import TestClient, TestServer
 
@@ -295,7 +295,7 @@ class SubagentWorkspaceAndPersonaTests(unittest.IsolatedAsyncioTestCase):
                 await ob_runner.cleanup()
 
     async def test_webui_chat_data_list_preview_and_permanent_delete(self) -> None:
-        from agychat_bot.models import IncomingMessage
+        from agy_chat_bot.models import IncomingMessage
 
         with tempfile.TemporaryDirectory() as td:
             base = Path(td)

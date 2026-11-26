@@ -8,4 +8,4 @@ if not exist ".venv\Scripts\python.exe" (
 )
 
 set "PYTHONPATH=%~dp0src"
-".venv\Scripts\python.exe" -X utf8 -m agychat_bot.win_bg start
+".venv\Scripts\python.exe" -X utf8 -m agy_chat_bot.win_bg start

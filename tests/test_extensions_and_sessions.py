@@ -18,10 +18,10 @@ from aiohttp.test_utils import TestClient, TestServer
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from agychat_bot.app import BotApplication  # noqa: E402
-from agychat_bot.config import BotConfig, WebUIConfig  # noqa: E402
-from agychat_bot.models import IncomingMessage, JudgeDecision, RunnerResult  # noqa: E402
-from agychat_bot.webui.server import WebUIServer  # noqa: E402
+from agy_chat_bot.app import BotApplication  # noqa: E402
+from agy_chat_bot.config import BotConfig, WebUIConfig  # noqa: E402
+from agy_chat_bot.models import IncomingMessage, JudgeDecision, RunnerResult  # noqa: E402
+from agy_chat_bot.webui.server import WebUIServer  # noqa: E402
 
 
 class _FakeRunner:
@@ -72,7 +72,7 @@ class ExtensionsAndSessionsTests(unittest.IsolatedAsyncioTestCase):
             async with TestClient(TestServer(srv1.web_app)) as client1:
                 r = await client1.post("/api/auth/login", json={"username": "star", "password": "secret"})
                 self.assertEqual(r.status, 200)
-                cookie = r.cookies.get("agychat_bot_session")
+                cookie = r.cookies.get("agy_chat_bot_session")
                 self.assertIsNotNone(cookie)
                 assert cookie is not None
                 # At least 2 days (we set 7 days = 604800s)
@@ -89,20 +89,20 @@ class ExtensionsAndSessionsTests(unittest.IsolatedAsyncioTestCase):
             # Instance 2 (simulating process restart): same cookie stays authenticated!
             srv2 = WebUIServer(bot_app, wcfg)
             async with TestClient(TestServer(srv2.web_app)) as client2:
-                r_me = await client2.get("/api/auth/me", cookies={"agychat_bot_session": token_val})
+                r_me = await client2.get("/api/auth/me", cookies={"agy_chat_bot_session": token_val})
                 self.assertEqual(r_me.status, 200)
                 d_me = await r_me.json()
                 self.assertTrue(d_me["authenticated"])
                 self.assertGreaterEqual(d_me["session_ttl_days"], 2.0)
 
                 # Logout removes persisted token
-                r_out = await client2.post("/api/auth/logout", cookies={"agychat_bot_session": token_val})
+                r_out = await client2.post("/api/auth/logout", cookies={"agy_chat_bot_session": token_val})
                 self.assertEqual(r_out.status, 200)
-                r_me2 = await client2.get("/api/auth/me", cookies={"agychat_bot_session": token_val})
+                r_me2 = await client2.get("/api/auth/me", cookies={"agy_chat_bot_session": token_val})
                 self.assertFalse((await r_me2.json())["authenticated"])
 
     async def test_plugins_ui_hides_source_and_open_location_works(self) -> None:
-        html = (ROOT / "src" / "agychat_bot" / "webui" / "static" / "index.html").read_text(encoding="utf-8")
+        html = (ROOT / "src" / "agy_chat_bot" / "webui" / "static" / "index.html").read_text(encoding="utf-8")
         self.assertIn("打开插件所在位置", html)
         self.assertNotIn("plSourceEditor", html)
         self.assertNotIn("plPaneSource", html)
@@ -117,7 +117,7 @@ class ExtensionsAndSessionsTests(unittest.IsolatedAsyncioTestCase):
             await bot_app.plugin_manager.create_plugin("demo_open")
             srv = WebUIServer(bot_app, wcfg)
 
-            with patch("agychat_bot.webui.server.open_in_file_manager", return_value=(True, "ok")) as mock_open:
+            with patch("agy_chat_bot.webui.server.open_in_file_manager", return_value=(True, "ok")) as mock_open:
                 async with TestClient(TestServer(srv.web_app)) as client:
                     r1 = await client.post("/api/plugins/demo_open/open-location")
                     self.assertEqual(r1.status, 200)
@@ -297,10 +297,10 @@ class ExtensionsAndSessionsTests(unittest.IsolatedAsyncioTestCase):
             await http_runner.cleanup()
 
     async def test_context_history_persistence_and_warm_recycle_preserves_sessions(self) -> None:
-        from agychat_bot.collector import GroupContextStore
-        from agychat_bot.config import AgyConfig, RateLimitConfig
-        from agychat_bot.models import IncomingMessage, MediaAttachment
-        from agychat_bot.runner.agy_stream import AgyRunner
+        from agy_chat_bot.collector import GroupContextStore
+        from agy_chat_bot.config import AgyConfig, RateLimitConfig
+        from agy_chat_bot.models import IncomingMessage, MediaAttachment
+        from agy_chat_bot.runner.agy_stream import AgyRunner
 
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)

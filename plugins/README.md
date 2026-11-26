@@ -1,4 +1,4 @@
-# AgyChat Bot 聊天网关插件开发指南（Python）
+# Agy Chat Bot 聊天网关插件开发指南（Python）
 
 > **定位分工说明**
 > - **让模型主动调用外部工具**（如画图、联网接口、数据库查询、脚本工具）→ 请直接使用 **`agy` 官方原生 Skill / MCP**（在 WebUI 的 **Skill & MCP** 页面管理，100% 遵循官方格式，可直接接入社区现成生态）。
@@ -10,7 +10,7 @@
 
 ```python
 from __future__ import annotations
-from agychat_bot.plugins import (
+from agy_chat_bot.plugins import (
     BotPlugin,
     PluginContext,
     PluginReply,

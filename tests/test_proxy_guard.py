@@ -10,7 +10,7 @@ from aiohttp import web
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from agychat_bot.proxy_guard import (  # noqa: E402
+from agy_chat_bot.proxy_guard import (  # noqa: E402
     ProbeOutcome,
     ProxyControllerInfo,
     extract_local_proxy_port,

@@ -1,4 +1,4 @@
-# AgyChat Bot
+# Agy Chat Bot
 
 基于官方原生 Antigravity CLI（`agy`）的轻量聊天机器人，可以把gemini从agy cli接到聊天客户端，把agy cli当群聊bot用。
 

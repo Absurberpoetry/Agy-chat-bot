@@ -12,12 +12,12 @@ from aiohttp.test_utils import TestClient, TestServer
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from agychat_bot.adapters.base import OnMessageFn, PlatformAdapter
-from agychat_bot.app import BotApplication
-from agychat_bot.config import ModelProfileConfig, PlatformConfig, config_to_dict, load_config_from_dict
-from agychat_bot.models import IncomingMessage, JudgeDecision, RunnerResult
-from agychat_bot.runner import AgyRunner, BaseAgentRunner
-from agychat_bot.webui.server import WebUIServer
+from agy_chat_bot.adapters.base import OnMessageFn, PlatformAdapter
+from agy_chat_bot.app import BotApplication
+from agy_chat_bot.config import ModelProfileConfig, PlatformConfig, config_to_dict, load_config_from_dict
+from agy_chat_bot.models import IncomingMessage, JudgeDecision, RunnerResult
+from agy_chat_bot.runner import AgyRunner, BaseAgentRunner
+from agy_chat_bot.webui.server import WebUIServer
 
 
 class _StyleCaptureAdapter(PlatformAdapter):
@@ -176,7 +176,7 @@ class IdentitiesAndTriggerStylesTests(unittest.IsolatedAsyncioTestCase):
             plugins_dir = base / "plugins"
             plugins_dir.mkdir()
             (plugins_dir / "echo_pl.py").write_text(
-                "from agychat_bot.plugins import BotPlugin, PluginReply, command\n"
+                "from agy_chat_bot.plugins import BotPlugin, PluginReply, command\n"
                 "class EchoPl(BotPlugin):\n"
                 "    id = 'echo_pl'\n"
                 "    @command('echo')\n"
@@ -339,7 +339,7 @@ class IdentitiesAndTriggerStylesTests(unittest.IsolatedAsyncioTestCase):
                     json={
                         "filename": "hello_imp.py",
                         "code": (
-                            "from agychat_bot.plugins import BotPlugin, PluginReply, command\n"
+                            "from agy_chat_bot.plugins import BotPlugin, PluginReply, command\n"
                             "class HelloImp(BotPlugin):\n"
                             "    id = 'hello_imp'\n"
                             "    @command('hi_imp')\n"

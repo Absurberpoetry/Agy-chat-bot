@@ -8,7 +8,7 @@ from typing import Any
 
 import aiohttp
 
-from agychat_bot.plugins import BotPlugin, PluginContext, PluginReply, command
+from agy_chat_bot.plugins import BotPlugin, PluginContext, PluginReply, command
 
 _FLAG_VALUE_RE = re.compile(
     r"(?:^|\s)--(size|quality|format|complexity|background|frames|duration|model)\s+(\S+)",
@@ -55,7 +55,7 @@ class ImageGifGenPlugin(BotPlugin):
     id = "image_gif_gen"
     name = "AI 生图与动图 (GPT-Image-2.6)"
     version = "1.0.0"
-    author = "AgyChat Bot"
+    author = "Agy Chat Bot"
     description = "基于 GPT-Image-2.6 协议生成静态图片与动态 GIF（支持生图/生 GIF 模型与上游独立配置）"
 
     default_config: dict[str, Any] = {
@@ -369,7 +369,7 @@ class ImageGifGenPlugin(BotPlugin):
         headers = {
             "Authorization": f"Bearer {api_key.strip()}",
             "Content-Type": "application/json",
-            "User-Agent": "agychat-bot-image-gif-plugin/1.0",
+            "User-Agent": "agy-chat-bot-image-gif-plugin/1.0",
         }
         timeout = aiohttp.ClientTimeout(total=timeout_sec)
 
@@ -585,7 +585,7 @@ class ImageGifGenPlugin(BotPlugin):
         api_key = str(self.config.get("api_key") or "").strip()
         models_path = str(self.config.get("models_path") or "/v1/models").strip()
         url = _join_url(api_base, models_path)
-        headers = {"Authorization": f"Bearer {api_key}", "User-Agent": "agychat-bot-image-gif-plugin/1.0"}
+        headers = {"Authorization": f"Bearer {api_key}", "User-Agent": "agy-chat-bot-image-gif-plugin/1.0"}
         try:
             timeout = aiohttp.ClientTimeout(total=15.0)
             async with aiohttp.ClientSession(timeout=timeout, trust_env=False) as session:

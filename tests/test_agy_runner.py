@@ -11,9 +11,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from agychat_bot.config import AgyConfig, RateLimitConfig  # noqa: E402
-from agychat_bot.models import IncomingMessage  # noqa: E402
-from agychat_bot.runner.agy_stream import AgyRunner  # noqa: E402
+from agy_chat_bot.config import AgyConfig, RateLimitConfig  # noqa: E402
+from agy_chat_bot.models import IncomingMessage  # noqa: E402
+from agy_chat_bot.runner.agy_stream import AgyRunner  # noqa: E402
 
 _FAKE_AGY_SCRIPT = textwrap.dedent(
     """

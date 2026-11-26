@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>AgyChat Bot</title>
+<title>Agy Chat Bot</title>
 <script>try{var _t=localStorage.getItem('agy_wb_theme');if(_t==='light'||_t==='dark')document.documentElement.setAttribute('data-theme',_t);}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.loli.net">
 <link rel="stylesheet" href="https://fonts.loli.net/css2?family=Nunito:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&display=swap">
@@ -2418,7 +2418,7 @@
     </div>
 
     <div class="splash-meta">
-      <div class="splash-brand">AgyChat Bot</div>
+      <div class="splash-brand">Agy Chat Bot</div>
       <div class="splash-seg-bar" aria-hidden="true">
         <div class="splash-seg"></div>
         <div class="splash-seg"></div>
@@ -2437,7 +2437,7 @@
       <path d="M16 6.2L8.4 23.4h4.1l1.7-4.1h3.6l1.7 4.1h4.1L16 6.2zm-1.1 10.2L16 13.4l1.1 3h-2.2z" fill="currentColor"/>
       <circle cx="25.6" cy="9.2" r="2.2" fill="currentColor"/>
     </svg>
-    <h2>AgyChat Bot</h2>
+    <h2>Agy Chat Bot</h2>
     <p>登录控制台以管理运行状态、日志与人设</p>
     <div class="field" style="margin-bottom:12px"><label>用户名</label><input id="loginUser" value="admin" autocomplete="username"></div>
     <div class="field" style="margin-bottom:16px"><label>密码</label><input id="loginPass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
@@ -2631,7 +2631,7 @@
       <path d="M16 6.2L8.4 23.4h4.1l1.7-4.1h3.6l1.7 4.1h4.1L16 6.2zm-1.1 10.2L16 13.4l1.1 3h-2.2z" fill="currentColor"/>
       <circle cx="25.6" cy="9.2" r="2.2" fill="currentColor"/>
     </svg>
-    <span class="brand-title" id="brandBotName" style="letter-spacing:0.06em">AgyChat Bot</span>
+    <span class="brand-title" id="brandBotName" style="letter-spacing:0.06em">Agy Chat Bot</span>
     <span id="topDot" class="status-dot"></span>
   </div>
 
@@ -5006,7 +5006,7 @@ function fmtUptime(s) {
 async function refreshStatus() {
   try {
     const { data } = await api('/api/status');
-    document.getElementById('brandBotName').textContent = 'AgyChat Bot';
+    document.getElementById('brandBotName').textContent = 'Agy Chat Bot';
     document.getElementById('topModelPill').textContent = data.runner.model || 'CLI 默认';
 
     const plats = data.platforms || [];
@@ -5073,7 +5073,7 @@ function deriveLogTags(entry) {
   if (msg.includes('子代理') || low.includes('subagent:') || msg.includes('后台任务')) tags.push('subagent');
   if (low.includes('[mcp]') || low.includes('call_mcp_tool') || low.includes('mcp=')) tags.push('mcp');
   if (msg.includes('[工具]') || msg.includes('调用工具') || msg.includes('工具调用')) tags.push('tool');
-  if (msg.includes('[插件') || (lname.includes('agychat_bot.plugin') || lname.includes('agy_bot.plugin'))) tags.push('plugin');
+  if (msg.includes('[插件') || (lname.includes('agy_chat_bot.plugin') || lname.includes('agy_bot.plugin'))) tags.push('plugin');
   return tags;
 }
 
@@ -7522,7 +7522,7 @@ async function loadConfig() {
 async function saveAllConfig() {
   if (!currentConfig) return;
   const c = JSON.parse(JSON.stringify(currentConfig));
-  c.bot_name = document.getElementById('cfg_bot_name').value.trim() || 'AgyChat Bot';
+  c.bot_name = document.getElementById('cfg_bot_name').value.trim() || 'Agy Chat Bot';
   c.admins = splitCsv(document.getElementById('cfg_admins').value);
   c.logging.level = document.getElementById('cfg_log_level').value;
 
