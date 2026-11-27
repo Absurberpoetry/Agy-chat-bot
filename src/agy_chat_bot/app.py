@@ -18,6 +18,12 @@ from typing import Any
 from urllib.parse import urlparse
 
 from .adapters import AdapterRegistry
+from .capability_policy import (
+    has_any_override_enabling,
+    resolve_effective_capabilities_map,
+    resolve_group_compact_override,
+    resolve_group_trigger_override,
+)
 from .channel_guard import (
     ChannelActivationStore,
     is_non_friend_private_message,
@@ -796,8 +802,60 @@ class BotApplication:
             allow_command_execution=self.config.agy.allow_command_execution,
         )
 
+    def sync_capability_override_registrations(self) -> None:
+        """Ensure globally disabled MCP servers explicitly enabled by a client/session/model override
+        remain registered in mcp_config.json (denied by default, allowed only in matching sessions)."""
+        override_mcp_ids = {
+            sid
+            for sid, g_en in self.mcp_manager.get_global_enabled_map().items()
+            if (not g_en)
+            and has_any_override_enabling(
+                "mcp",
+                sid,
+                capability_overrides=self.config.capability_overrides,
+                model_profiles=self.config.agy.model_profiles,
+            )
+        }
+        self.mcp_manager.set_override_enabled_ids(override_mcp_ids)
+
+    def resolve_session_capabilities(
+        self,
+        *,
+        adapter_id: str,
+        scene: str,
+        channel_id: str,
+        session_key: str,
+        model_profile: ModelProfileConfig | None,
+    ) -> tuple[dict[str, bool], dict[str, bool]]:
+        """Resolve effective (mcp_states, skill_states) with strict precedence:
+        Client > Group/Private Session > Independent Model Profile > Global."""
+        mcp_global = self.mcp_manager.get_global_enabled_map()
+        skill_global = self.skills_manager.get_global_enabled_map()
+        mcp_states = resolve_effective_capabilities_map(
+            "mcp",
+            mcp_global,
+            capability_overrides=self.config.capability_overrides,
+            model_profile=model_profile,
+            adapter_id=adapter_id,
+            session_key=session_key,
+            scene=scene,
+            channel_id=channel_id,
+        )
+        skill_states = resolve_effective_capabilities_map(
+            "skills",
+            skill_global,
+            capability_overrides=self.config.capability_overrides,
+            model_profile=model_profile,
+            adapter_id=adapter_id,
+            session_key=session_key,
+            scene=scene,
+            channel_id=channel_id,
+        )
+        return mcp_states, skill_states
+
     def sync_workspace_instructions(self) -> Path:
         """Render and sync persona + global dialogs + enabled MCP usage guides into bot_workspace/GEMINI.md and subagent workspace."""
+        self.sync_capability_override_registrations()
         main_path = self.persona_store.sync_to_workspace(
             self.config.active_persona_id,
             bot_name=self.config.bot_name,
@@ -805,6 +863,9 @@ class BotApplication:
             mcp_guides=self.mcp_manager.get_usage_guides(),
             bg_subagent_enabled=self.config.agy.subagent_enabled,
             allow_command_execution=self.config.agy.allow_command_execution,
+            max_chars_per_message=self.config.reply.max_chars_per_message,
+            max_messages_per_reply=self.config.reply.max_messages_per_reply,
+            max_total_reply_chars=self.config.reply.max_reply_chars,
         )
         self.sync_subagent_workspace_instructions()
         return main_path
@@ -909,19 +970,34 @@ class BotApplication:
             or new_cfg.active_persona_id != old_cfg.active_persona_id
             or new_cfg.bot_name != old_cfg.bot_name
             or new_cfg.reply.segmented_reply.enabled != old_cfg.reply.segmented_reply.enabled
+            or new_cfg.reply.max_reply_chars != old_cfg.reply.max_reply_chars
+            or new_cfg.reply.max_chars_per_message != old_cfg.reply.max_chars_per_message
+            or new_cfg.reply.max_messages_per_reply != old_cfg.reply.max_messages_per_reply
             or new_cfg.agy.subagent_enabled != old_cfg.agy.subagent_enabled
             or new_cfg.agy.subagent_persona_id != old_cfg.agy.subagent_persona_id
             or new_cfg.agy.allow_command_execution != old_cfg.agy.allow_command_execution
+            or new_cfg.capability_overrides != old_cfg.capability_overrides
+            or new_cfg.agy.model_profiles != old_cfg.agy.model_profiles
         ):
             if not new_cfg.active_persona_id or self.persona_store.get(new_cfg.active_persona_id) is not None:
                 self.sync_workspace_instructions()
             else:
+                self.sync_capability_override_registrations()
                 self.sync_subagent_workspace_instructions()
+            if (
+                new_cfg.reply.max_reply_chars != old_cfg.reply.max_reply_chars
+                or new_cfg.reply.max_chars_per_message != old_cfg.reply.max_chars_per_message
+                or new_cfg.reply.max_messages_per_reply != old_cfg.reply.max_messages_per_reply
+                or new_cfg.capability_overrides != old_cfg.capability_overrides
+            ):
+                await self.reset_warm_sessions()
 
         if (
             new_cfg.plugins.enabled != old_cfg.plugins.enabled
             or new_cfg.plugins.dir != old_cfg.plugins.dir
             or new_cfg.plugins.disabled != old_cfg.plugins.disabled
+            or new_cfg.capability_overrides != old_cfg.capability_overrides
+            or new_cfg.agy.model_profiles != old_cfg.agy.model_profiles
         ):
             self.plugin_manager.set_plugins_dir(new_cfg.resolve_path(new_cfg.plugins.dir))
             await self.plugin_manager.load_all()
@@ -1004,8 +1080,14 @@ class BotApplication:
         except Exception as exc:
             logger.warning("[%s] 直接回复发送失败: %s", msg.session_key, exc)
 
-    def _resolve_reply_style(self, trigger_type: str) -> tuple[bool, bool]:
-        """Resolve (quote_trigger, at_user) for a specific trigger type with fallback to ReplyConfig."""
+    def _resolve_reply_style(
+        self,
+        trigger_type: str,
+        *,
+        session_key: str = "",
+        channel_id: str = "",
+    ) -> tuple[bool, bool]:
+        """Resolve (quote_trigger, at_user) for a trigger type with group override > global trigger > reply default."""
         tr_map = {
             "mention": self.config.triggers.mention,
             "quote": self.config.triggers.quote,
@@ -1017,6 +1099,17 @@ class BotApplication:
         tr_cfg = tr_map.get(trigger_type)
         q_opt = getattr(tr_cfg, "quote_reply", None) if tr_cfg is not None else None
         a_opt = getattr(tr_cfg, "at_user", None) if tr_cfg is not None else None
+        if session_key or channel_id:
+            g_ov = resolve_group_trigger_override(
+                self.config.triggers,
+                session_key=session_key,
+                channel_id=channel_id,
+            )
+            sub_ov = g_ov.get(trigger_type) if isinstance(g_ov.get(trigger_type), dict) else {}
+            if sub_ov.get("quote_reply") is not None:
+                q_opt = bool(sub_ov["quote_reply"])
+            if sub_ov.get("at_user") is not None:
+                a_opt = bool(sub_ov["at_user"])
         quote = self.config.reply.quote_trigger_message if q_opt is None else bool(q_opt)
         at_u = self.config.reply.at_trigger_user if a_opt is None else bool(a_opt)
         return quote, at_u
@@ -1165,6 +1258,8 @@ class BotApplication:
         delta_base_seq: int = 0,
         window_min_seq: int | None = None,
         latest_seq: int = 0,
+        mcp_states: dict[str, bool] | None = None,
+        skill_states: dict[str, bool] | None = None,
     ) -> Any:
         kwargs: dict[str, Any] = {}
         try:
@@ -1182,6 +1277,10 @@ class BotApplication:
                 kwargs["latest_seq"] = latest_seq
                 kwargs["delta_prompt"] = delta_prompt
                 kwargs["delta_base_seq"] = delta_base_seq
+            if "mcp_states" in params and mcp_states is not None:
+                kwargs["mcp_states"] = mcp_states
+            if "skill_states" in params and skill_states is not None:
+                kwargs["skill_states"] = skill_states
         except (TypeError, ValueError):
             kwargs = {}
         if kwargs:
@@ -1415,35 +1514,52 @@ class BotApplication:
         window_state: ActiveWindowState | None = None
         if self.config.collector.db_context_enabled and self.context_store.db_path is not None:
             ccfg = self.config.collector
-            eff_max_msgs = (
-                active_profile.compact_max_messages
-                if (active_profile is not None and active_profile.compact_max_messages > 0)
-                else (
-                    active_profile.max_context_messages
-                    if (active_profile is not None and active_profile.max_context_messages > 0)
-                    else ccfg.compact_max_messages
+            grp_cmp = (
+                resolve_group_compact_override(
+                    ccfg,
+                    session_key=snapshot.session_key,
+                    channel_id=snapshot.channel_id,
                 )
+                if snapshot.scene == "group"
+                else {}
             )
-            eff_drop_cnt = (
-                active_profile.compact_drop_by_count
-                if (active_profile is not None and active_profile.compact_drop_by_count > 0)
-                else ccfg.compact_drop_by_count
-            )
-            eff_max_tok = (
-                active_profile.compact_max_tokens
-                if (active_profile is not None and active_profile.compact_max_tokens > 0)
-                else ccfg.compact_max_tokens
-            )
-            eff_max_bytes = (
-                active_profile.compact_max_bytes
-                if (active_profile is not None and active_profile.compact_max_bytes > 0)
-                else ccfg.compact_max_bytes
-            )
-            eff_drop_tok = (
-                active_profile.compact_drop_by_tokens
-                if (active_profile is not None and active_profile.compact_drop_by_tokens > 0)
-                else ccfg.compact_drop_by_tokens
-            )
+            # Compaction precedence: Group-specific override > Independent Model Profile > Global
+            if grp_cmp.get("compact_max_messages") is not None:
+                eff_max_msgs = int(grp_cmp["compact_max_messages"])
+            elif active_profile is not None and active_profile.compact_max_messages > 0:
+                eff_max_msgs = active_profile.compact_max_messages
+            elif active_profile is not None and active_profile.max_context_messages > 0:
+                eff_max_msgs = active_profile.max_context_messages
+            else:
+                eff_max_msgs = ccfg.compact_max_messages
+
+            if grp_cmp.get("compact_drop_by_count") is not None:
+                eff_drop_cnt = max(1, int(grp_cmp["compact_drop_by_count"]))
+            elif active_profile is not None and active_profile.compact_drop_by_count > 0:
+                eff_drop_cnt = active_profile.compact_drop_by_count
+            else:
+                eff_drop_cnt = ccfg.compact_drop_by_count
+
+            if grp_cmp.get("compact_max_tokens") is not None:
+                eff_max_tok = int(grp_cmp["compact_max_tokens"])
+            elif active_profile is not None and active_profile.compact_max_tokens > 0:
+                eff_max_tok = active_profile.compact_max_tokens
+            else:
+                eff_max_tok = ccfg.compact_max_tokens
+
+            if grp_cmp.get("compact_max_bytes") is not None:
+                eff_max_bytes = int(grp_cmp["compact_max_bytes"])
+            elif active_profile is not None and active_profile.compact_max_bytes > 0:
+                eff_max_bytes = active_profile.compact_max_bytes
+            else:
+                eff_max_bytes = ccfg.compact_max_bytes
+
+            if grp_cmp.get("compact_drop_by_tokens") is not None:
+                eff_drop_tok = max(1, int(grp_cmp["compact_drop_by_tokens"]))
+            elif active_profile is not None and active_profile.compact_drop_by_tokens > 0:
+                eff_drop_tok = active_profile.compact_drop_by_tokens
+            else:
+                eff_drop_tok = ccfg.compact_drop_by_tokens
             window_state = self.context_store.get_active_window_and_compact(
                 snapshot.session_key,
                 cursor_key=runner_key,
@@ -1570,6 +1686,13 @@ class BotApplication:
         win_min_arg = window_state.active_min_seq if window_state is not None else None
         win_latest_arg = window_state.latest_seq if window_state is not None else 0
         prof_ov = active_profile if (identity.active and identity.has_tool_override()) else None
+        mcp_states, skill_states = self.resolve_session_capabilities(
+            adapter_id=snapshot.adapter_id,
+            scene=snapshot.scene,
+            channel_id=snapshot.channel_id,
+            session_key=snapshot.session_key,
+            model_profile=active_profile,
+        )
         result = await self._ask_runner(
             runner_key,
             prompt,
@@ -1579,6 +1702,8 @@ class BotApplication:
             delta_base_seq=delta_base_seq,
             window_min_seq=win_min_arg,
             latest_seq=win_latest_arg,
+            mcp_states=mcp_states,
+            skill_states=skill_states,
         )
         if not result.ok and is_proxy_or_geo_error(result.error):
             switched = await self._try_auto_proxy_failover(result.error)
@@ -1590,6 +1715,8 @@ class BotApplication:
                     profile_override=prof_ov,
                     window_min_seq=win_min_arg,
                     latest_seq=win_latest_arg,
+                    mcp_states=mcp_states,
+                    skill_states=skill_states,
                 )
             elif has_local_proxy and is_geo_blocked_error(result.error) and self.config.agy.fallback_models:
                 # Failover couldn't find a cleaner node; allow fallback model as last resort
@@ -1601,8 +1728,14 @@ class BotApplication:
                     defer_geo_fallback=False,
                     window_min_seq=win_min_arg,
                     latest_seq=win_latest_arg,
+                    mcp_states=mcp_states,
+                    skill_states=skill_states,
                 )
-        quote_flag, at_flag = self._resolve_reply_style(snapshot.primary_trigger)
+        quote_flag, at_flag = self._resolve_reply_style(
+            snapshot.primary_trigger,
+            session_key=snapshot.session_key,
+            channel_id=snapshot.channel_id,
+        )
         if not result.ok:
             if is_auth_required_error(result.error):
                 logger.error(
@@ -2080,12 +2213,33 @@ class BotApplication:
             task_desc[:80],
         )
 
+        sub_model_key = model_override or self.config.agy.subagent_model or self.config.agy.model
+        sub_profile = self.config.agy.resolve_model_profile(sub_model_key)
+        sub_mcp_states, sub_skill_states = self.resolve_session_capabilities(
+            adapter_id=snapshot.adapter_id,
+            scene=snapshot.scene,
+            channel_id=snapshot.channel_id,
+            session_key=snapshot.session_key,
+            model_profile=sub_profile,
+        )
+        sub_call_kwargs: dict[str, Any] = {
+            "model_override": model_override,
+            "timeout_seconds": self.config.agy.subagent_timeout_seconds,
+        }
+        try:
+            sub_params = inspect.signature(self.runner.run_subagent_task).parameters
+            if "mcp_states" in sub_params:
+                sub_call_kwargs["mcp_states"] = sub_mcp_states
+            if "skill_states" in sub_params:
+                sub_call_kwargs["skill_states"] = sub_skill_states
+        except (TypeError, ValueError):
+            pass
+
         try:
             sub_res = await self.runner.run_subagent_task(
                 task_id,
                 sub_prompt,
-                model_override=model_override,
-                timeout_seconds=self.config.agy.subagent_timeout_seconds,
+                **sub_call_kwargs,
             )
             if not sub_res.ok and is_proxy_or_geo_error(sub_res.error):
                 switched = await self._try_auto_proxy_failover(sub_res.error)
@@ -2094,8 +2248,7 @@ class BotApplication:
                     sub_res = await self.runner.run_subagent_task(
                         task_id,
                         sub_prompt,
-                        model_override=model_override,
-                        timeout_seconds=self.config.agy.subagent_timeout_seconds,
+                        **sub_call_kwargs,
                     )
         except asyncio.CancelledError:
             raise

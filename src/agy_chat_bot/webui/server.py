@@ -219,6 +219,9 @@ class WebUIServer:
         app.router.add_post("/api/mcp/{server_id}/test", self._handle_test_mcp)
         app.router.add_delete("/api/mcp/{server_id}", self._handle_delete_mcp)
 
+        app.router.add_get("/api/capabilities/overrides", self._handle_get_capability_overrides)
+        app.router.add_put("/api/capabilities/overrides", self._handle_put_capability_overrides)
+
         app.router.add_get("/api/security-settings", self._handle_get_security_settings)
         app.router.add_put("/api/security-settings", self._handle_put_security_settings)
 
@@ -1457,6 +1460,41 @@ class WebUIServer:
                 "message": f"已在宿主机打开配置文件所在位置: {target}" if opened else f"MCP 配置文件路径: {target}（{detail}）",
             }
         )
+
+    async def _handle_get_capability_overrides(self, request: web.Request) -> web.Response:
+        self._require_auth(request)
+        cfg_dict = config_to_dict(self._bot.config)
+        return web.json_response(
+            {
+                "ok": True,
+                "priority": ["client", "session", "model", "global"],
+                "data": cfg_dict.get("capability_overrides", {"clients": {}, "sessions": {}}),
+            }
+        )
+
+    async def _handle_put_capability_overrides(self, request: web.Request) -> web.Response:
+        self._require_auth(request)
+        try:
+            body = await _read_json_dict(request)
+            payload = body.get("data") if ("data" in body and isinstance(body.get("data"), dict)) else body
+            raw_cfg = config_to_dict(self._bot.config)
+            raw_cfg["capability_overrides"] = payload
+            new_cfg = load_config_from_dict(
+                raw_cfg,
+                base_dir=self._bot.config.base_dir,
+                config_path=self._bot.config.config_path,
+            )
+            await self._bot.reload_config(new_cfg)
+            self._persist_config_if_backed()
+            return web.json_response(
+                {
+                    "ok": True,
+                    "message": "生效作用域覆盖已保存并热重载（优先级：客户端 > 群聊/私聊 > 独立模型 > 全局）",
+                    "data": config_to_dict(self._bot.config).get("capability_overrides", {"clients": {}, "sessions": {}}),
+                }
+            )
+        except Exception as exc:
+            return web.json_response({"ok": False, "error": str(exc)}, status=400)
 
     async def _handle_run_scheduled_task(self, request: web.Request) -> web.Response:
         self._require_auth(request)

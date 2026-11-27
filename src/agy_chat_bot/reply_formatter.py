@@ -100,47 +100,104 @@ def _split_by_words(text: str, split_words: list[str]) -> list[str]:
     return out
 
 
+def _split_long_segment_safe(text: str, max_chars: int) -> list[str]:
+    """Split a single overly long bubble into <= max_chars chunks without slicing Markdown images/URLs."""
+    cleaned = text.strip()
+    if max_chars <= 0 or len(cleaned) <= max_chars:
+        return [cleaned] if cleaned else []
+
+    out: list[str] = []
+    pos = 0
+    n = len(cleaned)
+    while pos < n:
+        rem = cleaned[pos:].strip()
+        if not rem:
+            break
+        if len(rem) <= max_chars:
+            out.append(rem)
+            break
+        # Find safe cut point <= max_chars
+        cut = max_chars
+        # Do not slice through a Markdown image or URL
+        for m in _URL_OR_MD_IMG_RE.finditer(rem):
+            if m.start() < cut < m.end():
+                if m.start() > 0:
+                    cut = m.start()
+                else:
+                    cut = m.end()
+                break
+        else:
+            # Prefer natural newline / sentence punctuation boundary in the latter half
+            min_boundary = max(1, max_chars // 2)
+            for sep in ("\n", "。", "！", "？", "；", ".", "!", "?", "，", ",", " "):
+                idx = rem.rfind(sep, min_boundary, cut)
+                if idx != -1:
+                    cut = idx + (0 if sep == "\n" else len(sep))
+                    break
+        chunk = rem[:cut].strip()
+        if chunk:
+            out.append(chunk)
+        # Advance pos in original cleaned string
+        leading_ws = len(cleaned[pos:]) - len(cleaned[pos:].lstrip())
+        pos += leading_ws + max(1, cut)
+    return out
+
+
 def split_and_clean_reply(text: str, reply_cfg: ReplyConfig) -> list[str]:
-    """Format and optionally split a model reply into multi-bubble segments (AstrBot compatible)."""
+    """Format and optionally split a model reply into multi-bubble segments (AstrBot compatible),
+    enforcing total reply char cap, per-message char cap, and max message count when configured."""
     raw = text.strip()
     if not raw:
         return []
 
+    total_cap = max(0, int(reply_cfg.max_reply_chars or 0))
+    per_msg_cap = max(0, int(getattr(reply_cfg, "max_chars_per_message", 0) or 0))
+    max_msgs = max(0, int(getattr(reply_cfg, "max_messages_per_reply", 0) or 0))
+
+    if total_cap > 0:
+        raw = truncate_reply(raw, total_cap)
+
     seg_cfg = reply_cfg.segmented_reply
     if not seg_cfg.enabled or len(raw) > seg_cfg.words_count_threshold:
         single = _cleanup_segment(raw, seg_cfg.content_cleanup_rule) if seg_cfg.enabled else raw
-        single = truncate_reply(single, reply_cfg.max_reply_chars)
         if not single:
             return []
-        if reply_cfg.reply_prefix:
-            single = f"{reply_cfg.reply_prefix}{single}"
-        return [single]
-
-    raw = truncate_reply(raw, reply_cfg.max_reply_chars)
-    parts: list[str] = []
-
-    if seg_cfg.split_mode == "words" and seg_cfg.split_words:
-        parts = _split_by_words(raw, seg_cfg.split_words)
+        cleaned = _split_long_segment_safe(single, per_msg_cap) if per_msg_cap > 0 else [single]
     else:
-        try:
-            pattern = seg_cfg.regex or r"[\s\S]+?(?:\|\|\||$)"
-            parts = [m.group(0) for m in re.finditer(pattern, raw) if m.group(0)]
-        except re.error as exc:
-            logger.warning("分段回复分割正则无效 (%s): %s", seg_cfg.regex, exc)
-            parts = [raw]
-
-    cleaned: list[str] = []
-    for part in parts:
-        item = _cleanup_segment(part, seg_cfg.content_cleanup_rule)
-        if item:
-            cleaned.append(item)
-
-    if not cleaned:
-        fallback = _cleanup_segment(raw, seg_cfg.content_cleanup_rule)
-        if fallback:
-            cleaned = [fallback]
+        parts: list[str] = []
+        if seg_cfg.split_mode == "words" and seg_cfg.split_words:
+            parts = _split_by_words(raw, seg_cfg.split_words)
         else:
-            return []
+            try:
+                pattern = seg_cfg.regex or r"[\s\S]+?(?:\|\|\||$)"
+                parts = [m.group(0) for m in re.finditer(pattern, raw) if m.group(0)]
+            except re.error as exc:
+                logger.warning("分段回复分割正则无效 (%s): %s", seg_cfg.regex, exc)
+                parts = [raw]
+
+        cleaned = []
+        for part in parts:
+            item = _cleanup_segment(part, seg_cfg.content_cleanup_rule)
+            if not item:
+                continue
+            if per_msg_cap > 0 and len(item) > per_msg_cap:
+                cleaned.extend(_split_long_segment_safe(item, per_msg_cap))
+            else:
+                cleaned.append(item)
+
+        if not cleaned:
+            fallback = _cleanup_segment(raw, seg_cfg.content_cleanup_rule)
+            if fallback:
+                cleaned = _split_long_segment_safe(fallback, per_msg_cap) if per_msg_cap > 0 else [fallback]
+            else:
+                return []
+
+    if max_msgs > 0 and len(cleaned) > max_msgs:
+        head = cleaned[: max_msgs - 1]
+        tail_merged = "\n".join(cleaned[max_msgs - 1 :]).strip()
+        if per_msg_cap > 0 and len(tail_merged) > per_msg_cap:
+            tail_merged = truncate_reply(tail_merged, per_msg_cap)
+        cleaned = [*head, tail_merged] if tail_merged else head
 
     if reply_cfg.reply_prefix and cleaned:
         cleaned[0] = f"{reply_cfg.reply_prefix}{cleaned[0]}"

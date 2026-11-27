@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from ..capability_policy import has_any_override_enabling, resolve_capability_enabled
 from .sdk import BotPlugin, CommandMeta, HookMeta, PluginContext, PluginReply
 
 if TYPE_CHECKING:
@@ -249,6 +250,15 @@ class PluginManager:
             merged_cfg = _deep_merge(default_cfg, user_cfg)
             scope = normalize_plugin_scope(self._app.config.plugins.scopes.get(plugin_id))
             enabled = (plugin_id not in disabled_set) and (fallback_id not in disabled_set)
+            override_enabled = (
+                not enabled
+                and has_any_override_enabling(
+                    "plugins",
+                    plugin_id,
+                    capability_overrides=self._app.config.capability_overrides,
+                    model_profiles=self._app.config.agy.model_profiles,
+                )
+            )
 
             rec = LoadedPluginRecord(
                 plugin_id=plugin_id,
@@ -266,7 +276,7 @@ class PluginManager:
                 module_name=module_name,
             )
 
-            if enabled:
+            if enabled or override_enabled:
                 plugins_data_root = (self.data_dir / "plugins").resolve()
                 pdata_dir = (plugins_data_root / plugin_id).resolve()
                 if not pdata_dir.is_relative_to(plugins_data_root):
@@ -447,21 +457,42 @@ class PluginManager:
         adapter_id: str,
         scene: str,
         channel_id: str,
+        session_key: str = "",
     ) -> bool:
+        rec = self._records.get(plugin_id)
+        global_en = (rec.enabled if rec is not None else (plugin_id not in self._app.config.plugins.disabled))
+
         scope = self.get_plugin_scope(plugin_id)
+        legacy_ok = True
         s_adapter = scope.get("adapter_id", "")
         if s_adapter and adapter_id and s_adapter != adapter_id:
-            return False
-        if scene == "private":
-            return bool(scope.get("allow_private", True))
-        mode = scope.get("mode", "all")
-        gids = scope.get("group_ids") or []
-        cid = str(channel_id or "").strip()
-        if mode == "groups":
-            return cid in gids
-        if mode == "exclude_groups":
-            return cid not in gids
-        return True
+            legacy_ok = False
+        elif scene == "private":
+            legacy_ok = bool(scope.get("allow_private", True))
+        else:
+            mode = scope.get("mode", "all")
+            gids = scope.get("group_ids") or []
+            cid = str(channel_id or "").strip()
+            if mode == "groups":
+                legacy_ok = cid in gids
+            elif mode == "exclude_groups":
+                legacy_ok = cid not in gids
+
+        model_profile = self._app.config.agy.resolve_model_profile(self._app.config.agy.model)
+        eff_sk = session_key or (f"{adapter_id}:{scene}:{channel_id}" if (adapter_id and scene and channel_id) else "")
+        allowed, _ = resolve_capability_enabled(
+            "plugins",
+            plugin_id,
+            global_enabled=global_en,
+            capability_overrides=self._app.config.capability_overrides,
+            model_profile=model_profile,
+            adapter_id=adapter_id,
+            session_key=eff_sk,
+            scene=scene,
+            channel_id=channel_id,
+            legacy_plugin_allowed=legacy_ok,
+        )
+        return allowed
 
     def should_use_subagent(self, plugin_id: str, command_name: str = "") -> bool:
         """Resolve whether a plugin (or a specific command of it) should run via background subagent."""

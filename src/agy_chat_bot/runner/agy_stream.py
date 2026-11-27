@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import hashlib
 import json
 import logging
 import os
@@ -644,11 +645,15 @@ class AgyRunner(BaseAgentRunner):
         self,
         effective_model: str,
         profile: ModelProfileConfig | None,
+        *,
+        mcp_states: dict[str, bool] | None = None,
+        skill_states: dict[str, bool] | None = None,
     ) -> Path | None:
-        if profile is None and not self._cfg.allow_command_execution:
+        has_cap_overrides = bool(mcp_states) or bool(skill_states)
+        if profile is None and not self._cfg.allow_command_execution and not has_cap_overrides:
             return self._settings_file
 
-        eff_profile = profile or ModelProfileConfig(enable_command=True)
+        eff_profile = profile or ModelProfileConfig(enable_command=self._cfg.allow_command_execution)
 
         base_data: dict[str, Any] = {}
         if self._settings_file is not None and self._settings_file.exists():
@@ -714,6 +719,27 @@ class AgyRunner(BaseAgentRunner):
                 deny_set.update({"write_file(*)", "edit_file(*)"})
                 allow_set.difference_update({"write_file(*)", "edit_file(*)"})
 
+        # Apply resolved MCP & Skill capability states (Client > Session > Model > Global)
+        if mcp_states:
+            for sid, enabled in sorted(mcp_states.items()):
+                rule = f"mcp({sid}/*)"
+                if enabled:
+                    deny_set.discard(rule)
+                    allow_set.add(rule)
+                else:
+                    allow_set.discard(rule)
+                    deny_set.add(rule)
+
+        if skill_states:
+            for skid, enabled in sorted(skill_states.items()):
+                rule = f"read_file(.agents/skills/{skid}/*)"
+                if enabled:
+                    deny_set.discard(rule)
+                    allow_set.add(rule)
+                else:
+                    allow_set.discard(rule)
+                    deny_set.add(rule)
+
         perms["deny"] = sorted(deny_set)
         perms["allow"] = sorted(allow_set)
 
@@ -746,7 +772,15 @@ class AgyRunner(BaseAgentRunner):
                 f"f{int(profile.enable_file_tools)}"
                 f"c{int(cmd_allowed)}"
             )
-        out_path = out_dir / f"{safe_slug}_{perm_tag}.json"
+        cap_suffix = ""
+        if mcp_states or skill_states:
+            cap_blob = json.dumps(
+                {"m": sorted((mcp_states or {}).items()), "s": sorted((skill_states or {}).items())},
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+            cap_suffix = "_" + hashlib.sha1(cap_blob.encode("utf-8")).hexdigest()[:8]
+        out_path = out_dir / f"{safe_slug}_{perm_tag}{cap_suffix}.json"
         tmp = out_path.with_name(f".{out_path.name}.{uuid.uuid4().hex[:8]}.tmp")
         try:
             tmp.write_text(json.dumps(base_data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -763,6 +797,8 @@ class AgyRunner(BaseAgentRunner):
         resume_id: str = "",
         json_schema: Path | None = None,
         profile_override: ModelProfileConfig | None = None,
+        mcp_states: dict[str, bool] | None = None,
+        skill_states: dict[str, bool] | None = None,
     ) -> list[str]:
         cli_model, resolved_profile = self._cfg.resolve_model_target(effective_model)
         profile = profile_override if profile_override is not None else resolved_profile
@@ -797,7 +833,12 @@ class AgyRunner(BaseAgentRunner):
         if profile and profile.disable_slash_commands:
             cmd.append("--disable-slash-commands")
 
-        settings_path = self._resolve_model_settings_file(cli_model or effective_model, profile)
+        settings_path = self._resolve_model_settings_file(
+            cli_model or effective_model,
+            profile,
+            mcp_states=mcp_states,
+            skill_states=skill_states,
+        )
         if settings_path is not None:
             cmd.extend(["--settings", str(settings_path)])
         if resume_id:
@@ -808,15 +849,26 @@ class AgyRunner(BaseAgentRunner):
         self,
         effective_model: str,
         profile: ModelProfileConfig | None,
+        *,
+        mcp_states: dict[str, bool] | None = None,
+        skill_states: dict[str, bool] | None = None,
     ) -> str:
         cmd_flag = int(bool(self._cfg.allow_command_execution or (profile is not None and profile.enable_command)))
+        cap_sig = ""
+        if mcp_states or skill_states:
+            cap_blob = json.dumps(
+                {"m": sorted((mcp_states or {}).items()), "s": sorted((skill_states or {}).items())},
+                ensure_ascii=False,
+                separators=(",", ":"),
+            )
+            cap_sig = "|cap=" + hashlib.sha1(cap_blob.encode("utf-8")).hexdigest()[:10]
         if profile is None:
-            return f"{effective_model}|default|c{cmd_flag}"
+            return f"{effective_model}|default|c{cmd_flag}{cap_sig}"
         return (
             f"{effective_model}|{profile.model}|{profile.name}|{profile.effort}|{profile.execution_mode}|{profile.sandbox}|"
             f"{int(profile.disable_slash_commands)}|{int(profile.enable_web_search)}|"
             f"{int(profile.enable_url_read)}|{int(profile.enable_vision)}|"
-            f"{int(profile.enable_audio)}|{int(profile.enable_file_tools)}|c{cmd_flag}"
+            f"{int(profile.enable_audio)}|{int(profile.enable_file_tools)}|c{cmd_flag}{cap_sig}"
         )
 
     def peek_warm_cursor(self, session_key: str) -> tuple[int, int, set[int]] | None:
@@ -862,10 +914,17 @@ class AgyRunner(BaseAgentRunner):
         model_override: str | None = None,
         profile_override: ModelProfileConfig | None = None,
         window_min_seq: int | None = None,
+        mcp_states: dict[str, bool] | None = None,
+        skill_states: dict[str, bool] | None = None,
     ) -> _SessionProcess:
         effective_model = self._cfg.model if not model_override else model_override
         profile = profile_override if profile_override is not None else self._cfg.resolve_model_profile(effective_model)
-        sig = self._session_config_sig(effective_model, profile)
+        sig = self._session_config_sig(
+            effective_model,
+            profile,
+            mcp_states=mcp_states,
+            skill_states=skill_states,
+        )
         base_max_turns = (
             profile.max_turns
             if (profile is not None and profile.max_turns > 0)
@@ -958,6 +1017,8 @@ class AgyRunner(BaseAgentRunner):
                 effective_model,
                 resume_id=resume_id,
                 profile_override=profile,
+                mcp_states=mcp_states,
+                skill_states=skill_states,
             )
 
             cli_model_name, _ = self._cfg.resolve_model_target(effective_model)
@@ -1422,6 +1483,8 @@ class AgyRunner(BaseAgentRunner):
         delta_base_seq: int = 0,
         window_min_seq: int | None = None,
         latest_seq: int = 0,
+        mcp_states: dict[str, bool] | None = None,
+        skill_states: dict[str, bool] | None = None,
     ) -> RunnerResult:
         resumed_tried = False
         for attempt in range(2):
@@ -1433,6 +1496,8 @@ class AgyRunner(BaseAgentRunner):
                     model_override=model_override,
                     profile_override=profile_override,
                     window_min_seq=window_min_seq,
+                    mcp_states=mcp_states,
+                    skill_states=skill_states,
                 )
             except FileNotFoundError as exc:
                 return RunnerResult(ok=False, error=str(exc))
@@ -1561,6 +1626,8 @@ class AgyRunner(BaseAgentRunner):
         delta_base_seq: int = 0,
         window_min_seq: int | None = None,
         latest_seq: int = 0,
+        mcp_states: dict[str, bool] | None = None,
+        skill_states: dict[str, bool] | None = None,
     ) -> RunnerResult:
         open_circuit, rem = self.is_circuit_open()
         if open_circuit:
@@ -1586,6 +1653,8 @@ class AgyRunner(BaseAgentRunner):
                     delta_base_seq=delta_base_seq,
                     window_min_seq=window_min_seq,
                     latest_seq=latest_seq,
+                    mcp_states=mcp_states,
+                    skill_states=skill_states,
                 )
                 if (
                     result.ok
@@ -1616,6 +1685,8 @@ class AgyRunner(BaseAgentRunner):
                         delta_base_seq=delta_base_seq,
                         window_min_seq=window_min_seq,
                         latest_seq=latest_seq,
+                        mcp_states=mcp_states,
+                        skill_states=skill_states,
                     )
                     if fb_result.ok or fb_result.is_fatal_auth_or_tos or fb_result.is_rate_limited:
                         return fb_result
@@ -1665,6 +1736,8 @@ class AgyRunner(BaseAgentRunner):
         *,
         effective_model: str,
         timeout_sec: float,
+        mcp_states: dict[str, bool] | None = None,
+        skill_states: dict[str, bool] | None = None,
     ) -> RunnerResult:
         profile = self._build_subagent_profile(effective_model)
         try:
@@ -1673,6 +1746,8 @@ class AgyRunner(BaseAgentRunner):
                 effective_model,
                 resume_id="",
                 profile_override=profile,
+                mcp_states=mcp_states,
+                skill_states=skill_states,
             )
             proc = await self._spawn_process(cmd, cwd=self._subagent_workspace_dir)
         except FileNotFoundError as exc:
@@ -1775,6 +1850,8 @@ class AgyRunner(BaseAgentRunner):
         *,
         model_override: str | None = None,
         timeout_seconds: float | None = None,
+        mcp_states: dict[str, bool] | None = None,
+        skill_states: dict[str, bool] | None = None,
     ) -> RunnerResult:
         """Run an isolated background subagent process concurrently with main chat."""
         open_circuit, rem = self.is_circuit_open()
@@ -1796,6 +1873,8 @@ class AgyRunner(BaseAgentRunner):
                     prompt,
                     effective_model=primary_model,
                     timeout_sec=eff_timeout,
+                    mcp_states=mcp_states,
+                    skill_states=skill_states,
                 )
                 if result.status == "EMPTY_RESPONSE":
                     logger.warning(
@@ -1808,6 +1887,8 @@ class AgyRunner(BaseAgentRunner):
                         prompt,
                         effective_model=primary_model,
                         timeout_sec=eff_timeout,
+                        mcp_states=mcp_states,
+                        skill_states=skill_states,
                     )
                 if result.ok or result.is_fatal_auth_or_tos or result.is_rate_limited:
                     return result
@@ -1826,6 +1907,8 @@ class AgyRunner(BaseAgentRunner):
                         prompt,
                         effective_model=fb_model,
                         timeout_sec=eff_timeout,
+                        mcp_states=mcp_states,
+                        skill_states=skill_states,
                     )
                     if fb_res.ok or fb_res.is_fatal_auth_or_tos or fb_res.is_rate_limited:
                         return fb_res

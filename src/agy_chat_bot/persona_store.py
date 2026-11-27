@@ -39,6 +39,33 @@ _DEFAULT_STYLE_RULES = """## 回复风格与上下文格式
 5. 当已配置的 MCP 工具（如画图/查询类 MCP）或本地脚本/前端绘图能更好完成群友请求时可直接处理（若任务耗时且已启用后台子代理，可用 `<agy_bg_task>` 派发到后台执行，非 MCP 的前端/代码绘图任务可将 `"mcp"` 留空 `""`）；若生成了可访问的图片链接或本地 `.png`/`.jpg` 位图文件，请在回复中以标准 Markdown 图片格式 `![图片](图片链接或相对路径)` 输出，系统会自动将其作为真实图片发到聊天中。无论工具调用成功或失败，最终都必须输出自然文字回复，切勿返回空内容。"""
 
 
+def render_reply_limit_guidance(
+    *,
+    max_chars_per_message: int = 0,
+    max_messages_per_reply: int = 0,
+    max_total_reply_chars: int = 0,
+    segmented_enabled: bool = False,
+) -> str:
+    """Render plain natural-language reply length/count guidance for official GEMINI.md.
+
+    Intentionally avoids any synthetic/custom system tags or protocol markers so it remains
+    100% standard workspace instruction prose recognized natively by official agy CLI.
+    """
+    clauses: list[str] = []
+    if max_chars_per_message > 0:
+        clauses.append(f"单条消息控制在 {max_chars_per_message} 字以内")
+    if max_messages_per_reply > 0:
+        if segmented_enabled:
+            clauses.append(f"单次回复最多分成 {max_messages_per_reply} 条消息")
+        else:
+            clauses.append(f"单次回复最多发送 {max_messages_per_reply} 条消息")
+    if max_total_reply_chars > 0:
+        clauses.append(f"单次请求的回复总字数控制在 {max_total_reply_chars} 字以内")
+    if not clauses:
+        return ""
+    return "6. 回复篇幅习惯：请自然精炼地组织回答，" + "，".join(clauses) + "。"
+
+
 def _render_mcp_guides_section(
     mcp_guides: list[dict[str, Any]],
     *,
@@ -294,6 +321,9 @@ class PersonaStore:
         mcp_guides: list[dict[str, Any]] | None = None,
         bg_subagent_enabled: bool = True,
         allow_command_execution: bool = False,
+        max_chars_per_message: int = 0,
+        max_messages_per_reply: int = 0,
+        max_total_reply_chars: int = 0,
     ) -> str:
         persona = self.get(persona_id) if persona_id else None
         sections = [f"# 群聊机器人工作区规则（当前名称：{bot_name}）"]
@@ -330,7 +360,16 @@ class PersonaStore:
         if mcp_sec:
             sections.append(mcp_sec)
 
-        sections.append(_DEFAULT_STYLE_RULES)
+        style_sec = _DEFAULT_STYLE_RULES
+        limit_line = render_reply_limit_guidance(
+            max_chars_per_message=max_chars_per_message,
+            max_messages_per_reply=max_messages_per_reply,
+            max_total_reply_chars=max_total_reply_chars,
+            segmented_enabled=segmented_hint,
+        )
+        if limit_line:
+            style_sec = f"{style_sec}\n{limit_line}"
+        sections.append(style_sec)
         sections.append(_SECURITY_REDLINES_ALLOW_COMMAND if allow_command_execution else _SECURITY_REDLINES)
         return "\n\n".join(sections).strip() + "\n"
 
@@ -343,6 +382,9 @@ class PersonaStore:
         mcp_guides: list[dict[str, Any]] | None = None,
         bg_subagent_enabled: bool = True,
         allow_command_execution: bool = False,
+        max_chars_per_message: int = 0,
+        max_messages_per_reply: int = 0,
+        max_total_reply_chars: int = 0,
     ) -> Path:
         content = self.render_gemini_md(
             persona_id,
@@ -351,6 +393,9 @@ class PersonaStore:
             mcp_guides=mcp_guides,
             bg_subagent_enabled=bg_subagent_enabled,
             allow_command_execution=allow_command_execution,
+            max_chars_per_message=max_chars_per_message,
+            max_messages_per_reply=max_messages_per_reply,
+            max_total_reply_chars=max_total_reply_chars,
         )
         target = self._workspace_dir / "GEMINI.md"
         tmp = target.with_suffix(".md.tmp")

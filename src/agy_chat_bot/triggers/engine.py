@@ -7,7 +7,16 @@ import time
 from collections import defaultdict, deque
 from collections.abc import Awaitable, Callable
 
-from ..config import RateLimitConfig, TriggersConfig
+from ..capability_policy import resolve_group_trigger_override
+from ..config import (
+    ContextLLMTriggerConfig,
+    DiceTriggerConfig,
+    KeywordTriggerConfig,
+    MentionTriggerConfig,
+    QuoteTriggerConfig,
+    RateLimitConfig,
+    TriggersConfig,
+)
 from ..models import IncomingMessage, JudgeDecision, TriggerResult, TriggerType
 
 logger = logging.getLogger(__name__)
@@ -81,6 +90,131 @@ class TriggerEngine:
         self._last_dice_trigger: dict[str, float] = {}
         self._last_context_judge: dict[str, float] = {}
         self._last_context_reply: dict[str, float] = {}
+        self._group_regex_cache: dict[str, list[re.Pattern[str]]] = {}
+
+    def _effective_group_triggers(
+        self,
+        msg: IncomingMessage,
+    ) -> tuple[
+        MentionTriggerConfig,
+        QuoteTriggerConfig,
+        KeywordTriggerConfig,
+        DiceTriggerConfig,
+        ContextLLMTriggerConfig,
+        list[re.Pattern[str]],
+    ]:
+        base = self._config
+        if msg.scene != "group" or not base.group_overrides:
+            return (
+                base.mention,
+                base.quote,
+                base.keyword,
+                base.dice,
+                base.context_llm,
+                self._compiled_regex,
+            )
+        ov = resolve_group_trigger_override(
+            base,
+            session_key=msg.session_key,
+            channel_id=msg.channel_id,
+        )
+        if not ov:
+            return (
+                base.mention,
+                base.quote,
+                base.keyword,
+                base.dice,
+                base.context_llm,
+                self._compiled_regex,
+            )
+
+        m_ov = ov.get("mention") if isinstance(ov.get("mention"), dict) else {}
+        mention = MentionTriggerConfig(
+            enabled=base.mention.enabled if m_ov.get("enabled") is None else bool(m_ov["enabled"]),
+            allow_at_all=base.mention.allow_at_all if m_ov.get("allow_at_all") is None else bool(m_ov["allow_at_all"]),
+            include_quote_at=base.mention.include_quote_at,
+            unknown_reply_at_behavior=base.mention.unknown_reply_at_behavior,
+            quote_reply=base.mention.quote_reply if m_ov.get("quote_reply") is None else bool(m_ov["quote_reply"]),
+            at_user=base.mention.at_user if m_ov.get("at_user") is None else bool(m_ov["at_user"]),
+        )
+
+        q_ov = ov.get("quote") if isinstance(ov.get("quote"), dict) else {}
+        quote = QuoteTriggerConfig(
+            enabled=base.quote.enabled if q_ov.get("enabled") is None else bool(q_ov["enabled"]),
+            quote_reply=base.quote.quote_reply if q_ov.get("quote_reply") is None else bool(q_ov["quote_reply"]),
+            at_user=base.quote.at_user if q_ov.get("at_user") is None else bool(q_ov["at_user"]),
+        )
+
+        k_ov = ov.get("keyword") if isinstance(ov.get("keyword"), dict) else {}
+        kw_case = base.keyword.case_sensitive if k_ov.get("case_sensitive") is None else bool(k_ov["case_sensitive"])
+        kw_patterns = list(k_ov["regex_patterns"]) if k_ov.get("regex_patterns") is not None else list(base.keyword.regex_patterns)
+        keyword = KeywordTriggerConfig(
+            enabled=base.keyword.enabled if k_ov.get("enabled") is None else bool(k_ov["enabled"]),
+            keywords=list(k_ov["keywords"]) if k_ov.get("keywords") is not None else list(base.keyword.keywords),
+            regex_patterns=kw_patterns,
+            case_sensitive=kw_case,
+            exclude_keywords=(
+                list(k_ov["exclude_keywords"])
+                if k_ov.get("exclude_keywords") is not None
+                else list(base.keyword.exclude_keywords)
+            ),
+            quote_reply=base.keyword.quote_reply if k_ov.get("quote_reply") is None else bool(k_ov["quote_reply"]),
+            at_user=base.keyword.at_user if k_ov.get("at_user") is None else bool(k_ov["at_user"]),
+        )
+        if k_ov.get("regex_patterns") is not None or k_ov.get("case_sensitive") is not None:
+            cache_key = f"{msg.session_key}:{int(kw_case)}:{'|'.join(kw_patterns)}"
+            compiled_rx = self._group_regex_cache.get(cache_key)
+            if compiled_rx is None:
+                flags = 0 if kw_case else re.IGNORECASE
+                compiled_rx = []
+                for pat in kw_patterns:
+                    try:
+                        compiled_rx.append(re.compile(pat, flags))
+                    except re.error:
+                        pass
+                self._group_regex_cache[cache_key] = compiled_rx
+        else:
+            compiled_rx = self._compiled_regex
+
+        d_ov = ov.get("dice") if isinstance(ov.get("dice"), dict) else {}
+        dice = DiceTriggerConfig(
+            enabled=base.dice.enabled if d_ov.get("enabled") is None else bool(d_ov["enabled"]),
+            probability=base.dice.probability if d_ov.get("probability") is None else float(d_ov["probability"]),
+            min_message_length=(
+                base.dice.min_message_length
+                if d_ov.get("min_message_length") is None
+                else int(d_ov["min_message_length"])
+            ),
+            cooldown_seconds=(
+                base.dice.cooldown_seconds
+                if d_ov.get("cooldown_seconds") is None
+                else float(d_ov["cooldown_seconds"])
+            ),
+            ignore_prefixes=list(base.dice.ignore_prefixes),
+            quote_reply=base.dice.quote_reply if d_ov.get("quote_reply") is None else bool(d_ov["quote_reply"]),
+            at_user=base.dice.at_user if d_ov.get("at_user") is None else bool(d_ov["at_user"]),
+        )
+
+        c_ov = ov.get("context_llm") if isinstance(ov.get("context_llm"), dict) else {}
+        ctx_llm = ContextLLMTriggerConfig(
+            enabled=base.context_llm.enabled if c_ov.get("enabled") is None else bool(c_ov["enabled"]),
+            min_unread_messages=(
+                base.context_llm.min_unread_messages
+                if c_ov.get("min_unread_messages") is None
+                else max(1, int(c_ov["min_unread_messages"]))
+            ),
+            min_interval_seconds=(
+                base.context_llm.min_interval_seconds
+                if c_ov.get("min_interval_seconds") is None
+                else max(0.0, float(c_ov["min_interval_seconds"]))
+            ),
+            judge_context_window=base.context_llm.judge_context_window,
+            cooldown_after_reply_seconds=base.context_llm.cooldown_after_reply_seconds,
+            quote_reply=base.context_llm.quote_reply if c_ov.get("quote_reply") is None else bool(c_ov["quote_reply"]),
+            at_user=base.context_llm.at_user if c_ov.get("at_user") is None else bool(c_ov["at_user"]),
+        )
+
+        return mention, quote, keyword, dice, ctx_llm, compiled_rx
 
     def set_context_judge(self, judge: ContextJudgeFn | None) -> None:
         self._context_judge = judge
@@ -117,18 +251,19 @@ class TriggerEngine:
                 should_wait_trailing=True,
             )
 
+        mention_cfg, quote_cfg, keyword_cfg, dice_cfg, _, compiled_rx = self._effective_group_triggers(msg)
+
         matched: list[TriggerType] = []
         reasons: list[str] = []
 
         # 1 & 2: Distinguish quote/reply vs @ mention carefully.
         # In QQ / OneBot v11, quoting the bot's message injects an `@bot` segment automatically.
         is_quoted_bot = msg.is_quoted_bot
-        quote_matched = self._config.quote.enabled and is_quoted_bot
+        quote_matched = quote_cfg.enabled and is_quoted_bot
         if quote_matched:
             matched.append("quote")
             reasons.append("reply_to_bot")
 
-        mention_cfg = self._config.mention
         mention_matched = False
         if mention_cfg.enabled:
             if mention_cfg.include_quote_at and msg.at_bot_count > 0:
@@ -148,7 +283,7 @@ class TriggerEngine:
             and msg.reply_to_user_id is None
             and msg.at_bot_count > 0
         ):
-            if mention_cfg.unknown_reply_at_behavior == "quote" and self._config.quote.enabled:
+            if mention_cfg.unknown_reply_at_behavior == "quote" and quote_cfg.enabled:
                 matched.append("quote")
                 reasons.append("unknown_reply_fallback_quote")
             elif mention_cfg.unknown_reply_at_behavior == "mention" and mention_cfg.enabled:
@@ -159,7 +294,7 @@ class TriggerEngine:
             matched.append("mention")
 
         # 3: Keyword / regex trigger
-        if self._config.keyword.enabled and self._match_keyword(msg.text):
+        if keyword_cfg.enabled and self._match_keyword(msg.text, cfg=keyword_cfg, compiled_regex=compiled_rx):
             matched.append("keyword")
             reasons.append("keyword_matched")
 
@@ -183,13 +318,13 @@ class TriggerEngine:
             )
 
         # 4: Random dice trigger (strictly gated by length, ignore prefixes, and group cooldown)
-        if self._config.dice.enabled and self._match_dice(msg, now):
+        if dice_cfg.enabled and self._match_dice(msg, now, cfg=dice_cfg):
             self._last_dice_trigger[msg.session_key] = now
             return TriggerResult(
                 triggered=True,
                 trigger_type="dice",
                 matched_triggers=["dice"],
-                reason=f"dice_roll(p={self._config.dice.probability})",
+                reason=f"dice_roll(p={dice_cfg.probability})",
                 should_wait_trailing=True,
             )
 
@@ -204,7 +339,7 @@ class TriggerEngine:
         now_mono: float | None = None,
     ) -> TriggerResult:
         """Evaluate Trigger 5 (model decides from group context) under strict rate gates."""
-        cfg = self._config.context_llm
+        _, _, _, _, cfg, _ = self._effective_group_triggers(msg)
         if not cfg.enabled or self._context_judge is None or msg.scene != "group":
             return TriggerResult(triggered=False, reason="context_llm_disabled")
 
@@ -236,39 +371,52 @@ class TriggerEngine:
 
         return TriggerResult(triggered=False, reason=f"context_llm_skip:{decision.reason}")
 
-    def _match_keyword(self, text: str) -> bool:
+    def _match_keyword(
+        self,
+        text: str,
+        *,
+        cfg: KeywordTriggerConfig | None = None,
+        compiled_regex: list[re.Pattern[str]] | None = None,
+    ) -> bool:
         if not text:
             return False
-        cfg = self._config.keyword
-        haystack = text if cfg.case_sensitive else text.lower()
+        eff_cfg = cfg or self._config.keyword
+        rx_list = self._compiled_regex if compiled_regex is None else compiled_regex
+        haystack = text if eff_cfg.case_sensitive else text.lower()
 
-        for excl in cfg.exclude_keywords:
-            needle = excl if cfg.case_sensitive else excl.lower()
+        for excl in eff_cfg.exclude_keywords:
+            needle = excl if eff_cfg.case_sensitive else excl.lower()
             if needle and needle in haystack:
                 return False
 
-        for kw in cfg.keywords:
-            needle = kw if cfg.case_sensitive else kw.lower()
+        for kw in eff_cfg.keywords:
+            needle = kw if eff_cfg.case_sensitive else kw.lower()
             if needle and needle in haystack:
                 return True
 
-        for pattern in self._compiled_regex:
+        for pattern in rx_list:
             if pattern.search(text):
                 return True
 
         return False
 
-    def _match_dice(self, msg: IncomingMessage, now_mono: float) -> bool:
-        cfg = self._config.dice
-        if msg.scene != "group" or cfg.probability <= 0:
+    def _match_dice(
+        self,
+        msg: IncomingMessage,
+        now_mono: float,
+        *,
+        cfg: DiceTriggerConfig | None = None,
+    ) -> bool:
+        eff_cfg = cfg or self._config.dice
+        if msg.scene != "group" or eff_cfg.probability <= 0:
             return False
         text = msg.text.strip()
-        if len(text) < cfg.min_message_length:
+        if len(text) < eff_cfg.min_message_length:
             return False
-        for prefix in cfg.ignore_prefixes:
+        for prefix in eff_cfg.ignore_prefixes:
             if prefix and text.startswith(prefix):
                 return False
         last = self._last_dice_trigger.get(msg.session_key)
-        if last is not None and (now_mono - last) < cfg.cooldown_seconds:
+        if last is not None and (now_mono - last) < eff_cfg.cooldown_seconds:
             return False
-        return self._rng.random() < cfg.probability
+        return self._rng.random() < eff_cfg.probability

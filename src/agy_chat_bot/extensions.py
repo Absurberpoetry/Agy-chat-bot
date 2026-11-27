@@ -438,6 +438,9 @@ class SkillsManager:
         self.active_dir.mkdir(parents=True, exist_ok=True)
         return self.active_dir, False
 
+    def get_global_enabled_map(self) -> dict[str, bool]:
+        return {str(s["id"]): bool(s.get("enabled", True)) for s in self.list_skills() if s.get("id")}
+
 
 def _normalize_mcp_server_entry(server_id: str, raw: dict[str, Any]) -> dict[str, Any]:
     sid = _validate_id(server_id, "MCP 服务器 ID")
@@ -609,6 +612,7 @@ class McpManager:
         self.data_dir.mkdir(parents=True, exist_ok=True)
         self._servers: dict[str, dict[str, Any]] = {}
         self._builtin_servers: dict[str, dict[str, Any]] = {}
+        self._override_enabled_ids: set[str] = set()
         self._load()
         if self._servers:
             self._sync_settings_allow()
@@ -747,6 +751,17 @@ class McpManager:
         except Exception as exc:
             logger.warning("同步 MCP 白名单至 %s 失败: %s", sf, exc)
 
+    def set_override_enabled_ids(self, server_ids: set[str]) -> None:
+        """Keep globally disabled MCP servers registered in mcp_config.json when enabled by a higher-priority scope
+        (client / session / model), while leaving them out of the global default settings allow list."""
+        cleaned = {str(x).strip() for x in (server_ids or set()) if str(x).strip()}
+        if cleaned != self._override_enabled_ids:
+            self._override_enabled_ids = cleaned
+            self._sync_workspace_mcp_config()
+
+    def get_global_enabled_map(self) -> dict[str, bool]:
+        return {str(s["id"]): bool(s.get("enabled", True)) for s in self.list_servers() if s.get("id")}
+
     def _sync_subagent_mcp_config(self) -> None:
         """Sync enabled external (non-builtin) MCP servers to the isolated subagent workspace."""
         if self.subagent_workspace_dir is None:
@@ -758,7 +773,7 @@ class McpManager:
             if sid in self._BUILTIN_IDS:
                 continue
             entry = self._servers[sid]
-            if entry.get("enabled", True):
+            if entry.get("enabled", True) or sid in self._override_enabled_ids:
                 sub_map[sid] = _to_antigravity_mcp_entry(entry)
         payload = {"mcpServers": sub_map}
         target = sub_agents_dir / "mcp_config.json"
@@ -772,7 +787,7 @@ class McpManager:
         managed = self._all_managed_servers()
         for sid in sorted(managed.keys()):
             entry = managed[sid]
-            if entry.get("enabled", True):
+            if entry.get("enabled", True) or sid in self._override_enabled_ids:
                 active_map[sid] = _to_antigravity_mcp_entry(entry)
         payload = {"mcpServers": active_map}
         tmp = self.mcp_config_path.with_suffix(".tmp")

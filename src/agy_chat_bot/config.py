@@ -179,6 +179,16 @@ class TriggersConfig:
     disable_builtin_commands: bool = False
     command_prefixes: list[str] = field(default_factory=lambda: ["/"])
     admin_bypass_rate_limit: bool = False
+    group_overrides: dict[str, dict[str, Any]] = field(default_factory=dict)
+
+
+@dataclass(slots=True)
+class CapabilityOverridesConfig:
+    """Scoped overrides for plugins / mcp / skills.
+    Precedence: clients (adapter_id) > sessions (group/private) > model_profile > global."""
+
+    clients: dict[str, dict[str, dict[str, bool]]] = field(default_factory=dict)
+    sessions: dict[str, dict[str, dict[str, bool]]] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -229,6 +239,7 @@ class CollectorConfig:
     compact_max_tokens: int = 12000
     compact_max_bytes: int = 0
     compact_drop_by_tokens: int = 20
+    group_compact_overrides: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -259,7 +270,9 @@ class ReplyConfig:
     quote_trigger_message: bool = True
     at_trigger_user: bool = False
     reply_prefix: str = ""
-    max_reply_chars: int = 800
+    max_reply_chars: int = 800  # Total reply character cap per request (0 = unlimited)
+    max_chars_per_message: int = 0  # Single-bubble character cap (0 = unlimited)
+    max_messages_per_reply: int = 0  # Max bubbles per reply (0 = unlimited)
     segmented_reply: SegmentedReplyConfig = field(default_factory=SegmentedReplyConfig)
 
 
@@ -284,6 +297,9 @@ class ModelProfileConfig:
     enable_audio: bool = False
     enable_file_tools: bool = False
     enable_command: bool = False
+    mcp_overrides: dict[str, bool] = field(default_factory=dict)
+    skill_overrides: dict[str, bool] = field(default_factory=dict)
+    plugin_overrides: dict[str, bool] = field(default_factory=dict)
 
 
 def strip_model_effort_suffix(model_id: str) -> tuple[str, str]:
@@ -373,6 +389,7 @@ class BotConfig:
     prompt: PromptConfig = field(default_factory=PromptConfig)
     content_safety: ContentSafetyConfig = field(default_factory=ContentSafetyConfig)
     plugins: PluginsConfig = field(default_factory=PluginsConfig)
+    capability_overrides: CapabilityOverridesConfig = field(default_factory=CapabilityOverridesConfig)
     collector: CollectorConfig = field(default_factory=CollectorConfig)
     rate_limit: RateLimitConfig = field(default_factory=RateLimitConfig)
     reply: ReplyConfig = field(default_factory=ReplyConfig)
@@ -415,6 +432,174 @@ def _as_opt_bool(val: Any) -> bool | None:
             return None
         return low in ("true", "1", "yes", "on")
     return bool(val)
+
+
+def _as_bool_map(raw: Any) -> dict[str, bool]:
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, bool] = {}
+    for k, v in raw.items():
+        ks = str(k or "").strip()
+        if not ks or v is None or v == "":
+            continue
+        opt = _as_opt_bool(v)
+        if opt is not None:
+            out[ks] = opt
+    return out
+
+
+def _as_opt_int(val: Any, *, min_val: int = 0) -> int | None:
+    if val is None or val == "":
+        return None
+    try:
+        return max(min_val, int(val))
+    except (TypeError, ValueError):
+        return None
+
+
+def _as_opt_float(val: Any, *, min_val: float = 0.0) -> float | None:
+    if val is None or val == "":
+        return None
+    try:
+        return max(min_val, float(val))
+    except (TypeError, ValueError):
+        return None
+
+
+def _normalize_group_trigger_overrides(raw: Any) -> dict[str, dict[str, Any]]:
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, dict[str, Any]] = {}
+    for gkey, item in raw.items():
+        gk = str(gkey or "").strip()
+        if not gk or not isinstance(item, dict):
+            continue
+        entry: dict[str, Any] = {}
+        if isinstance(item.get("mention"), dict):
+            m = item["mention"]
+            me = {
+                "enabled": _as_opt_bool(m.get("enabled")),
+                "allow_at_all": _as_opt_bool(m.get("allow_at_all")),
+                "quote_reply": _as_opt_bool(m.get("quote_reply")),
+                "at_user": _as_opt_bool(m.get("at_user")),
+            }
+            me = {k: v for k, v in me.items() if v is not None}
+            if me:
+                entry["mention"] = me
+        if isinstance(item.get("quote"), dict):
+            q = item["quote"]
+            qe = {
+                "enabled": _as_opt_bool(q.get("enabled")),
+                "quote_reply": _as_opt_bool(q.get("quote_reply")),
+                "at_user": _as_opt_bool(q.get("at_user")),
+            }
+            qe = {k: v for k, v in qe.items() if v is not None}
+            if qe:
+                entry["quote"] = qe
+        if isinstance(item.get("keyword"), dict):
+            kw = item["keyword"]
+            ke: dict[str, Any] = {}
+            for bk in ("enabled", "case_sensitive", "quote_reply", "at_user"):
+                bv = _as_opt_bool(kw.get(bk))
+                if bv is not None:
+                    ke[bk] = bv
+            if "keywords" in kw and kw.get("keywords") is not None:
+                ke["keywords"] = _as_str_list(kw.get("keywords"))
+            if "exclude_keywords" in kw and kw.get("exclude_keywords") is not None:
+                ke["exclude_keywords"] = _as_str_list(kw.get("exclude_keywords"))
+            if "regex_patterns" in kw and kw.get("regex_patterns") is not None:
+                ke["regex_patterns"] = _as_str_list(kw.get("regex_patterns"))
+            if ke:
+                entry["keyword"] = ke
+        if isinstance(item.get("dice"), dict):
+            dc = item["dice"]
+            de: dict[str, Any] = {}
+            for bk in ("enabled", "quote_reply", "at_user"):
+                bv = _as_opt_bool(dc.get(bk))
+                if bv is not None:
+                    de[bk] = bv
+            p_val = _as_opt_float(dc.get("probability"), min_val=0.0)
+            if p_val is not None:
+                de["probability"] = min(1.0, p_val)
+            ml_val = _as_opt_int(dc.get("min_message_length"), min_val=0)
+            if ml_val is not None:
+                de["min_message_length"] = ml_val
+            cd_val = _as_opt_float(dc.get("cooldown_seconds"), min_val=0.0)
+            if cd_val is not None:
+                de["cooldown_seconds"] = cd_val
+            if de:
+                entry["dice"] = de
+        if isinstance(item.get("context_llm"), dict):
+            cl = item["context_llm"]
+            ce: dict[str, Any] = {}
+            for bk in ("enabled", "quote_reply", "at_user"):
+                bv = _as_opt_bool(cl.get(bk))
+                if bv is not None:
+                    ce[bk] = bv
+            mu = _as_opt_int(cl.get("min_unread_messages"), min_val=1)
+            if mu is not None:
+                ce["min_unread_messages"] = mu
+            mi = _as_opt_float(cl.get("min_interval_seconds"), min_val=0.0)
+            if mi is not None:
+                ce["min_interval_seconds"] = mi
+            if ce:
+                entry["context_llm"] = ce
+        if entry:
+            out[gk] = entry
+    return out
+
+
+def _normalize_group_compact_overrides(raw: Any) -> dict[str, dict[str, Any]]:
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, dict[str, Any]] = {}
+    for gkey, item in raw.items():
+        gk = str(gkey or "").strip()
+        if not gk or not isinstance(item, dict):
+            continue
+        entry: dict[str, Any] = {}
+        for k, mv in (
+            ("compact_max_messages", 0),
+            ("compact_drop_by_count", 1),
+            ("compact_max_tokens", 0),
+            ("compact_max_bytes", 0),
+            ("compact_drop_by_tokens", 1),
+            ("context_message_limit", 1),
+        ):
+            val = _as_opt_int(item.get(k), min_val=mv)
+            if val is not None:
+                entry[k] = val
+        if entry:
+            out[gk] = entry
+    return out
+
+
+def _normalize_capability_overrides(raw: Any) -> CapabilityOverridesConfig:
+    from .capability_policy import normalize_override_bucket
+
+    if not isinstance(raw, dict):
+        return CapabilityOverridesConfig()
+    clients: dict[str, dict[str, dict[str, bool]]] = {}
+    sessions: dict[str, dict[str, dict[str, bool]]] = {}
+    raw_clients = raw.get("clients")
+    if isinstance(raw_clients, dict):
+        for cid, bucket in raw_clients.items():
+            ck = str(cid or "").strip()
+            if not ck:
+                continue
+            norm = normalize_override_bucket(bucket)
+            if any(norm.values()):
+                clients[ck] = norm
+    raw_sessions = raw.get("sessions")
+    if isinstance(raw_sessions, dict):
+        for sid, bucket in raw_sessions.items():
+            sk = str(sid or "").strip()
+            if not sk:
+                continue
+            norm = normalize_override_bucket(bucket)
+            if any(norm.values()):
+                sessions[sk] = norm
+    return CapabilityOverridesConfig(clients=clients, sessions=sessions)
 
 
 def load_config_from_dict(
@@ -601,6 +786,7 @@ def load_config_from_dict(
         disable_builtin_commands=bool(tr.get("disable_builtin_commands", False)),
         command_prefixes=_as_str_list(tr.get("command_prefixes")) or ["/"],
         admin_bypass_rate_limit=bool(tr.get("admin_bypass_rate_limit", False)),
+        group_overrides=_normalize_group_trigger_overrides(tr.get("group_overrides")),
     )
 
     id_raw = raw.get("identities") or {}
@@ -696,6 +882,7 @@ def load_config_from_dict(
         configs={str(k): dict(v) for k, v in raw_pl_cfgs.items() if isinstance(v, dict)},
         scopes={str(k): dict(v) for k, v in raw_pl_scopes.items() if isinstance(v, dict)},
     )
+    capability_overrides = _normalize_capability_overrides(raw.get("capability_overrides"))
 
     col = _as_dict(raw.get("collector"))
     collector = CollectorConfig(
@@ -712,6 +899,7 @@ def load_config_from_dict(
         compact_max_tokens=max(0, int(col.get("compact_max_tokens", 12000) or 0)),
         compact_max_bytes=max(0, int(col.get("compact_max_bytes", 0) or 0)),
         compact_drop_by_tokens=max(1, int(col.get("compact_drop_by_tokens", 20) or 1)),
+        group_compact_overrides=_normalize_group_compact_overrides(col.get("group_compact_overrides")),
     )
 
     rl = _as_dict(raw.get("rate_limit"))
@@ -737,11 +925,15 @@ def load_config_from_dict(
         split_words=_as_str_list(seg_raw.get("split_words", ["|||"])),
         content_cleanup_rule=str(seg_raw.get("content_cleanup_rule", "")),
     )
+    raw_max_reply = rep.get("max_reply_chars", 800)
+    max_reply_val = 0 if (raw_max_reply is not None and int(raw_max_reply) <= 0) else max(0, int(raw_max_reply or 0))
     reply = ReplyConfig(
         quote_trigger_message=bool(rep.get("quote_trigger_message", True)),
         at_trigger_user=bool(rep.get("at_trigger_user", False)),
         reply_prefix=str(rep.get("reply_prefix", "")),
-        max_reply_chars=max(50, int(rep.get("max_reply_chars", 800))),
+        max_reply_chars=max_reply_val,
+        max_chars_per_message=max(0, int(rep.get("max_chars_per_message", 0) or 0)),
+        max_messages_per_reply=max(0, int(rep.get("max_messages_per_reply", 0) or 0)),
         segmented_reply=segmented_reply,
     )
 
@@ -774,6 +966,9 @@ def load_config_from_dict(
                 enable_audio=bool(mv.get("enable_audio", False)),
                 enable_file_tools=bool(mv.get("enable_file_tools", False)),
                 enable_command=bool(mv.get("enable_command", False)),
+                mcp_overrides=_as_bool_map(mv.get("mcp_overrides")),
+                skill_overrides=_as_bool_map(mv.get("skill_overrides")),
+                plugin_overrides=_as_bool_map(mv.get("plugin_overrides")),
             )
 
     agy = AgyConfig(
@@ -830,6 +1025,7 @@ def load_config_from_dict(
         prompt=prompt,
         content_safety=content_safety,
         plugins=plugins,
+        capability_overrides=capability_overrides,
         collector=collector,
         rate_limit=rate_limit,
         reply=reply,
@@ -961,6 +1157,7 @@ def config_to_dict(cfg: BotConfig) -> dict[str, Any]:
             "disable_builtin_commands": cfg.triggers.disable_builtin_commands,
             "command_prefixes": list(cfg.triggers.command_prefixes),
             "admin_bypass_rate_limit": cfg.triggers.admin_bypass_rate_limit,
+            "group_overrides": {k: dict(v) for k, v in cfg.triggers.group_overrides.items()},
         },
         "identities": {
             "enabled": cfg.identities.enabled,
@@ -1027,6 +1224,24 @@ def config_to_dict(cfg: BotConfig) -> dict[str, Any]:
             "configs": {k: dict(v) for k, v in cfg.plugins.configs.items()},
             "scopes": {k: dict(v) for k, v in cfg.plugins.scopes.items()},
         },
+        "capability_overrides": {
+            "clients": {
+                cid: {
+                    "plugins": dict(bucket.get("plugins") or {}),
+                    "mcp": dict(bucket.get("mcp") or {}),
+                    "skills": dict(bucket.get("skills") or {}),
+                }
+                for cid, bucket in cfg.capability_overrides.clients.items()
+            },
+            "sessions": {
+                sid: {
+                    "plugins": dict(bucket.get("plugins") or {}),
+                    "mcp": dict(bucket.get("mcp") or {}),
+                    "skills": dict(bucket.get("skills") or {}),
+                }
+                for sid, bucket in cfg.capability_overrides.sessions.items()
+            },
+        },
         "collector": {
             "wait_triggers": list(cfg.collector.wait_triggers),
             "quiet_wait_seconds": cfg.collector.quiet_wait_seconds,
@@ -1041,6 +1256,7 @@ def config_to_dict(cfg: BotConfig) -> dict[str, Any]:
             "compact_max_tokens": cfg.collector.compact_max_tokens,
             "compact_max_bytes": cfg.collector.compact_max_bytes,
             "compact_drop_by_tokens": cfg.collector.compact_drop_by_tokens,
+            "group_compact_overrides": {k: dict(v) for k, v in cfg.collector.group_compact_overrides.items()},
         },
         "rate_limit": {
             "max_concurrent_requests": cfg.rate_limit.max_concurrent_requests,
@@ -1054,6 +1270,8 @@ def config_to_dict(cfg: BotConfig) -> dict[str, Any]:
             "at_trigger_user": cfg.reply.at_trigger_user,
             "reply_prefix": cfg.reply.reply_prefix,
             "max_reply_chars": cfg.reply.max_reply_chars,
+            "max_chars_per_message": cfg.reply.max_chars_per_message,
+            "max_messages_per_reply": cfg.reply.max_messages_per_reply,
             "segmented_reply": {
                 "enabled": cfg.reply.segmented_reply.enabled,
                 "only_llm_result": cfg.reply.segmented_reply.only_llm_result,
@@ -1115,6 +1333,9 @@ def config_to_dict(cfg: BotConfig) -> dict[str, Any]:
                     "enable_audio": v.enable_audio,
                     "enable_file_tools": v.enable_file_tools,
                     "enable_command": v.enable_command,
+                    "mcp_overrides": dict(v.mcp_overrides),
+                    "skill_overrides": dict(v.skill_overrides),
+                    "plugin_overrides": dict(v.plugin_overrides),
                 }
                 for k, v in cfg.agy.model_profiles.items()
             },

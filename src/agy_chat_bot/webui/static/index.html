@@ -858,6 +858,67 @@
     white-space: pre-line;
   }
   [data-theme="light"] .rel-usage-card { background: rgba(15, 23, 42, 0.03); }
+  .rel-priority-card {
+    padding: 10px 12px; border-radius: 10px;
+    background: rgba(245, 158, 11, 0.09); border: 1px solid rgba(245, 158, 11, 0.34);
+    font-size: 12.2px; line-height: 1.65; color: var(--text-strong);
+    white-space: pre-line;
+  }
+  [data-theme="light"] .rel-priority-card {
+    background: rgba(217, 119, 6, 0.08); border-color: rgba(217, 119, 6, 0.32);
+  }
+  .studio-priority-box {
+    margin: 0 10px 8px;
+    padding: 9px 11px;
+    border-radius: 9px;
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.30);
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: var(--text-2);
+    flex-shrink: 0;
+  }
+  .studio-priority-box .sp-title {
+    font-size: 11.5px; font-weight: 700; color: var(--text-strong);
+    margin-bottom: 3px; display: flex; align-items: center; gap: 5px;
+  }
+  .studio-priority-box .sp-chain {
+    font-weight: 700; color: var(--warn); letter-spacing: 0.01em;
+    margin-bottom: 3px;
+  }
+  [data-theme="light"] .studio-priority-box {
+    background: rgba(217, 119, 6, 0.07); border-color: rgba(217, 119, 6, 0.28);
+  }
+  .ov-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+  .ov-item {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 8px 11px; border-radius: 9px;
+    border: 1px solid var(--border); background: rgba(255, 255, 255, 0.025);
+    transition: border-color .14s, background .14s;
+  }
+  .ov-item.clickable { cursor: pointer; }
+  .ov-item.clickable:hover { border-color: var(--input-focus-border); background: rgba(255, 255, 255, 0.05); }
+  .ov-item-main { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 3px; }
+  .ov-item-title { font-size: 12.5px; font-weight: 700; color: var(--text-strong); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .ov-item-meta { font-size: 11.5px; color: var(--text-3); display: flex; flex-wrap: wrap; gap: 5px; }
+  .ov-picker-bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .ov-picker-bar select, .ov-picker-bar input { flex: 1 1 170px; min-width: 140px; }
+  .mi-cap-group { display: flex; flex-direction: column; gap: 5px; }
+  .mi-cap-subhd { font-size: 11px; font-weight: 700; color: var(--text-3); letter-spacing: 0.04em; margin-top: 4px; }
+  .mi-cap-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 6px 8px; border-radius: 8px;
+    border: 1px solid var(--border); background: rgba(255, 255, 255, 0.02);
+  }
+  .mi-cap-name { min-width: 0; flex: 1; font-size: 12px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mi-cap-name small { display: block; font-size: 10.5px; color: var(--text-3); font-family: var(--font-mono); }
+  .cap-scope-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;
+    padding: 7px 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: rgba(255, 255, 255, 0.025);
+  }
+  .cap-badge-on { color: var(--ok); font-weight: 700; }
+  .cap-badge-off { color: var(--err); font-weight: 700; }
   .rel-opt-list { display: flex; flex-direction: column; gap: 6px; }
   @media (min-width: 769px) {
     #view-settings .cfg-row .cfg-desc { display: none; }
@@ -3132,6 +3193,21 @@
                   <label class="switch"><input type="checkbox" id="cfg_tr_sched_en" onchange="syncTriggerSummary()"><span class="track"></span><span class="thumb"></span></label>
                 </div>
               </div>
+              <div class="cfg-row stack" id="row_tr_group_overrides" data-rel-key="tr_group_overrides">
+                <div class="cfg-k">
+                  <div class="cfg-title">特定群聊触发覆盖（已有聊天记录群聊）<span class="target-hint" id="trGroupOvCountBadge">0 个群聊</span></div>
+                  <div class="cfg-desc">上方各项为全局触发配置；此处可针对已有聊天记录的群聊单独覆盖 @、引用、关键词与随机插话策略（优先级：特定群聊 &gt; 全局）</div>
+                </div>
+                <div class="ov-picker-bar" onclick="event.stopPropagation()">
+                  <select id="trGroupOvSelect">
+                    <option value="">从已有聊天记录的群聊中选择...</option>
+                  </select>
+                  <input id="trGroupOvManual" class="mono" placeholder="或手动输入群号 / session_key（如 group:123456）">
+                  <button type="button" class="sm primary" onclick="addGroupTriggerOverrideFromPicker()">+ 配置该群</button>
+                  <button type="button" class="sm" onclick="refreshKnownChatSessions(true)">刷新群列表</button>
+                </div>
+                <div id="trGroupOvList" class="ov-list"></div>
+              </div>
               <div class="cfg-row" data-rel-key="col_wait">
                 <div class="cfg-k"><div class="cfg-title">连发消息合并等待</div><div class="cfg-desc">用户连续拆成多条发送消息时，短暂静默等待几秒后合并为一次完整提问再统一回复，避免抢答刷屏</div></div>
                 <div class="cfg-v triple">
@@ -3147,11 +3223,16 @@
                   <label style="display:inline-flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-2)">@ 触发用户<span class="switch"><input type="checkbox" id="cfg_rep_at"><span class="track"></span><span class="thumb"></span></span></label>
                 </div>
               </div>
-              <div class="cfg-row" data-rel-key="rep_prefix_max">
-                <div class="cfg-k"><div class="cfg-title">回复前缀与单次最大字数</div><div class="cfg-desc">回复前缀留空则不加；超出最大字数将自动截断</div></div>
-                <div class="cfg-v pair">
+              <div class="cfg-row stack" data-rel-key="rep_prefix_max">
+                <div class="cfg-k">
+                  <div class="cfg-title">回复前缀与字数 / 条数限制</div>
+                  <div class="cfg-desc">官方 agy CLI 无原生字数/条数命令行参数；非 0 项会自动转为自然语言规则写入官方 bot_workspace/GEMINI.md（不自拟系统标识与规范）并附带本地安全兜底，填 0 表示不限制</div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">
                   <div class="inline-field"><span>回复前缀</span><input id="cfg_rep_prefix" placeholder="留空不加"></div>
-                  <div class="inline-field"><span>最大字数</span><input id="cfg_rep_max" type="number" step="50"></div>
+                  <div class="inline-field"><span>单条消息字数上限 (0=不限)</span><input id="cfg_rep_max_per_msg" type="number" min="0" step="20"></div>
+                  <div class="inline-field"><span>单次最多发送条数 (0=不限)</span><input id="cfg_rep_max_msgs" type="number" min="0" step="1"></div>
+                  <div class="inline-field"><span>单次请求总字数上限 (0=不限)</span><input id="cfg_rep_max" type="number" min="0" step="50"></div>
                 </div>
               </div>
               <div class="cfg-row" data-rel-key="seg_en">
@@ -3248,6 +3329,21 @@
                   <div class="inline-field"><span>达到字节(B)</span><input id="cfg_col_cmax_bytes" type="number" min="0" step="2048"></div>
                   <div class="inline-field"><span>每批丢弃条</span><input id="cfg_col_cdrop_tok" type="number" min="1" step="5"></div>
                 </div>
+              </div>
+              <div class="cfg-row stack" id="row_col_group_compact" data-rel-key="col_group_compact">
+                <div class="cfg-k">
+                  <div class="cfg-title">特定群聊上下文压缩覆盖（已有聊天记录群聊）<span class="target-hint" id="ctxGroupOvCountBadge">0 个群聊</span></div>
+                  <div class="cfg-desc">上方压缩策略为全局配置；此处可针对已有聊天记录的特定群聊单独设置压缩条数、Token、字节与丢弃条数（优先级：特定群聊 &gt; 独立模型 &gt; 全局）</div>
+                </div>
+                <div class="ov-picker-bar" onclick="event.stopPropagation()">
+                  <select id="ctxGroupOvSelect">
+                    <option value="">从已有聊天记录的群聊中选择...</option>
+                  </select>
+                  <input id="ctxGroupOvManual" class="mono" placeholder="或手动输入群号 / session_key（如 group:123456）">
+                  <button type="button" class="sm primary" onclick="addGroupCompactOverrideFromPicker()">+ 配置该群</button>
+                  <button type="button" class="sm" onclick="refreshKnownChatSessions(true)">刷新群列表</button>
+                </div>
+                <div id="ctxGroupOvList" class="ov-list"></div>
               </div>
               <div class="cfg-row" data-rel-key="col_window">
                 <div class="cfg-k"><div class="cfg-title">追发范围与历史窗口</div><div class="cfg-desc">哪些触发器启用防抖（逗号分隔）、送入上下文条数与内存缓冲条数</div></div>
@@ -3540,6 +3636,27 @@
                 <div>工作区文件读写<small>允许读写 bot_workspace（始终禁止 Shell 与修改红线）</small></div>
                 <label class="switch"><input type="checkbox" id="mi_tool_files" onchange="saveInspectorProfileField()"><span class="track"></span><span class="thumb"></span></label>
               </div>
+              <div class="mi-toggle-item">
+                <div>命令行执行 (run_command)<small>单独覆盖全局「允许执行命令行」开关</small></div>
+                <div id="miToolCmdTri"></div>
+              </div>
+            </div>
+
+            <!-- Per-Model MCP / Skill / Plugin Capability Overrides -->
+            <div class="mi-sec">
+              <div class="mi-sec-title">
+                <span>该模型独立 MCP / Skill / 插件覆写</span>
+                <button type="button" class="ghost sm" style="padding:1px 6px;font-size:11px" onclick="refreshCapabilityListsForInspector()">刷新列表</button>
+              </div>
+              <div style="font-size:11.5px;color:var(--warn);line-height:1.5;padding:6px 8px;border-radius:8px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.26)">
+                生效优先级：<strong>客户端 &gt; 群聊/私聊 &gt; 独立模型 &gt; 全局</strong>。此处设为「启用 / 禁用」将覆盖全局默认，但会被更高层的群聊/私聊或客户端特定设置覆盖。
+              </div>
+              <div class="mi-cap-subhd">MCP 工具服务</div>
+              <div id="miMcpOverridesList" class="mi-cap-group"></div>
+              <div class="mi-cap-subhd">Antigravity Skills</div>
+              <div id="miSkillOverridesList" class="mi-cap-group"></div>
+              <div class="mi-cap-subhd">外部插件 (Plugins)</div>
+              <div id="miPluginOverridesList" class="mi-cap-group"></div>
             </div>
 
             <div class="mi-sec">
@@ -3661,6 +3778,11 @@
           </div>
         </div>
         <div id="pluginList" class="p-list sh-container"></div>
+        <div class="studio-priority-box">
+          <div class="sp-title">生效优先级说明</div>
+          <div class="sp-chain">客户端 &gt; 群聊/私聊 &gt; 独立模型 &gt; 全局</div>
+          <div>列表中的开关为<strong>全局默认</strong>；若在右侧「客户端/群聊/私聊覆盖」或「独立模型」中设置了启用/禁用，高优先级将覆盖全局。</div>
+        </div>
         <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--text-3)">
           <span id="pluginDirHint" class="mono" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">目录: ./plugins</span>
           <button class="sm" style="flex-shrink:0" onclick="openPluginLocation('')" title="在文件管理器中打开插件目录">打开目录</button>
@@ -3759,6 +3881,9 @@
               </div>
             </div>
 
+            <!-- Section 1.5: Priority Scoped Overrides (Client / Group / Private) -->
+            <div id="plCapOverridesCard"></div>
+
             <!-- Section 2: Per-Plugin Visual Configuration (Schema-Driven, Zero Raw JSON) -->
             <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 2px 0">
               <span style="font-size:13px;font-weight:700;color:var(--text-strong)">插件参数配置</span>
@@ -3793,6 +3918,12 @@
         </div>
 
         <div id="extList" class="p-list sh-container"></div>
+
+        <div class="studio-priority-box">
+          <div class="sp-title">生效优先级说明</div>
+          <div class="sp-chain">客户端 &gt; 群聊/私聊 &gt; 独立模型 &gt; 全局</div>
+          <div>列表中的开关为<strong>全局默认</strong>；可在「全局配置 → 独立模型」按模型覆写，或在右侧按客户端/群聊/私聊单独覆写，高优先级覆盖低优先级。</div>
+        </div>
 
         <div style="padding:10px 12px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--text-3)">
           <span id="extDirHint" class="mono" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">bot_workspace/.agents/skills</span>
@@ -3850,6 +3981,7 @@
                 <div id="sk_path_view" class="mono" style="padding:7px 10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--border);font-size:11.5px;color:var(--text-3);word-break:break-all">-</div>
               </div>
             </div>
+            <div id="skCapOverridesCard"></div>
             <div class="studio-foot">
               如需修改 Skill 内容或添加脚本/参考资料，请点击右上角「打开所在位置」在本地目录编辑，完成后点左侧「刷新」即可。
             </div>
@@ -3906,6 +4038,7 @@
             </div>
 
             <!-- Usage Prompt & Async Subagent Mode -->
+            <div id="mcpCapOverridesCard"></div>
             <div class="tr-card">
               <div class="tr-card-hd">
                 <span style="font-size:13px;font-weight:700;color:var(--text-strong)">模型调用规范与并发模式</span>
@@ -4889,6 +5022,8 @@ function switchCfgPane(key, btn, opts = {}) {
     if (!opts.keepRel) closeRelInspector({ skipFlip: true });
   });
   if (effKey === 'chatdata') loadChatDataSessions();
+  if (effKey === 'reply' || effKey === 'context') refreshKnownChatSessions(false);
+  if (effKey === 'model') refreshCapabilityListsForInspector(true);
 }
 
 /* ============================================================================
@@ -4941,6 +5076,8 @@ function switchView(name, btn) {
   if (name === 'settings') {
     loadConfig();
     loadSecuritySettings();
+    refreshKnownChatSessions(false);
+    refreshCapabilityListsForInspector(true);
     requestAnimationFrame(() => sharedHoverControllers.get(document.getElementById('cfgTabs'))?.syncActive(true));
   }
   if (name === 'personas') {
@@ -4948,10 +5085,12 @@ function switchView(name, btn) {
     requestAnimationFrame(() => sharedHoverControllers.get(document.getElementById('personaSubTabs'))?.syncActive(true));
   }
   if (name === 'plugins') {
-    loadPlugins();
+    ensureCapabilityOverridesLoaded(false).then(() => loadPlugins());
+    refreshKnownChatSessions(false);
   }
   if (name === 'extensions') {
-    loadExtensionsView();
+    ensureCapabilityOverridesLoaded(false).then(() => loadExtensionsView());
+    refreshKnownChatSessions(false);
     requestAnimationFrame(() => sharedHoverControllers.get(document.getElementById('extModeTabs'))?.syncActive(true));
   }
   if (name === 'cli') {
@@ -5468,6 +5607,10 @@ function defaultModelProfile(cliModel = '') {
     enable_vision: true,
     enable_audio: false,
     enable_file_tools: false,
+    enable_command: null,
+    mcp_overrides: {},
+    skill_overrides: {},
+    plugin_overrides: {},
   };
 }
 
@@ -5967,6 +6110,15 @@ function loadProfileIntoInspectorForm(key, fallbackCliSlug = '') {
   document.getElementById('mi_tool_audio').checked = !!p.enable_audio;
   document.getElementById('mi_tool_url').checked = !!p.enable_url_read;
   document.getElementById('mi_tool_files').checked = !!p.enable_file_tools;
+  const cmdTri = document.getElementById('miToolCmdTri');
+  if (cmdTri) {
+    cmdTri.innerHTML = renderTriButtons(
+      p.enable_command === true ? true : (p.enable_command === false ? false : null),
+      'setModelEnableCommand($V)',
+      '允许', '禁止', '跟随全局'
+    );
+  }
+  renderModelCapabilityOverrides(p);
 }
 
 function saveInspectorProfileField() {
@@ -6001,6 +6153,10 @@ function saveInspectorProfileField() {
     enable_vision: document.getElementById('mi_tool_vision').checked,
     enable_audio: document.getElementById('mi_tool_audio').checked,
     enable_file_tools: document.getElementById('mi_tool_files').checked,
+    enable_command: prev.enable_command === true ? true : (prev.enable_command === false ? false : null),
+    mcp_overrides: { ...(prev.mcp_overrides || {}) },
+    skill_overrides: { ...(prev.skill_overrides || {}) },
+    plugin_overrides: { ...(prev.plugin_overrides || {}) },
   };
   modelProfilesDraft[inspectedProfileKey] = profile;
   renderModelSlotBoxes();
@@ -7413,7 +7569,9 @@ async function loadConfig() {
       private_needs_wake: !!tr.private_needs_wake,
       disable_builtin_commands: !!tr.disable_builtin_commands,
       command_prefixes: [...(tr.command_prefixes || ['/'])],
+      group_overrides: JSON.parse(JSON.stringify(tr.group_overrides || {})),
     };
+    groupTriggerOverridesDraft = triggersDraft.group_overrides;
 
     document.getElementById('cfg_tr_mention').checked = triggersDraft.mention.enabled;
     document.getElementById('cfg_tr_quote').checked = triggersDraft.quote.enabled;
@@ -7422,6 +7580,7 @@ async function loadConfig() {
     document.getElementById('cfg_tr_sched_en').checked = triggersDraft.scheduled.enabled;
     document.getElementById('cfg_tr_admin_bypass').checked = !!tr.admin_bypass_rate_limit;
     syncTriggerSummary();
+    renderGroupTriggerOverridesList();
 
     const idCfg = data.identities || {};
     const idDef = idCfg.default_policy || {};
@@ -7448,7 +7607,11 @@ async function loadConfig() {
     renderIdentityList();
 
     if (sideInspectorState?.kind === 'trigger') openTriggerInspector(sideInspectorState.trKey);
-    else if (sideInspectorState?.kind === 'id_default') openIdentityDefaultInspector();
+    else if (sideInspectorState?.kind === 'group_trigger' && groupTriggerOverridesDraft[sideInspectorState.groupKey]) {
+      openGroupTriggerOverrideInspector(sideInspectorState.groupKey);
+    } else if (sideInspectorState?.kind === 'group_compact' && groupCompactOverridesDraft[sideInspectorState.groupKey]) {
+      openGroupCompactOverrideInspector(sideInspectorState.groupKey);
+    } else if (sideInspectorState?.kind === 'id_default') openIdentityDefaultInspector();
     else if (sideInspectorState?.kind === 'id_profile' && identitiesDraft.profiles[sideInspectorState.idx]) {
       openIdentityProfileInspector(sideInspectorState.idx);
     }
@@ -7466,6 +7629,8 @@ async function loadConfig() {
     document.getElementById('cfg_col_cmax_tok').value = data.collector?.compact_max_tokens ?? 12000;
     document.getElementById('cfg_col_cmax_bytes').value = data.collector?.compact_max_bytes ?? 0;
     document.getElementById('cfg_col_cdrop_tok').value = data.collector?.compact_drop_by_tokens ?? 20;
+    groupCompactOverridesDraft = JSON.parse(JSON.stringify(data.collector?.group_compact_overrides || {}));
+    renderGroupCompactOverridesList();
     updateDbCompactVisibility();
     document.getElementById('cfg_col_only_u').checked = data.collector?.track_only_trigger_user !== false;
 
@@ -7477,7 +7642,10 @@ async function loadConfig() {
     document.getElementById('cfg_rep_quote').checked = !!data.reply?.quote_trigger_message;
     document.getElementById('cfg_rep_at').checked = !!data.reply?.at_trigger_user;
     document.getElementById('cfg_rep_prefix').value = data.reply?.reply_prefix || '';
+    document.getElementById('cfg_rep_max_per_msg').value = data.reply?.max_chars_per_message ?? 0;
+    document.getElementById('cfg_rep_max_msgs').value = data.reply?.max_messages_per_reply ?? 0;
     document.getElementById('cfg_rep_max').value = data.reply?.max_reply_chars ?? 800;
+    capabilityOverridesDraft = normalizeCapabilityOverridesObj(data.capability_overrides || {});
 
     const seg = data.reply?.segmented_reply || {};
     document.getElementById('cfg_seg_en').checked = !!seg.enabled;
@@ -7627,6 +7795,7 @@ async function saveAllConfig() {
       at_user: null,
       rules: [],
     },
+    group_overrides: JSON.parse(JSON.stringify(groupTriggerOverridesDraft || {})),
   };
 
   c.identities = {
@@ -7668,6 +7837,7 @@ async function saveAllConfig() {
   c.collector.compact_max_tokens = Math.max(0, Number(document.getElementById('cfg_col_cmax_tok').value || 0));
   c.collector.compact_max_bytes = Math.max(0, Number(document.getElementById('cfg_col_cmax_bytes').value || 0));
   c.collector.compact_drop_by_tokens = Math.max(1, Number(document.getElementById('cfg_col_cdrop_tok').value || 1));
+  c.collector.group_compact_overrides = JSON.parse(JSON.stringify(groupCompactOverridesDraft || {}));
   c.collector.track_only_trigger_user = document.getElementById('cfg_col_only_u').checked;
 
   c.prompt = {
@@ -7681,7 +7851,10 @@ async function saveAllConfig() {
   c.reply.quote_trigger_message = document.getElementById('cfg_rep_quote').checked;
   c.reply.at_trigger_user = document.getElementById('cfg_rep_at').checked;
   c.reply.reply_prefix = document.getElementById('cfg_rep_prefix').value;
-  c.reply.max_reply_chars = Number(document.getElementById('cfg_rep_max').value);
+  c.reply.max_chars_per_message = Math.max(0, Number(document.getElementById('cfg_rep_max_per_msg').value || 0));
+  c.reply.max_messages_per_reply = Math.max(0, Number(document.getElementById('cfg_rep_max_msgs').value || 0));
+  c.reply.max_reply_chars = Math.max(0, Number(document.getElementById('cfg_rep_max').value || 0));
+  c.capability_overrides = JSON.parse(JSON.stringify(capabilityOverridesDraft || { clients: {}, sessions: {} }));
   c.reply.segmented_reply.enabled = document.getElementById('cfg_seg_en').checked;
   c.reply.segmented_reply.only_llm_result = document.getElementById('cfg_seg_only_llm').checked;
   c.reply.segmented_reply.split_mode = document.getElementById('cfg_seg_mode').value;
@@ -8575,6 +8748,7 @@ async function selectPlugin(pid) {
 
   pluginConfigDraft = JSON.parse(JSON.stringify(p.config || {}));
   renderPluginVisualParams(p, pluginConfigDraft);
+  renderCapabilityScopedOverridesCard('plCapOverridesCard', 'plugins', p.id);
 }
 
 async function openPluginLocation(pid) {
@@ -8782,6 +8956,7 @@ function selectSkill(sid) {
   chk.disabled = !!s.readonly;
   document.getElementById('skEnableToggleWrap').style.display = s.readonly ? 'none' : 'inline-flex';
   document.getElementById('btnDeleteSkill').style.display = s.readonly ? 'none' : '';
+  renderCapabilityScopedOverridesCard('skCapOverridesCard', 'skills', s.id);
 }
 
 async function toggleSkill(sid, enabled) {
@@ -9101,6 +9276,7 @@ function selectMcpServer(sid) {
   document.getElementById('btnSaveMcp').style.display = ro ? 'none' : '';
   document.getElementById('btnDeleteMcp').style.display = ro ? 'none' : '';
   onMcpTransportChange();
+  renderCapabilityScopedOverridesCard('mcpCapOverridesCard', 'mcp', m.id);
 }
 
 function newMcpServer() {
@@ -9138,6 +9314,8 @@ function newMcpServer() {
   document.getElementById('btnSaveMcp').style.display = '';
   document.getElementById('btnDeleteMcp').style.display = 'none';
   onMcpTransportChange();
+  const capEl = document.getElementById('mcpCapOverridesCard');
+  if (capEl) capEl.innerHTML = '';
   document.getElementById('mcp_id').focus();
 }
 
@@ -10012,9 +10190,27 @@ const REL_KIND_LABELS = {
 
 const SETTING_META = {
   // Model pane
-  model: { title: '主聊天模型', pane: 'model', isOn: () => !!_val('cfg_model'), usage: '点击右侧白色配置框可在右栏自由起名，并单独指定底层 agy 模型、推理强度、上下文压缩阈值与工具权限。' },
-  fallback: { title: '故障回退模型', pane: 'model', isOn: () => !!_val('cfg_fallback_models'), usage: '可点「+ 添加」建多个不同名字的回退配置；主模型超时、503 或限流时按从左到右顺序自动切换接管。' },
-  subagent: { title: '子代理模型与并发设置', pane: 'model', isOn: () => _chk('cfg_subagent_enabled'), usage: '开启后，画图等耗时 MCP 会交给独立后台子代理并发跑，不卡群聊。\n• 专用模型留空则复用主模型；\n• 载入人格默认「纯净工具模式」最防误拒，也可绑定人格工坊里的专属绘图人格。' },
+  model: {
+    title: '主聊天模型',
+    pane: 'model',
+    isOn: () => !!_val('cfg_model'),
+    priority: '插件 / Skill / MCP 生效优先级：\n客户端 > 群聊/私聊 > 独立模型 > 全局\n\n上下文压缩优先级：\n特定群聊 > 独立模型 > 全局',
+    usage: '点击右侧白色配置框可在右栏自由起名，并单独指定底层 agy 模型、推理强度、上下文压缩阈值、工具权限，以及该模型专属的 MCP / Skill / 插件启用或禁用覆写。',
+  },
+  fallback: {
+    title: '故障回退模型',
+    pane: 'model',
+    isOn: () => !!_val('cfg_fallback_models'),
+    priority: '插件 / Skill / MCP 生效优先级：\n客户端 > 群聊/私聊 > 独立模型 > 全局\n\n上下文压缩优先级：\n特定群聊 > 独立模型 > 全局',
+    usage: '可点「+ 添加」建多个不同名字的回退配置；主模型超时、503 或限流时按从左到右顺序自动切换接管，各自独立生效其工具、MCP、Skill 与压缩配置。',
+  },
+  subagent: {
+    title: '子代理模型与并发设置',
+    pane: 'model',
+    isOn: () => _chk('cfg_subagent_enabled'),
+    priority: '插件 / Skill / MCP 生效优先级：\n客户端 > 群聊/私聊 > 独立模型 > 全局',
+    usage: '开启后，画图等耗时 MCP 会交给独立后台子代理并发跑，不卡群聊。\n• 专用模型留空则复用主模型；\n• 载入人格默认「纯净工具模式」最防误拒，也可绑定人格工坊里的专属绘图人格。',
+  },
   effort: { title: '全局默认推理强度', pane: 'model', isOn: () => !!_val('cfg_effort'), usage: '可选 low / medium / high / xhigh；一般建议留空，由每个白色模型框各自的模型后缀或单独参数决定。' },
 
   // Agent pane
@@ -10037,14 +10233,27 @@ const SETTING_META = {
   p_retry: { title: '重连退避与 RPC 超时', pane: 'platform', isOn: () => Number(_val('cfg_p_rpc_to') || 0) > 0, usage: '客户端断线后会按初始重连间隔指数退避重连，直至上限；RPC 超时控制拉取引用消息/头像的最大等待秒数。' },
 
   // Merged Reply pane (Triggers + Coalesce + Reply Style + Segmented)
-  tr_mention: { title: '有人 @ 机器人时触发回复', pane: 'reply', isOn: () => _chk('cfg_tr_mention'), usage: '点击此行可在右侧配置是否响应 @全体成员，以及被 @ 时是否单独覆写「引用/艾特」回复样式。' },
-  tr_quote: { title: '有人引用机器人消息时触发回复', pane: 'reply', isOn: () => _chk('cfg_tr_quote'), usage: '群友长按引用机器人说过的话即可续聊；点击此行可在右侧单独配置引用回复样式。' },
-  tr_keyword: { title: '关键词 / 正则触发回复', pane: 'reply', isOn: () => _chk('cfg_tr_kw'), usage: '无需 @ 机器人，只要消息命中关键词或正则就会回复；点击此行在右侧自由增删关键词与正则列表。' },
-  tr_dice: { title: '随机概率插话', pane: 'reply', isOn: () => _chk('cfg_tr_dice'), usage: '按设定概率（如 0.03 = 3%）在活跃群聊中随机搭话；建议配合 180 秒以上冷却避免刷屏。' },
+  tr_mention: { title: '有人 @ 机器人时触发回复', pane: 'reply', isOn: () => _chk('cfg_tr_mention'), priority: '触发回复生效优先级：\n特定群聊覆盖 > 全局触发设置', usage: '此处为全局默认配置。点击此行可在右侧配置是否响应 @全体成员，以及被 @ 时是否单独覆写「引用/艾特」回复样式；若需针对单个群聊关闭或修改，请在下方「特定群聊触发覆盖」设置。' },
+  tr_quote: { title: '有人引用机器人消息时触发回复', pane: 'reply', isOn: () => _chk('cfg_tr_quote'), priority: '触发回复生效优先级：\n特定群聊覆盖 > 全局触发设置', usage: '此处为全局默认配置。群友长按引用机器人说过的话即可续聊；若某个群聊配置了特定触发覆盖，则该群以特定覆盖为准。' },
+  tr_keyword: { title: '关键词 / 正则触发回复', pane: 'reply', isOn: () => _chk('cfg_tr_kw'), priority: '触发回复生效优先级：\n特定群聊覆盖 > 全局触发设置', usage: '此处为全局默认配置。无需 @ 机器人，只要消息命中关键词或正则就会回复；可在下方「特定群聊触发覆盖」中为单个群聊单独指定开关或专属关键词。' },
+  tr_dice: { title: '随机概率插话', pane: 'reply', isOn: () => _chk('cfg_tr_dice'), priority: '触发回复生效优先级：\n特定群聊覆盖 > 全局触发设置', usage: '此处为全局默认配置。按设定概率（如 0.03 = 3%）在活跃群聊中随机搭话；可在下方「特定群聊触发覆盖」中为指定群聊单独调整概率、冷却或直接关闭。' },
   tr_scheduled: { title: '定时主动触发回复', pane: 'reply', isOn: () => _chk('cfg_tr_sched_en'), usage: '点击在右侧可视化选择「每天 / 每周 / 每月 / 间隔」时间，支持定时发送固定文本或让 AI 结合群聊主动发言。' },
+  tr_group_overrides: {
+    title: '特定群聊触发覆盖',
+    pane: 'reply',
+    isOn: () => Object.keys(groupTriggerOverridesDraft || {}).length > 0,
+    priority: '触发回复生效优先级：\n特定群聊覆盖 > 全局触发设置',
+    usage: '从已有聊天记录的群聊中选择目标群，单独覆写 @、引用、关键词、随机插话开关及回复样式。\n• 未设定的字段自动继承上方全局配置；\n• 移除群覆盖后立刻恢复跟随全局。',
+  },
   col_wait: { title: '连发消息合并等待', pane: 'reply', isOn: () => !!_val('cfg_col_wait_tr') && Number(_val('cfg_col_quiet') || 0) > 0, usage: '• 静默等待：收到触发后停几秒等对方把话说完（推荐 3~5 秒）；\n• 最长等待：连发不停时的最晚回复底线；\n• 最多追发条：攒够条数立刻回复。' },
-  rep_style: { title: '触发回复样式（引用与 @）', pane: 'reply', isOn: () => _chk('cfg_rep_quote') || _chk('cfg_rep_at'), usage: '控制默认发消息时是否带「引用原消息」和「@ 触发用户」；开启分段回复时仅附加在第一条气泡上。' },
-  rep_prefix_max: { title: '回复前缀与单次最大字数', pane: 'reply', isOn: () => !!_val('cfg_rep_prefix') || Number(_val('cfg_rep_max') || 0) > 0, usage: '前缀留空最自然；单次最大字数建议设为 600~1500，防止长文刷屏。' },
+  rep_style: { title: '触发回复样式（引用与 @）', pane: 'reply', isOn: () => _chk('cfg_rep_quote') || _chk('cfg_rep_at'), priority: '回复样式优先级：\n特定群聊覆盖 > 单触发方式覆盖 > 全局默认', usage: '控制默认发消息时是否带「引用原消息」和「@ 触发用户」；开启分段回复时仅附加在第一条气泡上。' },
+  rep_prefix_max: {
+    title: '回复前缀与字数 / 条数限制',
+    pane: 'reply',
+    isOn: () => !!_val('cfg_rep_prefix') || Number(_val('cfg_rep_max') || 0) > 0 || Number(_val('cfg_rep_max_per_msg') || 0) > 0 || Number(_val('cfg_rep_max_msgs') || 0) > 0,
+    priority: '实现方式说明：\n官方 agy CLI 无原生字数/条数命令行参数。\n非 0 限制项会自动转为自然语言写入官方 bot_workspace/GEMINI.md（绝不自拟系统标识与规范），并由本地发送器执行安全兜底。',
+    usage: '• 单条消息字数上限：控制每条发出的消息气泡长度（0 = 不限）；\n• 单次最多发送条数：限制单轮回复最多拆发几条消息（0 = 不限）；\n• 单次请求总字数上限：控制整轮回复总字数（0 = 不限）。',
+  },
   seg_en: { title: '启用分段回复', pane: 'reply', isOn: () => _chk('cfg_seg_en'), usage: '开启后自动把 AI 的长回复拆成多条短消息逐条发送，模拟真人聊天节奏；关闭后下方分段细项会自动置灰。' },
   seg_mode: { title: '分段模式', pane: 'reply', isOn: () => _chk('cfg_seg_en'), usage: '推荐选「分段词列表」（如在人设里约定用 ||| 分段）；需要按复杂语法切分时再切换正则表达式模式。' },
   seg_words: { title: '自定义分段词列表', pane: 'reply', isOn: () => _chk('cfg_seg_en') && _val('cfg_seg_mode') !== 'regex' && (currentConfig?.reply?.segmented_reply?.split_words || []).length > 0, usage: '输入分隔符号（如 |||）回车添加；发送时自定义符号会自动去除，而句号/问号等自然标点会保留在句尾。' },
@@ -10055,8 +10264,15 @@ const SETTING_META = {
   // Context pane
   sess_unique: { title: '群聊单用户独立会话', pane: 'context', isOn: () => _chk('cfg_sess_unique'), usage: '默认关闭（全群共享一份群聊记忆）；开启后群内每个成员拥有完全独立的记忆与暖会话，互不干扰。' },
   col_db_ctx: { title: 'SQLite 数据库上下文', pane: 'context', isOn: () => _chk('cfg_col_db_en'), usage: '强烈建议开启：消息永久落库，重启不丢记忆；同一压缩周期内仅增量投喂新消息以命中前缀缓存，并自动挂载 chat_history MCP 供模型翻查早期历史。' },
-  col_compact_count: { title: '按条数压缩策略', pane: 'context', isOn: () => _chk('cfg_col_db_en') && Number(_val('cfg_col_cmax_msg') || 0) > 0, usage: '当当前窗口累计消息达到「达到条数」时，自动把最早的「丢弃条数」归档移出窗口（不删除数据库记录）。填 0 关闭。' },
-  col_compact_size: { title: '按 Token/字节压缩策略', pane: 'context', isOn: () => _chk('cfg_col_db_en') && (Number(_val('cfg_col_cmax_tok') || 0) > 0 || Number(_val('cfg_col_cmax_bytes') || 0) > 0), usage: '与条数策略为「或」关系：任一达到 Token 或字节上限即按批归档最早消息，控制单轮上下文费用与速度。' },
+  col_compact_count: { title: '按条数压缩策略', pane: 'context', isOn: () => _chk('cfg_col_db_en') && Number(_val('cfg_col_cmax_msg') || 0) > 0, priority: '上下文压缩生效优先级：\n特定群聊覆盖 > 独立模型设置 > 全局压缩策略', usage: '此处为全局默认配置。当当前窗口累计消息达到「达到条数」时，自动把最早的「丢弃条数」归档移出窗口（不删除数据库记录）。填 0 关闭。' },
+  col_compact_size: { title: '按 Token/字节压缩策略', pane: 'context', isOn: () => _chk('cfg_col_db_en') && (Number(_val('cfg_col_cmax_tok') || 0) > 0 || Number(_val('cfg_col_cmax_bytes') || 0) > 0), priority: '上下文压缩生效优先级：\n特定群聊覆盖 > 独立模型设置 > 全局压缩策略', usage: '此处为全局默认配置。与条数策略为「或」关系：任一达到 Token 或字节上限即按批归档最早消息，控制单轮上下文费用与速度。' },
+  col_group_compact: {
+    title: '特定群聊上下文压缩覆盖',
+    pane: 'context',
+    isOn: () => Object.keys(groupCompactOverridesDraft || {}).length > 0,
+    priority: '上下文压缩生效优先级：\n特定群聊覆盖 > 独立模型设置 > 全局压缩策略',
+    usage: '从已有聊天记录的群聊中选择目标群，单独指定其压缩条数、Token、字节上限与丢弃条数。\n• 留空的字段自动回落到「独立模型 → 全局配置」；\n• 适合对水群适当收紧窗口，对核心讨论群放宽记忆。',
+  },
   col_window: { title: '追发范围与历史窗口', pane: 'context', isOn: () => Number(_val('cfg_col_ctx') || 0) > 0, usage: '• 等待触发器：填哪些触发方式启用连发合并（如 mention,quote,keyword）；\n• 送入上下文 / 历史缓冲：非数据库模式下的内存窗口大小。' },
   col_switches: { title: '上下文注入开关', pane: 'context', isOn: () => _chk('cfg_col_only_u') || _chk('cfg_prm_dt') || _chk('cfg_prm_grp'), usage: '• 仅追踪触发者：连发等待时只看原提问人；\n• 注入时间 / 群名：让模型感知当前几点和所在群名。' },
   prm_tz: { title: '时区与失败兜底文案', pane: 'context', isOn: () => !!_val('cfg_prm_tz') || !!_val('cfg_prm_err'), usage: '中国区保持 Asia/Shanghai；推理失败兜底文案留空则静默不发报错，填写后超时/熔断时向群里发该提示。' },
@@ -10078,7 +10294,13 @@ const SETTING_META = {
   admins: { title: '管理员 QQ', pane: 'system', isOn: () => !!_val('cfg_admins'), usage: '点击在右侧编辑管理员 QQ 名单；名单内成员可在聊天中执行 /status、/reset、/model 等内置管理指令。' },
   webui_net: { title: 'WebUI 监听与日志缓冲', pane: 'system', isOn: () => !!_val('cfg_wu_port'), usage: '0.0.0.0 表示允许局域网/公网访问，仅本机访问可改为 127.0.0.1；修改监听地址或端口后需重启服务生效。' },
   webui_auth: { title: 'WebUI 登录账号', pane: 'system', isOn: () => !!_val('cfg_wu_pass'), usage: '修改用户名或密码后保存会立即注销旧登录会话，公网部署强烈建议保留强密码。' },
-  plugins_sys: { title: '外部插件系统', pane: 'system', isOn: () => _chk('cfg_pl_en'), usage: '开启后自动加载目录内的 Python 插件（处理聊天指令与消息前后钩子），可在顶栏「插件」页直接管理与热重载。' },
+  plugins_sys: {
+    title: '外部插件系统',
+    pane: 'system',
+    isOn: () => _chk('cfg_pl_en'),
+    priority: '插件 / Skill / MCP 生效优先级：\n客户端 > 群聊/私聊 > 独立模型 > 全局',
+    usage: '开启后自动加载目录内的 Python 插件（处理聊天指令与消息前后钩子），可在顶栏「插件」页管理全局开关与按客户端/群聊/私聊覆写，也可在「独立模型」中覆写。',
+  },
 
   // Cross-view destinations
   'view:personas': { title: '人设工坊', view: 'personas', isOn: () => !!activePersonaId },
@@ -10198,6 +10420,11 @@ const SETTING_RELATIONS = {
     { to: 'p_guard', kind: 'dep', desc: '防打扰保护会拦截发往未激活群聊的定时推送，避免误打扰。' },
     { to: 'seg_en', kind: 'sync', desc: 'AI 主动发言定时任务会遵循分段回复规则；若关闭「仅对大模型回复分段」，固定文本也会分段。' },
   ],
+  tr_group_overrides: [
+    { to: 'tr_mention', kind: 'override', desc: '特定群聊的触发覆盖优先于上方所有全局触发开关与参数。' },
+    { to: 'tr_keyword', kind: 'override', desc: '可为特定群聊单独关闭关键词触发或设置专属关键词/正则。' },
+    { to: 'tr_dice', kind: 'override', desc: '可为活跃水群单独调低或关闭随机插话概率。' },
+  ],
 
   rep_style: [
     { to: 'tr_mention', kind: 'override', desc: '各触发方式右侧设为「跟随全局」时生效；若单独设为开启/关闭则会覆盖此全局样式。' },
@@ -10256,7 +10483,13 @@ const SETTING_RELATIONS = {
   col_compact_size: [
     { to: 'col_db_ctx', kind: 'dep', desc: '需先开启 SQLite 数据库上下文。' },
     { to: 'col_compact_count', kind: 'sync', desc: '与按条数阈值构成「或」触发关系，任一命中即执行压缩。' },
+    { to: 'col_group_compact', kind: 'override', desc: '特定群聊的压缩覆写优先于独立模型与全局设置。' },
     { to: 'view:extensions:mcp', kind: 'sync', desc: '被压缩归档的对话不会删除，模型需要回忆时可按关键词或序号从数据库检索。' },
+  ],
+  col_group_compact: [
+    { to: 'col_compact_count', kind: 'override', desc: '特定群聊覆盖优先于全局按条数与按 Token/字节压缩设置。' },
+    { to: 'model', kind: 'override', desc: '特定群聊压缩覆盖同时优先于「独立模型」里的单模型压缩设置。' },
+    { to: 'col_db_ctx', kind: 'dep', desc: '压缩归档依赖 SQLite 数据库上下文。' },
   ],
   col_window: [
     { to: 'col_db_ctx', kind: 'sync', desc: '开启 SQLite 数据库上下文后，主聊天窗口由压缩策略控制，此处主要作用于防抖窗口。' },
@@ -10406,7 +10639,17 @@ function renderRelInspectorBody(key) {
   if (titleEl) titleEl.textContent = cleanTitle;
 
   const usageText = (meta.usage || '').trim();
+  const priorityText = (meta.priority || '').trim();
   const blocks = [];
+
+  if (priorityText) {
+    blocks.push(`
+      <div class="rel-sec">
+        <div class="rel-sec-title">生效优先级（高 → 低）</div>
+        <div class="rel-priority-card">${esc(priorityText)}</div>
+      </div>
+    `);
+  }
 
   if (introDesc) {
     blocks.push(`
@@ -11758,6 +12001,744 @@ function hideAppSplash(immediate = false) {
 
 // Hard failsafe so the splash screen can never remain stuck on slow/errored networks
 setTimeout(() => hideAppSplash(true), 5500);
+
+// ================= SCOPED OVERRIDES (PER-GROUP TRIGGERS / COMPACTION / 4-LAYER CAPABILITIES) =================
+var groupTriggerOverridesDraft = {};
+var groupCompactOverridesDraft = {};
+var capabilityOverridesDraft = { clients: {}, sessions: {} };
+var _capOverridesLoadedOnce = false;
+
+function normalizeCapabilityOverridesObj(raw) {
+  const out = { clients: {}, sessions: {} };
+  if (!raw || typeof raw !== 'object') return out;
+  for (const scopeKey of ['clients', 'sessions']) {
+    const src = raw[scopeKey];
+    if (!src || typeof src !== 'object') continue;
+    for (const [target, bucket] of Object.entries(src)) {
+      const tk = String(target || '').trim();
+      if (!tk || !bucket || typeof bucket !== 'object') continue;
+      const cleanBucket = { plugins: {}, skills: {}, mcp: {} };
+      for (const kind of ['plugins', 'skills', 'mcp']) {
+        const km = bucket[kind];
+        if (!km || typeof km !== 'object') continue;
+        for (const [itemId, flag] of Object.entries(km)) {
+          const ik = String(itemId || '').trim();
+          if (ik && typeof flag === 'boolean') cleanBucket[kind][ik] = flag;
+        }
+      }
+      if (Object.keys(cleanBucket.plugins).length || Object.keys(cleanBucket.skills).length || Object.keys(cleanBucket.mcp).length) {
+        out[scopeKey][tk] = cleanBucket;
+      }
+    }
+  }
+  return out;
+}
+
+function _formatSessionChoiceLabel(item) {
+  const sc = item.scene === 'private' ? '私聊' : '群聊';
+  const name = item.display_name && item.display_name !== item.channel_id
+    ? `${item.display_name} (${item.channel_id})`
+    : (item.channel_id || item.session_key);
+  const cnt = Number(item.total_messages || 0);
+  const adp = item.adapter_id ? `${item.adapter_id} · ` : '';
+  return `[${sc}] ${adp}${name}${cnt ? ` · ${cnt}条` : ''}`;
+}
+
+function _describeGroupKey(groupKey) {
+  const hit = (chatDataSessionsCache || []).find(
+    x => x.session_key === groupKey || `group:${x.channel_id}` === groupKey || x.channel_id === groupKey
+  );
+  if (hit) {
+    const nm = hit.display_name && hit.display_name !== hit.channel_id
+      ? `${hit.display_name} (${hit.channel_id})`
+      : (hit.channel_id || groupKey);
+    return { title: nm, sub: hit.session_key, count: Number(hit.total_messages || 0) };
+  }
+  return { title: groupKey, sub: groupKey, count: 0 };
+}
+
+function populateGroupOverridePickers() {
+  const groups = (chatDataSessionsCache || []).filter(x => x.scene === 'group');
+  const buildOpts = (existingMap) => {
+    const opts = ['<option value="">从已有聊天记录的群聊中选择...</option>'];
+    for (const g of groups) {
+      const k = g.session_key || `group:${g.channel_id}`;
+      const mark = existingMap && existingMap[k] ? ' [已配置]' : '';
+      opts.push(`<option value="${esc(k)}">${esc(_formatSessionChoiceLabel(g) + mark)}</option>`);
+    }
+    if (!groups.length) {
+      opts.push('<option value="" disabled>暂无已记录群聊，可在右侧手动输入群号</option>');
+    }
+    return opts.join('');
+  };
+  const trSel = document.getElementById('trGroupOvSelect');
+  if (trSel) trSel.innerHTML = buildOpts(groupTriggerOverridesDraft);
+  const ctxSel = document.getElementById('ctxGroupOvSelect');
+  if (ctxSel) ctxSel.innerHTML = buildOpts(groupCompactOverridesDraft);
+}
+
+async function refreshKnownChatSessions(showToast = false) {
+  try {
+    const res = await api('/api/chat-data/sessions');
+    chatDataSessionsCache = res.data || [];
+    populateGroupOverridePickers();
+    renderGroupTriggerOverridesList();
+    renderGroupCompactOverridesList();
+    if (selectedPluginId && document.getElementById('view-plugins')?.classList.contains('active')) {
+      renderCapabilityScopedOverridesCard('plCapOverridesCard', 'plugins', selectedPluginId);
+    }
+    if (selectedSkillId && extMode === 'skills' && document.getElementById('view-extensions')?.classList.contains('active')) {
+      renderCapabilityScopedOverridesCard('skCapOverridesCard', 'skills', selectedSkillId);
+    }
+    if (selectedMcpId && extMode === 'mcp' && !isCreatingMcp && document.getElementById('view-extensions')?.classList.contains('active')) {
+      renderCapabilityScopedOverridesCard('mcpCapOverridesCard', 'mcp', selectedMcpId);
+    }
+    if (showToast) toast(`已刷新 ${chatDataSessionsCache.length} 个历史会话`);
+  } catch (e) {
+    if (showToast) toast('刷新会话列表失败: ' + e.message, true);
+  }
+}
+
+async function ensureCapabilityOverridesLoaded(force = false) {
+  if (_capOverridesLoadedOnce && !force) return;
+  try {
+    const res = await api('/api/capabilities/overrides');
+    capabilityOverridesDraft = normalizeCapabilityOverridesObj(res.data || {});
+    _capOverridesLoadedOnce = true;
+    if (currentConfig) {
+      currentConfig.capability_overrides = JSON.parse(JSON.stringify(capabilityOverridesDraft));
+    }
+  } catch (_) {}
+}
+
+async function refreshCapabilityListsForInspector(silent = false) {
+  try {
+    const tasks = [];
+    if (!mcpCache.length || !silent) tasks.push(api('/api/mcp').then(r => { mcpCache = r.data || []; }).catch(() => {}));
+    if (!skillsCache.length || !silent) tasks.push(api('/api/skills').then(r => { skillsCache = r.data || []; }).catch(() => {}));
+    if (!pluginsCache.length || !silent) tasks.push(api('/api/plugins').then(r => { pluginsCache = r.data || []; }).catch(() => {}));
+    if (tasks.length) await Promise.all(tasks);
+    if (inspectorOpen && inspectedProfileKey) {
+      renderModelCapabilityOverrides(getProfileFor(inspectedProfileKey));
+    }
+    if (!silent) toast('已刷新 MCP / Skill / 插件列表');
+  } catch (e) {
+    if (!silent) toast('刷新能力列表失败: ' + e.message, true);
+  }
+}
+
+// ---- Per-Group Trigger Overrides ----
+function _summarizeGroupTriggerEntry(entry) {
+  if (!entry || typeof entry !== 'object') return '继承全局';
+  const tags = [];
+  const labelMap = { mention: '@触发', quote: '引用', keyword: '关键词', dice: '随机插话' };
+  for (const [sec, name] of Object.entries(labelMap)) {
+    const sub = entry[sec];
+    if (!sub || typeof sub !== 'object') continue;
+    const parts = [];
+    if (typeof sub.enabled === 'boolean') parts.push(sub.enabled ? '开' : '关');
+    if (sec === 'dice' && sub.probability !== undefined && sub.probability !== null && sub.probability !== '') {
+      parts.push(`概率 ${sub.probability}`);
+    }
+    if (sec === 'keyword' && Array.isArray(sub.keywords) && sub.keywords.length) {
+      parts.push(`${sub.keywords.length}词`);
+    }
+    if (typeof sub.quote_reply === 'boolean') parts.push(sub.quote_reply ? '引用:开' : '引用:关');
+    if (typeof sub.at_user === 'boolean') parts.push(sub.at_user ? '@:开' : '@:关');
+    if (parts.length) tags.push(`${name}(${parts.join('/')})`);
+  }
+  return tags.length ? tags.join(' · ') : '已添加（点击右侧配置具体项）';
+}
+
+function renderGroupTriggerOverridesList() {
+  const box = document.getElementById('trGroupOvList');
+  const badge = document.getElementById('trGroupOvCountBadge');
+  const keys = Object.keys(groupTriggerOverridesDraft || {});
+  if (badge) badge.textContent = `${keys.length} 个群聊`;
+  populateGroupOverridePickers();
+  if (!box) return;
+  if (!keys.length) {
+    box.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:4px 2px">暂未对单个群聊配置特定触发规则，全部群聊均遵循上方全局配置。</div>';
+    return;
+  }
+  box.innerHTML = keys.map(gk => {
+    const info = _describeGroupKey(gk);
+    const kJson = esc(JSON.stringify(gk));
+    return `
+      <div class="ov-item clickable" onclick="openGroupTriggerOverrideInspector(${kJson})">
+        <div class="ov-item-main">
+          <div class="ov-item-title">
+            <span>${esc(info.title)}</span>
+            <span class="mono" style="font-size:11px;color:var(--text-3);font-weight:500">${esc(gk)}</span>
+          </div>
+          <div class="ov-item-meta">${esc(_summarizeGroupTriggerEntry(groupTriggerOverridesDraft[gk]))}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0" onclick="event.stopPropagation()">
+          <button type="button" class="sm" onclick="openGroupTriggerOverrideInspector(${kJson})">编辑</button>
+          <button type="button" class="ghost sm" style="color:var(--err)" onclick="removeGroupTriggerOverride(${kJson})" title="移除覆盖并恢复全局">移除</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function _normalizeGroupKeyInput(raw) {
+  const s = String(raw || '').trim();
+  if (!s) return '';
+  if (s.includes(':')) return s;
+  return `group:${s}`;
+}
+
+function addGroupTriggerOverrideFromPicker() {
+  const selVal = (document.getElementById('trGroupOvSelect')?.value || '').trim();
+  const manualVal = (document.getElementById('trGroupOvManual')?.value || '').trim();
+  const key = selVal || _normalizeGroupKeyInput(manualVal);
+  if (!key) { toast('请先选择已有聊天记录的群聊或输入群号', true); return; }
+  if (!groupTriggerOverridesDraft[key]) {
+    groupTriggerOverridesDraft[key] = {};
+  }
+  const manualInp = document.getElementById('trGroupOvManual');
+  if (manualInp) manualInp.value = '';
+  renderGroupTriggerOverridesList();
+  openGroupTriggerOverrideInspector(key);
+}
+
+function removeGroupTriggerOverride(groupKey) {
+  delete groupTriggerOverridesDraft[groupKey];
+  if (sideInspectorState?.kind === 'group_trigger' && sideInspectorState.groupKey === groupKey) {
+    closeSideInspector();
+  }
+  renderGroupTriggerOverridesList();
+  toast(`已移除 ${groupKey} 的特定触发覆盖（保存后生效）`);
+}
+
+function setGroupTriggerField(groupKey, section, field, val) {
+  if (!groupTriggerOverridesDraft[groupKey]) groupTriggerOverridesDraft[groupKey] = {};
+  const entry = groupTriggerOverridesDraft[groupKey];
+  if (!entry[section] || typeof entry[section] !== 'object') entry[section] = {};
+  if (val === null || val === undefined || val === '') {
+    delete entry[section][field];
+    if (!Object.keys(entry[section]).length) delete entry[section];
+  } else {
+    entry[section][field] = val;
+  }
+  renderGroupTriggerOverridesList();
+  openGroupTriggerOverrideInspector(groupKey);
+}
+
+function setGroupTriggerNumberField(groupKey, section, field, rawVal) {
+  const s = String(rawVal ?? '').trim();
+  if (!s) {
+    setGroupTriggerField(groupKey, section, field, null);
+    return;
+  }
+  const num = Number(s);
+  if (Number.isNaN(num)) return;
+  if (!groupTriggerOverridesDraft[groupKey]) groupTriggerOverridesDraft[groupKey] = {};
+  const entry = groupTriggerOverridesDraft[groupKey];
+  if (!entry[section] || typeof entry[section] !== 'object') entry[section] = {};
+  entry[section][field] = num;
+  renderGroupTriggerOverridesList();
+}
+
+function setGroupTriggerCsvField(groupKey, section, field, rawVal) {
+  const items = splitMultiTokens(rawVal);
+  if (!groupTriggerOverridesDraft[groupKey]) groupTriggerOverridesDraft[groupKey] = {};
+  const entry = groupTriggerOverridesDraft[groupKey];
+  if (!entry[section] || typeof entry[section] !== 'object') entry[section] = {};
+  if (!items.length) {
+    delete entry[section][field];
+    if (!Object.keys(entry[section]).length) delete entry[section];
+  } else {
+    entry[section][field] = items;
+  }
+  renderGroupTriggerOverridesList();
+}
+
+function openGroupTriggerOverrideInspector(groupKey) {
+  sideInspectorState = { kind: 'group_trigger', groupKey };
+  const entry = groupTriggerOverridesDraft[groupKey] || {};
+  const info = _describeGroupKey(groupKey);
+  const kJson = esc(JSON.stringify(groupKey));
+  const m = entry.mention || {};
+  const q = entry.quote || {};
+  const kw = entry.keyword || {};
+  const d = entry.dice || {};
+
+  const body = `
+    <div class="mi-sec">
+      <div style="font-size:11.5px;color:var(--warn);line-height:1.55;padding:7px 9px;border-radius:8px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.26)">
+        优先级：<strong>特定群聊 &gt; 全局触发设置</strong>。设为「跟随全局」或留空的项将自动继承全局默认值。
+      </div>
+    </div>
+    <div class="mi-sec">
+      <div class="mi-sec-title"><span>有人 @ 机器人时触发</span></div>
+      <div class="si-row">
+        <div class="si-row-label">启用状态</div>
+        ${renderTriButtons(m.enabled ?? null, `setGroupTriggerField(${kJson},'mention','enabled',$V)`, '开启', '关闭', '跟随全局')}
+      </div>
+      <div class="si-row">
+        <div class="si-row-label">响应 @全体成员</div>
+        ${renderTriButtons(m.allow_at_all ?? null, `setGroupTriggerField(${kJson},'mention','allow_at_all',$V)`, '开启', '关闭', '跟随全局')}
+      </div>
+      <div class="si-row">
+        <div class="si-row-label">回复时引用原消息</div>
+        ${renderTriButtons(m.quote_reply ?? null, `setGroupTriggerField(${kJson},'mention','quote_reply',$V)`, '引用', '不引', '跟随全局')}
+      </div>
+      <div class="si-row">
+        <div class="si-row-label">回复时 @ 对方</div>
+        ${renderTriButtons(m.at_user ?? null, `setGroupTriggerField(${kJson},'mention','at_user',$V)`, '@对方', '不@', '跟随全局')}
+      </div>
+    </div>
+    <div class="mi-sec">
+      <div class="mi-sec-title"><span>引用机器人消息时触发</span></div>
+      <div class="si-row">
+        <div class="si-row-label">启用状态</div>
+        ${renderTriButtons(q.enabled ?? null, `setGroupTriggerField(${kJson},'quote','enabled',$V)`, '开启', '关闭', '跟随全局')}
+      </div>
+      <div class="si-row">
+        <div class="si-row-label">回复时引用原消息</div>
+        ${renderTriButtons(q.quote_reply ?? null, `setGroupTriggerField(${kJson},'quote','quote_reply',$V)`, '引用', '不引', '跟随全局')}
+      </div>
+      <div class="si-row">
+        <div class="si-row-label">回复时 @ 对方</div>
+        ${renderTriButtons(q.at_user ?? null, `setGroupTriggerField(${kJson},'quote','at_user',$V)`, '@对方', '不@', '跟随全局')}
+      </div>
+    </div>
+    <div class="mi-sec">
+      <div class="mi-sec-title"><span>关键词 / 正则触发</span></div>
+      <div class="si-row">
+        <div class="si-row-label">启用状态</div>
+        ${renderTriButtons(kw.enabled ?? null, `setGroupTriggerField(${kJson},'keyword','enabled',$V)`, '开启', '关闭', '跟随全局')}
+      </div>
+      <div class="inline-field">
+        <span>该群专属关键词（逗号分隔，留空继承全局）</span>
+        <input value="${esc((kw.keywords || []).join(', '))}" placeholder="留空则继承全局关键词" oninput="setGroupTriggerCsvField(${kJson},'keyword','keywords',this.value)">
+      </div>
+      <div class="inline-field">
+        <span>该群专属正则（逗号分隔，留空继承全局）</span>
+        <input class="mono" value="${esc((kw.regex_patterns || []).join(', '))}" placeholder="留空则继承全局正则" oninput="setGroupTriggerCsvField(${kJson},'keyword','regex_patterns',this.value)">
+      </div>
+    </div>
+    <div class="mi-sec">
+      <div class="mi-sec-title"><span>随机概率插话</span></div>
+      <div class="si-row">
+        <div class="si-row-label">启用状态</div>
+        ${renderTriButtons(d.enabled ?? null, `setGroupTriggerField(${kJson},'dice','enabled',$V)`, '开启', '关闭', '跟随全局')}
+      </div>
+      <div class="grid-2">
+        <div class="inline-field">
+          <span>插话概率 (0~1，留空继承全局)</span>
+          <input type="number" step="0.01" min="0" max="1" value="${d.probability ?? ''}" placeholder="如 0.05" oninput="setGroupTriggerNumberField(${kJson},'dice','probability',this.value)">
+        </div>
+        <div class="inline-field">
+          <span>冷却秒数（留空继承全局）</span>
+          <input type="number" step="10" min="0" value="${d.cooldown_seconds ?? ''}" placeholder="如 180" oninput="setGroupTriggerNumberField(${kJson},'dice','cooldown_seconds',this.value)">
+        </div>
+      </div>
+    </div>
+    <div class="mi-sec" style="display:flex;gap:8px">
+      <button type="button" class="primary sm" style="flex:1" onclick="saveAllConfig()">保存并热重载</button>
+      <button type="button" class="danger sm" onclick="removeGroupTriggerOverride(${kJson})">移除该群覆盖</button>
+    </div>
+  `;
+  _openSideCard(`群触发覆盖 · ${info.title}`, `会话标识：${groupKey} · 覆盖全局触发配置`, 'row_tr_group_overrides', body);
+}
+
+// ---- Per-Group Context Compaction Overrides ----
+function _summarizeGroupCompactEntry(entry) {
+  if (!entry || typeof entry !== 'object') return '继承独立模型 / 全局';
+  const parts = [];
+  if (entry.compact_max_messages !== undefined && entry.compact_max_messages !== null) parts.push(`条数:${entry.compact_max_messages}`);
+  if (entry.compact_drop_by_count !== undefined && entry.compact_drop_by_count !== null) parts.push(`按条丢:${entry.compact_drop_by_count}`);
+  if (entry.compact_max_tokens !== undefined && entry.compact_max_tokens !== null) parts.push(`Token:${entry.compact_max_tokens}`);
+  if (entry.compact_max_bytes !== undefined && entry.compact_max_bytes !== null) parts.push(`字节:${entry.compact_max_bytes}B`);
+  if (entry.compact_drop_by_tokens !== undefined && entry.compact_drop_by_tokens !== null) parts.push(`按量丢:${entry.compact_drop_by_tokens}`);
+  if (entry.context_message_limit !== undefined && entry.context_message_limit !== null) parts.push(`窗口:${entry.context_message_limit}`);
+  return parts.length ? parts.join(' · ') : '已添加（留空项自动继承独立模型/全局）';
+}
+
+function renderGroupCompactOverridesList() {
+  const box = document.getElementById('ctxGroupOvList');
+  const badge = document.getElementById('ctxGroupOvCountBadge');
+  const keys = Object.keys(groupCompactOverridesDraft || {});
+  if (badge) badge.textContent = `${keys.length} 个群聊`;
+  populateGroupOverridePickers();
+  if (!box) return;
+  if (!keys.length) {
+    box.innerHTML = '<div style="font-size:12px;color:var(--text-3);padding:4px 2px">暂未对单个群聊配置特定压缩策略，全部群聊均遵循「独立模型 → 全局」策略。</div>';
+    return;
+  }
+  box.innerHTML = keys.map(gk => {
+    const info = _describeGroupKey(gk);
+    const kJson = esc(JSON.stringify(gk));
+    return `
+      <div class="ov-item clickable" onclick="openGroupCompactOverrideInspector(${kJson})">
+        <div class="ov-item-main">
+          <div class="ov-item-title">
+            <span>${esc(info.title)}</span>
+            <span class="mono" style="font-size:11px;color:var(--text-3);font-weight:500">${esc(gk)}</span>
+          </div>
+          <div class="ov-item-meta">${esc(_summarizeGroupCompactEntry(groupCompactOverridesDraft[gk]))}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0" onclick="event.stopPropagation()">
+          <button type="button" class="sm" onclick="openGroupCompactOverrideInspector(${kJson})">编辑</button>
+          <button type="button" class="ghost sm" style="color:var(--err)" onclick="removeGroupCompactOverride(${kJson})" title="移除覆盖">移除</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function addGroupCompactOverrideFromPicker() {
+  const selVal = (document.getElementById('ctxGroupOvSelect')?.value || '').trim();
+  const manualVal = (document.getElementById('ctxGroupOvManual')?.value || '').trim();
+  const key = selVal || _normalizeGroupKeyInput(manualVal);
+  if (!key) { toast('请先选择已有聊天记录的群聊或输入群号', true); return; }
+  if (!groupCompactOverridesDraft[key]) {
+    groupCompactOverridesDraft[key] = {};
+  }
+  const manualInp = document.getElementById('ctxGroupOvManual');
+  if (manualInp) manualInp.value = '';
+  renderGroupCompactOverridesList();
+  openGroupCompactOverrideInspector(key);
+}
+
+function removeGroupCompactOverride(groupKey) {
+  delete groupCompactOverridesDraft[groupKey];
+  if (sideInspectorState?.kind === 'group_compact' && sideInspectorState.groupKey === groupKey) {
+    closeSideInspector();
+  }
+  renderGroupCompactOverridesList();
+  toast(`已移除 ${groupKey} 的特定上下文压缩覆盖（保存后生效）`);
+}
+
+function setGroupCompactField(groupKey, field, rawVal) {
+  if (!groupCompactOverridesDraft[groupKey]) groupCompactOverridesDraft[groupKey] = {};
+  const entry = groupCompactOverridesDraft[groupKey];
+  const s = String(rawVal ?? '').trim();
+  if (!s) {
+    delete entry[field];
+  } else {
+    const num = Math.max(0, Math.floor(Number(s)));
+    if (!Number.isNaN(num)) entry[field] = num;
+  }
+  renderGroupCompactOverridesList();
+}
+
+function openGroupCompactOverrideInspector(groupKey) {
+  sideInspectorState = { kind: 'group_compact', groupKey };
+  const entry = groupCompactOverridesDraft[groupKey] || {};
+  const info = _describeGroupKey(groupKey);
+  const kJson = esc(JSON.stringify(groupKey));
+  const v = (f) => (entry[f] === undefined || entry[f] === null ? '' : entry[f]);
+
+  const body = `
+    <div class="mi-sec">
+      <div style="font-size:11.5px;color:var(--warn);line-height:1.55;padding:7px 9px;border-radius:8px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.26)">
+        优先级：<strong>特定群聊 &gt; 独立模型 &gt; 全局压缩策略</strong>。留空表示继承下层设置；填 0 可对该群关闭对应触发阈值。
+      </div>
+    </div>
+    <div class="mi-sec">
+      <div class="mi-sec-title"><span>按消息条数触发压缩</span></div>
+      <div class="grid-2">
+        <div class="inline-field">
+          <span>达到条数（0=关闭，留空继承）</span>
+          <input type="number" min="0" step="5" value="${esc(v('compact_max_messages'))}" placeholder="继承模型/全局" oninput="setGroupCompactField(${kJson},'compact_max_messages',this.value)">
+        </div>
+        <div class="inline-field">
+          <span>按条数丢弃条数（留空继承）</span>
+          <input type="number" min="1" step="5" value="${esc(v('compact_drop_by_count'))}" placeholder="继承模型/全局" oninput="setGroupCompactField(${kJson},'compact_drop_by_count',this.value)">
+        </div>
+      </div>
+    </div>
+    <div class="mi-sec">
+      <div class="mi-sec-title"><span>按 Token / 字节触发压缩</span></div>
+      <div class="grid-2">
+        <div class="inline-field">
+          <span>达到 Token（0=关闭，留空继承）</span>
+          <input type="number" min="0" step="500" value="${esc(v('compact_max_tokens'))}" placeholder="继承模型/全局" oninput="setGroupCompactField(${kJson},'compact_max_tokens',this.value)">
+        </div>
+        <div class="inline-field">
+          <span>达到字节 Bytes（0=关闭，留空继承）</span>
+          <input type="number" min="0" step="2048" value="${esc(v('compact_max_bytes'))}" placeholder="继承模型/全局" oninput="setGroupCompactField(${kJson},'compact_max_bytes',this.value)">
+        </div>
+      </div>
+      <div class="grid-2" style="margin-top:6px">
+        <div class="inline-field">
+          <span>按量每批丢弃条数（留空继承）</span>
+          <input type="number" min="1" step="5" value="${esc(v('compact_drop_by_tokens'))}" placeholder="继承模型/全局" oninput="setGroupCompactField(${kJson},'compact_drop_by_tokens',this.value)">
+        </div>
+        <div class="inline-field">
+          <span>送入上下文条数（留空继承）</span>
+          <input type="number" min="1" step="5" value="${esc(v('context_message_limit'))}" placeholder="继承全局" oninput="setGroupCompactField(${kJson},'context_message_limit',this.value)">
+        </div>
+      </div>
+    </div>
+    <div class="mi-sec" style="display:flex;gap:8px">
+      <button type="button" class="primary sm" style="flex:1" onclick="saveAllConfig()">保存并热重载</button>
+      <button type="button" class="danger sm" onclick="removeGroupCompactOverride(${kJson})">移除该群覆盖</button>
+    </div>
+  `;
+  _openSideCard(`群上下文压缩覆盖 · ${info.title}`, `会话标识：${groupKey} · 覆盖独立模型与全局压缩`, 'row_col_group_compact', body);
+}
+
+// ---- Independent Model: enable_command & MCP / Skill / Plugin Overrides ----
+function _ensureInspectedProfileDraft() {
+  if (!inspectedProfileKey) {
+    const cliSlug = document.getElementById('miResolvedSlug')?.textContent?.trim() || '';
+    if (!cliSlug || cliSlug === '-') return null;
+    inspectedProfileKey = cliSlug;
+  }
+  if (!modelProfilesDraft[inspectedProfileKey]) {
+    modelProfilesDraft[inspectedProfileKey] = getProfileFor(inspectedProfileKey);
+  }
+  return modelProfilesDraft[inspectedProfileKey];
+}
+
+function setModelEnableCommand(val) {
+  const p = _ensureInspectedProfileDraft();
+  if (!p) return;
+  p.enable_command = val === true ? true : (val === false ? false : null);
+  saveInspectorProfileField();
+  loadProfileIntoInspectorForm(inspectedProfileKey);
+}
+
+function setModelCapOverride(kind, itemId, val) {
+  const p = _ensureInspectedProfileDraft();
+  if (!p) return;
+  const field = kind === 'mcp' ? 'mcp_overrides' : (kind === 'skills' ? 'skill_overrides' : 'plugin_overrides');
+  if (!p[field] || typeof p[field] !== 'object') p[field] = {};
+  if (val === true || val === false) {
+    p[field][itemId] = val;
+  } else {
+    delete p[field][itemId];
+  }
+  saveInspectorProfileField();
+  renderModelCapabilityOverrides(getProfileFor(inspectedProfileKey));
+}
+
+function renderModelCapabilityOverrides(profile) {
+  const p = profile || defaultModelProfile('');
+  const renderKind = (boxId, kind, items, ovMap, emptyHint) => {
+    const box = document.getElementById(boxId);
+    if (!box) return;
+    const allIds = [];
+    const metaById = {};
+    for (const it of (items || [])) {
+      const id = String(it?.id || '').trim();
+      if (!id) continue;
+      if (!allIds.includes(id)) allIds.push(id);
+      metaById[id] = { name: it.name || id, enabled: !!it.enabled };
+    }
+    for (const id of Object.keys(ovMap || {})) {
+      if (id && !allIds.includes(id)) {
+        allIds.push(id);
+        metaById[id] = { name: id, enabled: false };
+      }
+    }
+    if (!allIds.length) {
+      box.innerHTML = `<div style="font-size:11.5px;color:var(--text-3);padding:3px 2px">${esc(emptyHint)}</div>`;
+      return;
+    }
+    box.innerHTML = allIds.map(id => {
+      const cur = Object.prototype.hasOwnProperty.call(ovMap || {}, id) ? ovMap[id] : null;
+      const m = metaById[id];
+      const idJson = esc(JSON.stringify(id));
+      return `
+        <div class="mi-cap-row">
+          <div class="mi-cap-name" title="${esc(id)}">
+            ${esc(m.name)}
+            <small>全局：${m.enabled ? '已启用' : '已停用'}</small>
+          </div>
+          ${renderTriButtons(cur, `setModelCapOverride('${kind}',${idJson},$V)`, '启用', '禁用', '全局')}
+        </div>
+      `;
+    }).join('');
+  };
+
+  renderKind('miMcpOverridesList', 'mcp', mcpCache, p.mcp_overrides || {}, '暂无已配置的 MCP 服务');
+  renderKind('miSkillOverridesList', 'skills', skillsCache, p.skill_overrides || {}, '暂无已安装的 Skill');
+  renderKind('miPluginOverridesList', 'plugins', pluginsCache, p.plugin_overrides || {}, '暂无已加载的外部插件');
+}
+
+// ---- Scoped Capability Overrides Card (Client > Group/Private > Model > Global) ----
+async function persistCapabilityOverrides(toastMsg = '已保存特定范围覆盖并热重载') {
+  const clean = normalizeCapabilityOverridesObj(capabilityOverridesDraft);
+  capabilityOverridesDraft = clean;
+  try {
+    const res = await api('/api/capabilities/overrides', {
+      method: 'PUT',
+      body: JSON.stringify(clean),
+    });
+    capabilityOverridesDraft = normalizeCapabilityOverridesObj(res.data || clean);
+    _capOverridesLoadedOnce = true;
+    if (currentConfig) {
+      currentConfig.capability_overrides = JSON.parse(JSON.stringify(capabilityOverridesDraft));
+    }
+    toast(toastMsg);
+    refreshStatus();
+  } catch (e) {
+    toast('保存特定范围覆盖失败: ' + e.message, true);
+  }
+}
+
+function renderCapabilityScopedOverridesCard(containerId, kind, itemId) {
+  const box = document.getElementById(containerId);
+  if (!box || !itemId) return;
+  const ov = normalizeCapabilityOverridesObj(capabilityOverridesDraft);
+  const kindLabel = kind === 'plugins' ? '插件' : (kind === 'skills' ? 'Skill' : 'MCP');
+
+  const clientEntries = [];
+  for (const [cid, bucket] of Object.entries(ov.clients || {})) {
+    if (Object.prototype.hasOwnProperty.call(bucket[kind] || {}, itemId)) {
+      clientEntries.push({ target: cid, enabled: !!bucket[kind][itemId] });
+    }
+  }
+  const sessionEntries = [];
+  for (const [sid, bucket] of Object.entries(ov.sessions || {})) {
+    if (Object.prototype.hasOwnProperty.call(bucket[kind] || {}, itemId)) {
+      sessionEntries.push({ target: sid, enabled: !!bucket[kind][itemId] });
+    }
+  }
+
+  // Model-level overrides summary (read-only indicator to prevent confusion)
+  const modelField = kind === 'mcp' ? 'mcp_overrides' : (kind === 'skills' ? 'skill_overrides' : 'plugin_overrides');
+  const profilesSrc = (currentConfig?.agy?.model_profiles && Object.keys(currentConfig.agy.model_profiles).length)
+    ? currentConfig.agy.model_profiles
+    : (modelProfilesDraft || {});
+  const modelNotes = [];
+  for (const [mk, prof] of Object.entries(profilesSrc)) {
+    const mm = prof?.[modelField];
+    if (mm && Object.prototype.hasOwnProperty.call(mm, itemId)) {
+      const nm = (prof.name || '').trim() || mk;
+      modelNotes.push(`${nm}: ${mm[itemId] ? '启用' : '禁用'}`);
+    }
+  }
+
+  const platforms = currentConfig?.platforms || [];
+  const clientOpts = ['<option value="">选择已配置客户端...</option>']
+    .concat(platforms.map(pl => `<option value="${esc(pl.id)}">${esc(pl.id)} (${esc(pl.type || 'client')})</option>`))
+    .join('');
+
+  const sessionOpts = ['<option value="">从已有聊天记录（群聊/私聊）中选择...</option>']
+    .concat((chatDataSessionsCache || []).map(s => `<option value="${esc(s.session_key)}">${esc(_formatSessionChoiceLabel(s))}</option>`))
+    .join('');
+
+  const itemJson = esc(JSON.stringify(itemId));
+  const contJson = esc(JSON.stringify(containerId));
+
+  const renderRows = (scopeType, entries) => {
+    if (!entries.length) {
+      return `<div style="font-size:11.5px;color:var(--text-3);padding:2px 0">暂未配置${scopeType === 'client' ? '客户端' : '群聊 / 私聊'}覆盖</div>`;
+    }
+    return entries.map(e => {
+      const targetJson = esc(JSON.stringify(e.target));
+      const label = scopeType === 'session' ? _describeGroupKey(e.target).title : e.target;
+      const sub = label !== e.target ? ` (${e.target})` : '';
+      return `
+        <div class="cap-scope-row">
+          <div style="min-width:0;flex:1;font-size:12px">
+            <span style="font-weight:700;color:var(--text-strong)">${esc(label)}</span>
+            ${sub ? `<span class="mono" style="font-size:11px;color:var(--text-3)">${esc(sub)}</span>` : ''}
+            <span style="margin-left:8px" class="${e.enabled ? 'cap-badge-on' : 'cap-badge-off'}">${e.enabled ? '强制启用' : '强制禁用'}</span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+            <button type="button" class="sm" onclick="toggleScopedCapabilityOverride('${kind}',${itemJson},'${scopeType}',${targetJson},${!e.enabled},${contJson})">切为${e.enabled ? '禁用' : '启用'}</button>
+            <button type="button" class="ghost sm" style="color:var(--err)" onclick="removeScopedCapabilityOverride('${kind}',${itemJson},'${scopeType}',${targetJson},${contJson})">移除</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  };
+
+  box.innerHTML = `
+    <div class="tr-card">
+      <div class="tr-card-hd">
+        <span style="font-size:13px;font-weight:700;color:var(--text-strong)">特定客户端 / 群聊 / 私聊生效覆盖</span>
+        <span style="font-size:11.5px;color:var(--warn);font-weight:700">优先级：客户端 &gt; 群聊/私聊 &gt; 独立模型 &gt; 全局</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--text-3);line-height:1.55">
+        左侧列表开关为该${kindLabel}的<strong>全局默认</strong>；在此为指定客户端、群聊或私聊设定「强制启用 / 强制禁用」后会立刻保存生效，即使全局关闭也可在指定范围单独启用。
+        ${modelNotes.length ? `<div style="margin-top:4px;color:var(--text-2)">当前已在独立模型中覆写：<strong>${esc(modelNotes.join(' · '))}</strong></div>` : ''}
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:6px;padding-top:6px;border-top:1px solid var(--border)">
+        <div style="font-size:12px;font-weight:700;color:var(--text-strong)">1. 按客户端覆盖（最高优先级）</div>
+        <div class="ov-picker-bar">
+          <select id="${esc(containerId)}_cli_sel">${clientOpts}</select>
+          <input id="${esc(containerId)}_cli_inp" class="mono" placeholder="或输入客户端 ID（如 qq_napcat_1）">
+          <select id="${esc(containerId)}_cli_val" style="flex:0 0 112px;min-width:112px">
+            <option value="true">强制启用</option>
+            <option value="false">强制禁用</option>
+          </select>
+          <button type="button" class="sm primary" onclick="addScopedCapabilityOverride('${kind}',${itemJson},'client',${contJson})">+ 添加</button>
+        </div>
+        <div class="ov-list">${renderRows('client', clientEntries)}</div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:6px;padding-top:8px;border-top:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span style="font-size:12px;font-weight:700;color:var(--text-strong)">2. 按群聊 / 私聊覆盖（优先于独立模型与全局）</span>
+          <button type="button" class="ghost sm" onclick="refreshKnownChatSessions(true)">刷新历史会话</button>
+        </div>
+        <div class="ov-picker-bar">
+          <select id="${esc(containerId)}_ses_sel">${sessionOpts}</select>
+          <input id="${esc(containerId)}_ses_inp" class="mono" placeholder="或输入 group:群号 / private:用户ID">
+          <select id="${esc(containerId)}_ses_val" style="flex:0 0 112px;min-width:112px">
+            <option value="true">强制启用</option>
+            <option value="false">强制禁用</option>
+          </select>
+          <button type="button" class="sm primary" onclick="addScopedCapabilityOverride('${kind}',${itemJson},'session',${contJson})">+ 添加</button>
+        </div>
+        <div class="ov-list">${renderRows('session', sessionEntries)}</div>
+      </div>
+    </div>
+  `;
+}
+
+async function addScopedCapabilityOverride(kind, itemId, scopeType, containerId) {
+  const pfx = scopeType === 'client' ? 'cli' : 'ses';
+  const selVal = (document.getElementById(`${containerId}_${pfx}_sel`)?.value || '').trim();
+  const inpVal = (document.getElementById(`${containerId}_${pfx}_inp`)?.value || '').trim();
+  const targetKey = selVal || inpVal;
+  if (!targetKey) {
+    toast(scopeType === 'client' ? '请选择或输入客户端 ID' : '请选择或输入群聊/私聊标识', true);
+    return;
+  }
+  const flag = (document.getElementById(`${containerId}_${pfx}_val`)?.value || 'true') === 'true';
+  const scopeField = scopeType === 'client' ? 'clients' : 'sessions';
+  if (!capabilityOverridesDraft[scopeField]) capabilityOverridesDraft[scopeField] = {};
+  if (!capabilityOverridesDraft[scopeField][targetKey]) {
+    capabilityOverridesDraft[scopeField][targetKey] = { plugins: {}, skills: {}, mcp: {} };
+  }
+  if (!capabilityOverridesDraft[scopeField][targetKey][kind]) {
+    capabilityOverridesDraft[scopeField][targetKey][kind] = {};
+  }
+  capabilityOverridesDraft[scopeField][targetKey][kind][itemId] = flag;
+  await persistCapabilityOverrides(`已设置 ${targetKey} → ${itemId}：${flag ? '强制启用' : '强制禁用'}`);
+  renderCapabilityScopedOverridesCard(containerId, kind, itemId);
+}
+
+async function toggleScopedCapabilityOverride(kind, itemId, scopeType, targetKey, enabled, containerId) {
+  const scopeField = scopeType === 'client' ? 'clients' : 'sessions';
+  if (!capabilityOverridesDraft[scopeField]) capabilityOverridesDraft[scopeField] = {};
+  if (!capabilityOverridesDraft[scopeField][targetKey]) {
+    capabilityOverridesDraft[scopeField][targetKey] = { plugins: {}, skills: {}, mcp: {} };
+  }
+  capabilityOverridesDraft[scopeField][targetKey][kind][itemId] = !!enabled;
+  await persistCapabilityOverrides(`已切换 ${targetKey} → ${itemId} 为${enabled ? '强制启用' : '强制禁用'}`);
+  renderCapabilityScopedOverridesCard(containerId, kind, itemId);
+}
+
+async function removeScopedCapabilityOverride(kind, itemId, scopeType, targetKey, containerId) {
+  const scopeField = scopeType === 'client' ? 'clients' : 'sessions';
+  if (capabilityOverridesDraft?.[scopeField]?.[targetKey]?.[kind]) {
+    delete capabilityOverridesDraft[scopeField][targetKey][kind][itemId];
+  }
+  await persistCapabilityOverrides(`已移除 ${targetKey} 对 ${itemId} 的覆盖`);
+  renderCapabilityScopedOverridesCard(containerId, kind, itemId);
+}
 
 (async () => {
   try {
