@@ -458,6 +458,7 @@ class TelegramAdapter(PlatformAdapter):
                 with contextlib.suppress(Exception):
                     await self._api_call("deleteWebhook", json_body={"drop_pending_updates": False}, timeout_seconds=10.0)
 
+                consecutive_timeouts = 0
                 while not self._stopped:
                     params: dict[str, Any] = {
                         "timeout": poll_timeout,
@@ -465,11 +466,23 @@ class TelegramAdapter(PlatformAdapter):
                     }
                     if self._offset > 0:
                         params["offset"] = self._offset
-                    updates = await self._api_call(
-                        "getUpdates",
-                        json_body=params,
-                        timeout_seconds=poll_timeout + 12.0,
-                    )
+                    try:
+                        updates = await self._api_call(
+                            "getUpdates",
+                            json_body=params,
+                            timeout_seconds=poll_timeout + 20.0,
+                        )
+                    except (asyncio.TimeoutError, TimeoutError):
+                        consecutive_timeouts += 1
+                        if consecutive_timeouts < 3:
+                            logger.debug(
+                                "[%s] Telegram 长轮询等待超时 (%d/3)，继续下一轮轮询",
+                                self.adapter_id,
+                                consecutive_timeouts,
+                            )
+                            continue
+                        raise
+                    consecutive_timeouts = 0
                     if not isinstance(updates, list):
                         continue
                     for upd in updates:
@@ -498,7 +511,8 @@ class TelegramAdapter(PlatformAdapter):
                 self.connected = False
                 if self._stopped:
                     break
-                logger.warning("[%s] Telegram 长轮询连接异常: %s；%.1f 秒后重连", self.adapter_id, exc, backoff)
+                err_desc = str(exc).strip() or type(exc).__name__
+                logger.warning("[%s] Telegram 长轮询连接异常: %s；%.1f 秒后重连", self.adapter_id, err_desc, backoff)
                 await asyncio.sleep(backoff)
                 backoff = min(max_backoff, backoff * 2.0)
 

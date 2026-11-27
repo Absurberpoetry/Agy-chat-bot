@@ -148,3 +148,5 @@ class RunnerResult:
     thinking_seconds: float = 0.0
     duration_seconds: float = 0.0
     tokens_per_second: float = 0.0
+    tool_call_count: int = 0
+    tool_errors: list[str] = field(default_factory=list)

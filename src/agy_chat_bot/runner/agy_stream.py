@@ -709,11 +709,29 @@ class AgyRunner(BaseAgentRunner):
 
             if profile.enable_file_tools:
                 deny_set.difference_update({"write_file(*)", "edit_file(*)"})
+                allow_set.update({"write_file(*)", "edit_file(*)"})
             else:
                 deny_set.update({"write_file(*)", "edit_file(*)"})
+                allow_set.difference_update({"write_file(*)", "edit_file(*)"})
 
         perms["deny"] = sorted(deny_set)
         perms["allow"] = sorted(allow_set)
+
+        # Ensure current active main & subagent workspaces are always trusted (prevents write_file denial after repo move/rename)
+        raw_trusted = base_data.get("trustedWorkspaces")
+        trusted_list: list[str] = (
+            [str(x).strip() for x in raw_trusted if str(x).strip()]
+            if isinstance(raw_trusted, list)
+            else []
+        )
+        trusted_norm = {os.path.normcase(os.path.normpath(p)) for p in trusted_list}
+        for ws_dir in (self._workspace_dir, self._subagent_workspace_dir):
+            ws_str = str(ws_dir.resolve())
+            ws_norm = os.path.normcase(os.path.normpath(ws_str))
+            if ws_norm not in trusted_norm:
+                trusted_list.append(ws_str)
+                trusted_norm.add(ws_norm)
+        base_data["trustedWorkspaces"] = trusted_list
 
         out_dir = self._data_dir / "model_settings"
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -1009,6 +1027,8 @@ class AgyRunner(BaseAgentRunner):
             tool_started_at: dict[str, float] = {}
             tool_logged_done: set[str] = set()
             tool_intervals: list[tuple[float, float]] = []
+            tool_errors: list[str] = []
+            streamed_text_chunks: list[str] = []
             is_subagent = sp.session_key.startswith("subagent:")
             role_tag = "[子代理]" if is_subagent else "agy"
 
@@ -1132,6 +1152,7 @@ class AgyRunner(BaseAgentRunner):
                             dur_str = f", 耗时 {now_mono - t_start:.1f}s" if t_start is not None else ""
                             err_msg = _extract_tool_error_detail(step, include_output=is_err_state)
                             if is_err_state or err_msg:
+                                tool_errors.append(f"{tool_name}: {err_msg[:180] or state}")
                                 logger.warning(
                                     "%s工具调用失败: %s%s%s -> %s",
                                     prefix,
@@ -1159,16 +1180,18 @@ class AgyRunner(BaseAgentRunner):
                             or step.get("reasoning_delta")
                         )
                         is_think_type = any(k in st_type for k in ("think", "thought", "reason", "planner", "plan"))
-                        has_text_payload = bool(
+                        step_delta_piece = (
                             step.get("text_delta")
                             or step.get("content_delta")
                             or step.get("response_delta")
                             or step.get("delta")
-                            or (
-                                st_type in ("agent_response", "response", "assistant", "text", "output", "message", "answer")
-                                and (step.get("text") or step.get("content") or step.get("response"))
-                            )
                         )
+                        step_full_piece = (
+                            (step.get("text") or step.get("content") or step.get("response"))
+                            if st_type in ("agent_response", "response", "assistant", "text", "output", "message", "answer")
+                            else None
+                        )
+                        has_text_payload = bool(step_delta_piece or step_full_piece)
                         if (is_think_type or has_think_payload) and not has_text_payload:
                             if think_start_t is None:
                                 think_start_t = now_mono
@@ -1179,6 +1202,10 @@ class AgyRunner(BaseAgentRunner):
                             if first_output_t is None:
                                 first_output_t = now_mono
                             last_output_t = now_mono
+                            if isinstance(step_delta_piece, str) and step_delta_piece:
+                                streamed_text_chunks.append(step_delta_piece)
+                            elif isinstance(step_full_piece, str) and step_full_piece.strip():
+                                streamed_text_chunks = [step_full_piece]
                 elif ev_type in ("thought", "thinking", "reasoning"):
                     if think_start_t is None:
                         think_start_t = now_mono
@@ -1187,6 +1214,18 @@ class AgyRunner(BaseAgentRunner):
                     if first_output_t is None:
                         first_output_t = now_mono
                     last_output_t = now_mono
+                    ev_piece = (
+                        event.get("delta")
+                        or event.get("text_delta")
+                        or event.get("text")
+                        or (
+                            event.get("message", {}).get("content")
+                            if isinstance(event.get("message"), dict)
+                            else None
+                        )
+                    )
+                    if isinstance(ev_piece, str) and ev_piece:
+                        streamed_text_chunks.append(ev_piece)
                 elif ev_type == "result":
                     _close_thinking_span(now_mono)
                     raw_res = event.get("result")
@@ -1207,6 +1246,8 @@ class AgyRunner(BaseAgentRunner):
                         )
                         sp.num_turns = num_turns
                         resp_text = str(res.get("response") or "").strip()
+                        if not resp_text and streamed_text_chunks:
+                            resp_text = "".join(streamed_text_chunks).strip()
 
                         u = _extract_detailed_usage_stats(event, res)
                         if u["total_tokens"] <= 0 and step_usage_fallback:
@@ -1313,8 +1354,8 @@ class AgyRunner(BaseAgentRunner):
 
                         used_model = (u["model"] or sp.model_name or self._cfg.model or "default").strip()
 
+                        tool_cnt = len(tool_logged_done | set(tool_started_at.keys()))
                         if not is_subagent:
-                            tool_cnt = len(tool_logged_done | set(tool_started_at.keys()))
                             tool_note = f", 工具调用 {tool_cnt} 次" if tool_cnt else ""
                             if cache_tok > 0 and in_tok > 0:
                                 usage_note = f", 输入 {in_tok} tok (缓存命中 {cache_tok} tok / {cache_hit_rate:.1f}%), 输出 {out_tok} tok"
@@ -1351,6 +1392,8 @@ class AgyRunner(BaseAgentRunner):
                             thinking_seconds=thinking_sec,
                             duration_seconds=duration_sec,
                             tokens_per_second=tps,
+                            tool_call_count=tool_cnt,
+                            tool_errors=list(tool_errors),
                         )
                     num_turns = int(raw_num_turns) if raw_num_turns is not None else sp.num_turns
                     sp.num_turns = num_turns
@@ -1418,6 +1461,57 @@ class AgyRunner(BaseAgentRunner):
                 return RunnerResult(ok=False, error=f"agy 通信异常: {exc}")
 
             if result.ok:
+                if (
+                    not (result.response or "").strip()
+                    and sp.proc.returncode is None
+                    and session_key != "proxy_guard:probe"
+                ):
+                    err_hint = (
+                        f"（注意上一轮部分工具报错：{'; '.join(result.tool_errors[:3])}）"
+                        if result.tool_errors
+                        else ""
+                    )
+                    if result.tool_call_count > 0:
+                        followup_prompt = (
+                            "[系统提醒：你刚才调用了工具但没有输出任何最终文字回复]"
+                            f"{err_hint} 请直接输出给群友的最终文字回复；"
+                            "若已生成本地 PNG/JPG 图片文件，请附上标准 Markdown `![图片](相对路径)` 以便系统发出真实图片；"
+                            "若工具失败未能完成，请用自然口吻简短说明情况，切勿返回空内容。"
+                        )
+                    else:
+                        followup_prompt = (
+                            "[系统提醒：你上一轮返回了空内容] 请直接给出对刚才消息的自然回复，切勿返回空内容。"
+                        )
+                    logger.warning(
+                        "[%s] 主代理返回空内容 (tool_calls=%d, output_tokens=%d)，正在同会话自动追问一次以防漏回...",
+                        session_key,
+                        result.tool_call_count,
+                        result.output_tokens,
+                    )
+                    try:
+                        retry_res = await self._run_turn(sp, followup_prompt)
+                        if retry_res.ok and (retry_res.response or "").strip():
+                            retry_res.input_tokens += result.input_tokens
+                            retry_res.output_tokens += result.output_tokens
+                            retry_res.cache_read_tokens += result.cache_read_tokens
+                            retry_res.cache_creation_tokens += result.cache_creation_tokens
+                            retry_res.thinking_tokens += result.thinking_tokens
+                            retry_res.total_tokens = max(
+                                retry_res.total_tokens + result.total_tokens,
+                                retry_res.input_tokens
+                                + retry_res.cache_read_tokens
+                                + retry_res.cache_creation_tokens
+                                + retry_res.output_tokens,
+                            )
+                            retry_res.duration_seconds = round(
+                                result.duration_seconds + retry_res.duration_seconds, 3
+                            )
+                            retry_res.tool_call_count += result.tool_call_count
+                            retry_res.tool_errors = [*result.tool_errors, *retry_res.tool_errors]
+                            result = retry_res
+                    except Exception as exc:
+                        logger.warning("[%s] 空回复自动追问异常: %s", session_key, exc)
+
                 sp.resumed_from_same_epoch = False
                 if window_min_seq is not None:
                     sp.window_min_seq = window_min_seq
@@ -1539,7 +1633,7 @@ class AgyRunner(BaseAgentRunner):
                 enable_vision=True,
                 enable_web_search=True,
                 enable_url_read=False,
-                enable_file_tools=False,
+                enable_file_tools=bool(self._cfg.allow_command_execution),
                 enable_command=self._cfg.allow_command_execution,
             )
         return ModelProfileConfig(
@@ -1560,7 +1654,7 @@ class AgyRunner(BaseAgentRunner):
             enable_url_read=base.enable_url_read,
             enable_vision=True,  # Always allow read_file(.media_cache/*) & lazy MCP schemas
             enable_audio=base.enable_audio,
-            enable_file_tools=base.enable_file_tools,
+            enable_file_tools=bool(base.enable_file_tools or self._cfg.allow_command_execution),
             enable_command=bool(self._cfg.allow_command_execution or base.enable_command),
         )
 

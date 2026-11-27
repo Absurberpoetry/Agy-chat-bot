@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from agy_chat_bot.config import AgyConfig, RateLimitConfig  # noqa: E402
+from agy_chat_bot.config import AgyConfig, ModelProfileConfig, RateLimitConfig  # noqa: E402
 from agy_chat_bot.models import IncomingMessage  # noqa: E402
 from agy_chat_bot.runner.agy_stream import AgyRunner  # noqa: E402
 
@@ -92,6 +92,56 @@ _FAKE_AGY_SCRIPT = textwrap.dedent(
                     "status": "ERROR",
                     "response": "",
                     "error": "429 RESOURCE_EXHAUSTED quota",
+                    "num_turns": turns,
+                },
+            }), flush=True)
+            continue
+        if "SIMULATE_TOOL_EMPTY" in content:
+            turns += 1
+            print(json.dumps({
+                "event": "step_update",
+                "step_update": {"conversation_id": conv_id, "step_index": 1, "state": "ERROR", "step_type": "tool", "tool_name": "write_file", "error": "permission denied"},
+            }), flush=True)
+            print(json.dumps({
+                "event": "step_update",
+                "step_update": {"conversation_id": conv_id, "step_index": 2, "state": "DONE", "step_type": "tool", "tool_name": "run_command"},
+            }), flush=True)
+            print(json.dumps({
+                "event": "result",
+                "result": {
+                    "conversation_id": conv_id,
+                    "status": "SUCCESS",
+                    "response": "",
+                    "usage": {"input_tokens": 200, "output_tokens": 500},
+                    "num_turns": turns,
+                },
+            }), flush=True)
+            continue
+        if "SIMULATE_STREAM_FALLBACK" in content:
+            turns += 1
+            print(json.dumps({
+                "event": "assistant",
+                "delta": "画好啦 ![图片](logo.png)",
+            }), flush=True)
+            print(json.dumps({
+                "event": "result",
+                "result": {
+                    "conversation_id": conv_id,
+                    "status": "SUCCESS",
+                    "response": "",
+                    "num_turns": turns,
+                },
+            }), flush=True)
+            continue
+        if "系统提醒：你刚才调用了工具但没有输出任何最终文字回复" in content:
+            turns += 1
+            print(json.dumps({
+                "event": "result",
+                "result": {
+                    "conversation_id": conv_id,
+                    "status": "SUCCESS",
+                    "response": "已补发前端 logo ![图片](logo_minimal.png)",
+                    "usage": {"input_tokens": 50, "output_tokens": 40},
                     "num_turns": turns,
                 },
             }), flush=True)
@@ -315,6 +365,97 @@ class AgyRunnerTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(env.get("HTTP_PROXY"), "http://127.0.0.1:7890")
             self.assertEqual(env.get("HTTPS_PROXY"), "http://127.0.0.1:7890")
             self.assertEqual(env.get("ALL_PROXY"), "http://127.0.0.1:7890")
+            await runner.shutdown()
+
+    async def test_file_tools_permission_adds_allow_and_trusted_workspaces(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            ws_dir = tmp_path / "bot_workspace"
+            data_dir = tmp_path / "data"
+            sub_ws = data_dir / "subagent_workspace"
+            settings_path = tmp_path / "settings.bot.json"
+            settings_path.write_text(
+                json.dumps(
+                    {
+                        "trustedWorkspaces": [r"C:\old_moved_repo\bot_workspace"],
+                        "permissions": {"deny": ["command(*)", "write_file(*)"], "allow": ["read_file(.media_cache/*)"]},
+                    }
+                ),
+                encoding="utf-8",
+            )
+            profile = ModelProfileConfig(
+                model="gemini-4-neon-low",
+                enable_web_search=True,
+                enable_url_read=True,
+                enable_vision=True,
+                enable_file_tools=True,
+                enable_command=True,
+            )
+            runner = AgyRunner(
+                AgyConfig(
+                    mode="agy",
+                    executable="fake_agy",
+                    allow_command_execution=True,
+                    model="gemini-4-neon-low",
+                    model_profiles={"gemini-4-neon-low": profile},
+                ),
+                RateLimitConfig(max_concurrent_requests=1, max_queue_size=4),
+                workspace_dir=ws_dir,
+                data_dir=data_dir,
+                settings_file=settings_path,
+            )
+            resolved = runner._resolve_model_settings_file("gemini-4-neon-low", profile)
+            self.assertIsNotNone(resolved)
+            cfg = json.loads(resolved.read_text(encoding="utf-8"))
+            self.assertIn("write_file(*)", cfg["permissions"]["allow"])
+            self.assertIn("edit_file(*)", cfg["permissions"]["allow"])
+            self.assertNotIn("write_file(*)", cfg["permissions"]["deny"])
+            self.assertIn("write_file(GEMINI.md)", cfg["permissions"]["deny"])
+            self.assertIn("write_file(.agents/)", cfg["permissions"]["deny"])
+            trusted = [str(Path(p).resolve()) for p in cfg["trustedWorkspaces"]]
+            self.assertIn(str(ws_dir.resolve()), trusted)
+            self.assertIn(str(sub_ws.resolve()), trusted)
+
+            # Subagent profile also gets file tools when allow_command_execution is enabled
+            sub_prof = runner._build_subagent_profile("gemini-4-neon-medium")
+            self.assertTrue(sub_prof.enable_file_tools)
+            await runner.shutdown()
+
+    async def test_empty_response_after_tool_calls_auto_recovers_and_stream_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            fake_agy = tmp_path / "fake_agy.py"
+            fake_agy.write_text(_FAKE_AGY_SCRIPT, encoding="utf-8")
+
+            async def spawn_fake(*args, cwd=None, env=None):
+                cmd = [sys.executable, str(fake_agy), *args[1:]]
+                return await asyncio.create_subprocess_exec(
+                    *cmd,
+                    stdin=asyncio.subprocess.PIPE,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                    cwd=cwd,
+                    env=env,
+                    limit=10 * 1024 * 1024,
+                )
+
+            runner = AgyRunner(
+                AgyConfig(mode="agy", executable="fake_agy"),
+                RateLimitConfig(max_concurrent_requests=1, max_queue_size=4),
+                workspace_dir=tmp_path / "workspace",
+                data_dir=tmp_path / "data",
+                process_factory=spawn_fake,
+            )
+            r1 = await runner.ask("qq_1:group:777", "SIMULATE_TOOL_EMPTY 绘制前端logo")
+            self.assertTrue(r1.ok)
+            self.assertIn("![图片](logo_minimal.png)", r1.response)
+            self.assertEqual(r1.tool_call_count, 2)
+            self.assertTrue(any("write_file" in e for e in r1.tool_errors))
+            self.assertGreaterEqual(r1.output_tokens, 540)
+
+            r2 = await runner.ask("qq_1:group:777", "SIMULATE_STREAM_FALLBACK")
+            self.assertTrue(r2.ok)
+            self.assertIn("![图片](logo.png)", r2.response)
             await runner.shutdown()
 
 
