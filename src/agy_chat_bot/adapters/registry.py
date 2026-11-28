@@ -11,12 +11,13 @@ from .base import MessageLookupFn, OnGroupBanFn, OnMessageFn, PlatformAdapter, W
 from .generic_ws import GenericWSAdapter
 from .onebot_v11 import OneBotV11Adapter
 from .telegram import TelegramAdapter
+from .weixin_ilink import WeixinILinkAdapter
 
 AdapterFactory = Callable[..., PlatformAdapter]
 
 
 class AdapterRegistry:
-    """Builds and runs multiple platform adapters concurrently (OneBot v11, Telegram, Generic WS)."""
+    """Builds and runs multiple platform adapters concurrently (OneBot v11, Telegram, WeChat iLink, Generic WS)."""
 
     def __init__(self) -> None:
         self._factories: dict[str, AdapterFactory] = {
@@ -24,6 +25,11 @@ class AdapterRegistry:
             "napcat": OneBotV11Adapter,
             "telegram": TelegramAdapter,
             "tg": TelegramAdapter,
+            "weixin_ilink": WeixinILinkAdapter,
+            "weixin": WeixinILinkAdapter,
+            "wechat": WeixinILinkAdapter,
+            "weixin_oc": WeixinILinkAdapter,
+            "clawbot": WeixinILinkAdapter,
             "generic_ws": GenericWSAdapter,
         }
         self._adapters: dict[str, PlatformAdapter] = {}

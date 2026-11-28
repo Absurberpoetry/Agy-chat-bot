@@ -14,6 +14,12 @@ from typing import TYPE_CHECKING, Any
 from aiohttp import ClientError, ClientSession, ClientTimeout, WSServerHandshakeError, WSMsgType, web
 
 from ..adapters.telegram import normalize_telegram_api_base, probe_telegram_bot
+from ..adapters.weixin_ilink import (
+    fetch_weixin_qr_code,
+    normalize_weixin_api_base,
+    poll_weixin_qr_status,
+    probe_weixin_ilink,
+)
 from ..config import (
     ScheduledTaskConfig,
     ScriptRuleConfig,
@@ -174,6 +180,8 @@ class WebUIServer:
         app.router.add_get("/api/config", self._handle_get_config)
         app.router.add_put("/api/config", self._handle_put_config)
         app.router.add_post("/api/platforms/test", self._handle_test_platform)
+        app.router.add_post("/api/platforms/weixin/qr-start", self._handle_weixin_qr_start)
+        app.router.add_post("/api/platforms/weixin/qr-status", self._handle_weixin_qr_status)
         app.router.add_get("/api/models", self._handle_list_models)
         app.router.add_get("/api/agents", self._handle_list_agents)
 
@@ -401,6 +409,33 @@ class WebUIServer:
             logger.exception("WebUI 更新配置失败")
             return web.json_response({"ok": False, "error": str(exc)}, status=400)
 
+    async def _handle_weixin_qr_start(self, request: web.Request) -> web.Response:
+        self._require_auth(request)
+        try:
+            body = await _read_json_dict(request)
+        except Exception:
+            body = {}
+        api_base = str(body.get("api_base") or body.get("ws_url") or "").strip()
+        explicit_proxy = str(body.get("proxy") or "").strip()
+        use_agy_proxy = bool(body.get("use_agy_proxy", False))
+        eff_proxy = explicit_proxy if explicit_proxy else (self._bot.config.agy.proxy if use_agy_proxy else "")
+        res = await fetch_weixin_qr_code(api_base=api_base, proxy=eff_proxy, timeout_seconds=12.0)
+        return web.json_response(res, status=200 if res.get("ok") else 400)
+
+    async def _handle_weixin_qr_status(self, request: web.Request) -> web.Response:
+        self._require_auth(request)
+        try:
+            body = await _read_json_dict(request)
+        except Exception as exc:
+            return web.json_response({"ok": False, "error": str(exc)}, status=400)
+        qrcode = str(body.get("qrcode") or "").strip()
+        api_base = str(body.get("api_base") or body.get("ws_url") or "").strip()
+        explicit_proxy = str(body.get("proxy") or "").strip()
+        use_agy_proxy = bool(body.get("use_agy_proxy", False))
+        eff_proxy = explicit_proxy if explicit_proxy else (self._bot.config.agy.proxy if use_agy_proxy else "")
+        res = await poll_weixin_qr_status(qrcode, api_base=api_base, proxy=eff_proxy, timeout_seconds=10.0)
+        return web.json_response(res, status=200 if res.get("ok") else 400)
+
     async def _handle_test_platform(self, request: web.Request) -> web.Response:
         """Actively probe a chat client's forward WebSocket endpoint & OneBot v11 handshake."""
         self._require_auth(request)
@@ -478,6 +513,50 @@ class WebUIServer:
                     }
                 )
             err = str(probe.get("error") or "Telegram 连接测试失败")
+            _log(f"✗ {err}")
+            return web.json_response(
+                {
+                    "ok": True,
+                    "connected": False,
+                    "latency_ms": probe.get("latency_ms", 0),
+                    "runtime_connected": runtime_connected,
+                    "runtime_self_id": runtime_self_id,
+                    "logs": logs,
+                    "error": err,
+                }
+            )
+
+        if ptype in ("weixin_ilink", "weixin", "wechat", "weixin_oc", "clawbot"):
+            extra = body.get("extra") if isinstance(body.get("extra"), dict) else {}
+            explicit_proxy = str(extra.get("proxy") or body.get("proxy") or "").strip()
+            use_agy_proxy = bool(extra.get("use_agy_proxy", False))
+            eff_proxy = explicit_proxy if explicit_proxy else (self._bot.config.agy.proxy if use_agy_proxy else "")
+            api_base = normalize_weixin_api_base(ws_url)
+            _log(f"开始探测个人微信官方 iLink 接口: {api_base}/ilink/bot/getupdates (代理: {eff_proxy or '直连'})")
+            probe = await probe_weixin_ilink(
+                token,
+                api_base=api_base,
+                proxy=eff_proxy,
+                timeout_seconds=min(6.0, timeout_sec),
+            )
+            if probe.get("ok"):
+                _log(f"✓ 微信 iLink 连接正常 ({probe.get('latency_ms', 0)} ms) {probe.get('note') or ''}".strip())
+                return web.json_response(
+                    {
+                        "ok": True,
+                        "connected": True,
+                        "latency_ms": probe.get("latency_ms", 0),
+                        "runtime_connected": runtime_connected,
+                        "runtime_self_id": runtime_self_id or str(body.get("self_id") or ""),
+                        "login_info": {
+                            "user_id": runtime_self_id or str(body.get("self_id") or ""),
+                            "nickname": str(extra.get("ilink_user_id") or runtime_self_id or "个人微信 (iLink)"),
+                        },
+                        "logs": logs,
+                        "error": "",
+                    }
+                )
+            err = str(probe.get("error") or "微信 iLink 连接测试失败")
             _log(f"✗ {err}")
             return web.json_response(
                 {

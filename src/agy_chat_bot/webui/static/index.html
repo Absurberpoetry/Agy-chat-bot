@@ -3093,7 +3093,7 @@
                   <div class="cfg-k"><div class="cfg-title">客户端 ID、协议类型与启用状态</div><div class="cfg-desc">每个接入的聊天客户端需具备唯一 ID，可自由启停；支持 OneBot v11 (NapCat / LLBot)、Telegram Bot API 等多客户端同时在线</div></div>
                   <div class="cfg-v" style="gap:8px">
                     <input id="cfg_p_id" class="mono" style="width:140px" placeholder="qq_napcat_1" oninput="onPlatformFieldInput()">
-                    <select id="cfg_p_type" style="width:168px" onchange="onPlatformTypeChange()"><option value="onebot_v11">OneBot v11 (NapCat)</option><option value="telegram">Telegram Bot API</option><option value="generic_ws">通用 WebSocket</option></select>
+                    <select id="cfg_p_type" style="width:184px" onchange="onPlatformTypeChange()"><option value="onebot_v11">OneBot v11 (NapCat)</option><option value="telegram">Telegram Bot API</option><option value="weixin_ilink">个人微信 (官方 iLink)</option><option value="generic_ws">通用 WebSocket</option></select>
                     <label class="switch"><input type="checkbox" id="cfg_p_enabled" onchange="onPlatformFieldInput()"><span class="track"></span><span class="thumb"></span></label>
                   </div>
                 </div>
@@ -3110,6 +3110,27 @@
                   <div class="cfg-v" style="gap:10px;flex-wrap:wrap">
                     <input id="cfg_p_tg_proxy" class="mono" style="flex:1;min-width:180px" placeholder="留空自动复用核心代理，如 http://127.0.0.1:7890" oninput="onPlatformFieldInput()">
                     <label style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2);white-space:nowrap">复用核心代理<span class="switch"><input type="checkbox" id="cfg_p_tg_use_agy_proxy" onchange="onPlatformFieldInput()"><span class="track"></span><span class="thumb"></span></span></label>
+                  </div>
+                </div>
+                <div class="cfg-row stack" id="row_p_wx_qr" data-rel-key="p_wx_qr" style="display:none">
+                  <div class="cfg-k">
+                    <div class="cfg-title">个人微信官方扫码登录（iLink / ClawBot 协议）</div>
+                    <div class="cfg-desc">腾讯官方合规通道（扫码 + 长轮询，无需公网 IP、免封号风险）；支持私聊文字、语音转文字与收发图片（官方暂未开放微信群聊）。手机微信需更新至最新版，扫码后在「设置 → 插件 → ClawBot」确认授权即可自动填入凭证并上线。</div>
+                  </div>
+                  <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap">
+                    <div id="wxQrImgBox" style="width:176px;height:176px;border-radius:12px;border:1px solid var(--border);background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0">
+                      <span style="font-size:12px;color:var(--text-3);text-align:center;padding:12px;line-height:1.6">点击右侧<br>「扫码登录」<br>生成二维码</span>
+                    </div>
+                    <div style="flex:1;min-width:220px;display:flex;flex-direction:column;gap:8px">
+                      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                        <button type="button" class="primary sm" id="btnWxQrStart" onclick="startWeixinQrLogin()">生成微信登录二维码</button>
+                        <button type="button" class="sm" id="btnWxQrStop" style="display:none" onclick="stopWeixinQrPolling(true)">停止等待</button>
+                      </div>
+                      <div id="wxQrStatusText" style="font-size:12.5px;color:var(--text-2);line-height:1.6">
+                        尚未发起扫码；登录成功后会自动回填 Bot Token、API 地址与机器人 ID 并保存热重载。
+                      </div>
+                      <div id="wxQrLinkHint" class="mono" style="display:none;font-size:11px;color:var(--text-3);word-break:break-all"></div>
+                    </div>
                   </div>
                 </div>
                 <div class="cfg-row" data-rel-key="p_guard">
@@ -7236,8 +7257,14 @@ function _isTelegramType(t) {
   return s === 'telegram' || s === 'tg';
 }
 
+function _isWeixinType(t) {
+  const s = String(t || '').toLowerCase();
+  return s === 'weixin_ilink' || s === 'weixin' || s === 'wechat' || s === 'weixin_oc' || s === 'clawbot';
+}
+
 function syncPlatformTypeUi(type) {
   const isTg = _isTelegramType(type);
+  const isWx = _isWeixinType(type);
   const wsTitle = document.getElementById('cfg_p_ws_title');
   const wsDesc = document.getElementById('cfg_p_ws_desc');
   const wsInput = document.getElementById('cfg_p0_ws');
@@ -7245,17 +7272,23 @@ function syncPlatformTypeUi(type) {
   const tkDesc = document.getElementById('cfg_p_token_desc');
   const tkInput = document.getElementById('cfg_p0_token');
   const tgRow = document.getElementById('row_p_tg_proxy');
-  if (wsTitle) wsTitle.textContent = isTg ? 'Telegram Bot API 地址' : '正向 WebSocket 地址';
-  if (wsDesc) wsDesc.textContent = isTg
-    ? '留空默认官方地址 https://api.telegram.org；如有反代或自建 Bot API 可填自定义域名'
-    : '例如 ws://127.0.0.1:3001';
-  if (wsInput) wsInput.placeholder = isTg ? 'https://api.telegram.org' : 'ws://127.0.0.1:3001';
-  if (tkTitle) tkTitle.textContent = isTg ? 'Telegram Bot Token' : 'Access Token';
-  if (tkDesc) tkDesc.textContent = isTg
-    ? '在 Telegram 私聊 @BotFather 发送 /newbot 获取（格式如 123456789:ABCdef...）'
-    : '与该聊天客户端网络配置中的 Token 保持一致';
-  if (tkInput) tkInput.placeholder = isTg ? '123456789:ABCdef...' : '可选，与客户端 Token 一致';
+  const wxRow = document.getElementById('row_p_wx_qr');
+  if (wsTitle) wsTitle.textContent = isWx ? '微信官方 iLink API 地址' : (isTg ? 'Telegram Bot API 地址' : '正向 WebSocket 地址');
+  if (wsDesc) wsDesc.textContent = isWx
+    ? '默认腾讯官方地址 https://ilinkai.weixin.qq.com，扫码成功后自动写入分配地址'
+    : (isTg
+      ? '留空默认官方地址 https://api.telegram.org；如有反代或自建 Bot API 可填自定义域名'
+      : '例如 ws://127.0.0.1:3001');
+  if (wsInput) wsInput.placeholder = isWx ? 'https://ilinkai.weixin.qq.com' : (isTg ? 'https://api.telegram.org' : 'ws://127.0.0.1:3001');
+  if (tkTitle) tkTitle.textContent = isWx ? '微信 iLink Bot Token（扫码自动填入）' : (isTg ? 'Telegram Bot Token' : 'Access Token');
+  if (tkDesc) tkDesc.textContent = isWx
+    ? '点击下方「生成微信登录二维码」扫码确认后自动回填，一般无需手动修改'
+    : (isTg
+      ? '在 Telegram 私聊 @BotFather 发送 /newbot 获取（格式如 123456789:ABCdef...）'
+      : '与该聊天客户端网络配置中的 Token 保持一致');
+  if (tkInput) tkInput.placeholder = isWx ? '扫码登录后自动生成' : (isTg ? '123456789:ABCdef...' : '可选，与客户端 Token 一致');
   if (tgRow) tgRow.style.display = isTg ? '' : 'none';
+  if (wxRow) wxRow.style.display = isWx ? '' : 'none';
 }
 
 function renderPlatformCards() {
@@ -7263,18 +7296,19 @@ function renderPlatformCards() {
   if (!grid) return;
   const plats = currentConfig?.platforms || [];
   if (selectedPlatformIdx >= plats.length) selectedPlatformIdx = Math.max(0, plats.length - 1);
-  const typeLabel = (t) => _isTelegramType(t) ? 'Telegram' : (t === 'generic_ws' ? 'Generic WS' : 'OneBot v11');
+  const typeLabel = (t) => _isWeixinType(t) ? '个人微信' : (_isTelegramType(t) ? 'Telegram' : (t === 'generic_ws' ? 'Generic WS' : 'OneBot v11'));
   const cardsHtml = plats.map((p, i) => {
     const isActive = platformDetailOpen && i === selectedPlatformIdx;
     const enabled = p.enabled !== false;
     const pid = p.id || `client_${i + 1}`;
     const isTg = _isTelegramType(p.type);
-    const url = isTg
-      ? (p.ws_url || 'https://api.telegram.org')
-      : (p.ws_url || '未填写 WebSocket 地址');
+    const isWx = _isWeixinType(p.type);
+    const url = isWx
+      ? (p.ws_url || 'https://ilinkai.weixin.qq.com')
+      : (isTg ? (p.ws_url || 'https://api.telegram.org') : (p.ws_url || '未填写 WebSocket 地址'));
     const selfTag = p.self_id
       ? `ID: ${p.self_id}`
-      : (isTg ? (p.access_token ? 'Bot Token 已填' : '待填 Bot Token') : (enabled ? '已启用' : '已停用'));
+      : (isWx ? (p.access_token ? '已扫码授权' : '待扫码登录') : (isTg ? (p.access_token ? 'Bot Token 已填' : '待填 Bot Token') : (enabled ? '已启用' : '已停用')));
     return `
       <div class="plat-rect-card ${isActive ? 'active' : ''}" role="button" tabindex="0" onclick="openPlatformCard(${i})">
         <div class="prc-top">
@@ -7290,6 +7324,10 @@ function renderPlatformCards() {
     `;
   }).join('');
   grid.innerHTML = cardsHtml + `
+    <div class="plat-rect-card is-add" role="button" tabindex="0" onclick="addPlatform('weixin_ilink')">
+      <span style="font-size:18px;line-height:1">+</span>
+      <span>新增个人微信 (官方扫码)</span>
+    </div>
     <div class="plat-rect-card is-add" role="button" tabindex="0" onclick="addPlatform('telegram')">
       <span style="font-size:18px;line-height:1">+</span>
       <span>新增 Telegram 机器人</span>
@@ -7313,24 +7351,25 @@ function renderPlatformForm() {
   if (!detailEl) return;
   if (!platformDetailOpen || !plats.length) {
     detailEl.style.display = 'none';
+    stopWeixinQrPolling(false);
     return;
   }
   detailEl.style.display = '';
   const p = plats[selectedPlatformIdx] || {};
   const titleEl = document.getElementById('platDetailTitle');
   if (titleEl) titleEl.textContent = `客户端独立配置 · ${p.id || ('client_' + (selectedPlatformIdx + 1))}`;
-  const ptype = _isTelegramType(p.type) ? 'telegram' : (p.type || 'onebot_v11');
+  const ptype = _isWeixinType(p.type) ? 'weixin_ilink' : (_isTelegramType(p.type) ? 'telegram' : (p.type || 'onebot_v11'));
   document.getElementById('cfg_p_id').value = p.id || '';
   document.getElementById('cfg_p_type').value = ptype;
   document.getElementById('cfg_p_enabled').checked = p.enabled !== false;
-  document.getElementById('cfg_p0_ws').value = p.ws_url || (_isTelegramType(ptype) ? 'https://api.telegram.org' : '');
+  document.getElementById('cfg_p0_ws').value = p.ws_url || (_isWeixinType(ptype) ? 'https://ilinkai.weixin.qq.com' : (_isTelegramType(ptype) ? 'https://api.telegram.org' : ''));
   document.getElementById('cfg_p0_token').value = p.access_token || '';
   document.getElementById('cfg_p0_self_id').value = p.self_id || '';
   document.getElementById('cfg_p0_user_block').value = (p.user_blocklist || []).join(', ');
   document.getElementById('cfg_p0_priv_block').value = (p.private_blocklist || []).join(', ');
   document.getElementById('cfg_p_rec_init').value = p.reconnect_initial_seconds ?? 2;
   document.getElementById('cfg_p_rec_max').value = p.reconnect_max_seconds ?? 60;
-  document.getElementById('cfg_p_rpc_to').value = p.rpc_timeout_seconds ?? (_isTelegramType(ptype) ? 15 : 5);
+  document.getElementById('cfg_p_rpc_to').value = p.rpc_timeout_seconds ?? ((_isTelegramType(ptype) || _isWeixinType(ptype)) ? 15 : 5);
   const extra = (p.extra && typeof p.extra === 'object') ? p.extra : {};
   const tgProxyEl = document.getElementById('cfg_p_tg_proxy');
   const tgUseAgyEl = document.getElementById('cfg_p_tg_use_agy_proxy');
@@ -7345,8 +7384,19 @@ function onPlatformTypeChange() {
   const idEl = document.getElementById('cfg_p_id');
   const rpcEl = document.getElementById('cfg_p_rpc_to');
   const nextType = typeEl ? typeEl.value : 'onebot_v11';
-  if (_isTelegramType(nextType)) {
-    if (wsEl && (!wsEl.value.trim() || wsEl.value.trim().startsWith('ws://') || wsEl.value.trim().startsWith('wss://'))) {
+  if (_isWeixinType(nextType)) {
+    if (wsEl && (!wsEl.value.trim() || wsEl.value.trim().startsWith('ws://') || wsEl.value.trim().startsWith('wss://') || wsEl.value.trim() === 'https://api.telegram.org')) {
+      wsEl.value = 'https://ilinkai.weixin.qq.com';
+    }
+    if (idEl && /^(client|tg_bot)_\d+$/.test(idEl.value.trim())) {
+      idEl.value = `wx_ilink_${selectedPlatformIdx + 1}`;
+    }
+    if (rpcEl && Number(rpcEl.value || 0) <= 5) {
+      rpcEl.value = 15;
+    }
+  } else if (_isTelegramType(nextType)) {
+    stopWeixinQrPolling(false);
+    if (wsEl && (!wsEl.value.trim() || wsEl.value.trim().startsWith('ws://') || wsEl.value.trim().startsWith('wss://') || wsEl.value.trim() === 'https://ilinkai.weixin.qq.com')) {
       wsEl.value = 'https://api.telegram.org';
     }
     if (idEl && /^client_\d+$/.test(idEl.value.trim())) {
@@ -7356,7 +7406,8 @@ function onPlatformTypeChange() {
       rpcEl.value = 15;
     }
   } else {
-    if (wsEl && wsEl.value.trim() === 'https://api.telegram.org') {
+    stopWeixinQrPolling(false);
+    if (wsEl && (wsEl.value.trim() === 'https://api.telegram.org' || wsEl.value.trim() === 'https://ilinkai.weixin.qq.com')) {
       wsEl.value = 'ws://127.0.0.1:3001';
     }
   }
@@ -7422,33 +7473,124 @@ function addPlatform(presetType = 'onebot_v11') {
   if (!currentConfig.platforms) currentConfig.platforms = [];
   if (platformDetailOpen && currentConfig.platforms.length) syncCurrentPlatformToObj(currentConfig.platforms);
   const isTg = _isTelegramType(presetType);
+  const isWx = _isWeixinType(presetType);
   const existingIds = new Set(currentConfig.platforms.map(x => String(x.id || '')));
   let n = currentConfig.platforms.length + 1;
-  let newId = isTg ? `tg_bot_${n}` : `client_${n}`;
+  let newId = isWx ? `wx_ilink_${n}` : (isTg ? `tg_bot_${n}` : `client_${n}`);
   while (existingIds.has(newId)) {
     n += 1;
-    newId = isTg ? `tg_bot_${n}` : `client_${n}`;
+    newId = isWx ? `wx_ilink_${n}` : (isTg ? `tg_bot_${n}` : `client_${n}`);
   }
   currentConfig.platforms.push({
     id: newId,
-    type: isTg ? 'telegram' : 'onebot_v11',
+    type: isWx ? 'weixin_ilink' : (isTg ? 'telegram' : 'onebot_v11'),
     enabled: true,
-    ws_url: isTg ? 'https://api.telegram.org' : 'ws://127.0.0.1:3001',
+    ws_url: isWx ? 'https://ilinkai.weixin.qq.com' : (isTg ? 'https://api.telegram.org' : 'ws://127.0.0.1:3001'),
     access_token: '',
     self_id: '',
     user_blocklist: [],
     private_blocklist: [],
     reconnect_initial_seconds: 2,
     reconnect_max_seconds: 60,
-    rpc_timeout_seconds: isTg ? 15 : 5,
-    extra: isTg ? { proxy: '', use_agy_proxy: true } : {},
+    rpc_timeout_seconds: (isTg || isWx) ? 15 : 5,
+    extra: isWx ? { use_agy_proxy: false } : (isTg ? { proxy: '', use_agy_proxy: true } : {}),
   });
   selectedPlatformIdx = currentConfig.platforms.length - 1;
   platformDetailOpen = true;
   renderPlatformForm();
-  toast(isTg
-    ? '已新增 Telegram 机器人卡片，填入 @BotFather Token 后可「测试连接」并「保存并热重载」'
-    : '已新增聊天客户端卡片，填写独立参数后点击「保存并热重载」');
+  toast(isWx
+    ? '已新增个人微信 (官方 iLink) 卡片，点击「生成微信登录二维码」扫码授权即可上线'
+    : (isTg
+      ? '已新增 Telegram 机器人卡片，填入 @BotFather Token 后可「测试连接」并「保存并热重载」'
+      : '已新增聊天客户端卡片，填写独立参数后点击「保存并热重载」'));
+}
+
+var _wxQrPollRunId = 0;
+
+function stopWeixinQrPolling(updateUi = false) {
+  _wxQrPollRunId += 1;
+  const stopBtn = document.getElementById('btnWxQrStop');
+  const startBtn = document.getElementById('btnWxQrStart');
+  if (stopBtn) stopBtn.style.display = 'none';
+  if (startBtn) startBtn.disabled = false;
+  if (updateUi) {
+    const st = document.getElementById('wxQrStatusText');
+    if (st) st.textContent = '已停止等待扫码；可随时重新点击「生成微信登录二维码」。';
+  }
+}
+
+async function startWeixinQrLogin() {
+  stopWeixinQrPolling(false);
+  const runId = ++_wxQrPollRunId;
+  const startBtn = document.getElementById('btnWxQrStart');
+  const stopBtn = document.getElementById('btnWxQrStop');
+  const imgBox = document.getElementById('wxQrImgBox');
+  const stEl = document.getElementById('wxQrStatusText');
+  const linkEl = document.getElementById('wxQrLinkHint');
+  if (startBtn) startBtn.disabled = true;
+  if (stopBtn) stopBtn.style.display = '';
+  if (stEl) stEl.textContent = '正在向腾讯官方 iLink 接口申请登录二维码...';
+  if (imgBox) imgBox.innerHTML = '<span style="font-size:12px;color:var(--text-3)">生成中...</span>';
+  const apiBase = (document.getElementById('cfg_p0_ws')?.value || '').trim();
+  try {
+    const res = await api('/api/platforms/weixin/qr-start', {
+      method: 'POST',
+      body: JSON.stringify({ api_base: apiBase }),
+    });
+    if (runId !== _wxQrPollRunId) return;
+    if (res.qrcode_svg_data_uri && imgBox) {
+      imgBox.innerHTML = `<img src="${res.qrcode_svg_data_uri}" alt="微信登录二维码" style="width:168px;height:168px;display:block;border-radius:8px">`;
+    }
+    if (linkEl && res.qrcode_url) {
+      linkEl.style.display = '';
+      linkEl.textContent = `二维码内容：${res.qrcode_url}`;
+    }
+    if (stEl) stEl.innerHTML = '请使用<strong>手机微信</strong>扫码并在「设置 → 插件 → ClawBot」点击确认授权（等待中...）';
+
+    const qrcode = res.qrcode;
+    const deadline = Date.now() + 180000;
+    while (runId === _wxQrPollRunId && Date.now() < deadline) {
+      const poll = await api('/api/platforms/weixin/qr-status', {
+        method: 'POST',
+        body: JSON.stringify({ qrcode, api_base: res.api_base || apiBase }),
+      });
+      if (runId !== _wxQrPollRunId) return;
+      const st = String(poll.status || 'wait').toLowerCase();
+      if (st === 'scaned' || st === 'scanned') {
+        if (stEl) stEl.innerHTML = '<span style="color:var(--warn);font-weight:700">✓ 已扫码，请在手机微信上点击「确认登录」...</span>';
+      } else if (st === 'confirmed') {
+        stopWeixinQrPolling(false);
+        if (poll.baseurl) document.getElementById('cfg_p0_ws').value = poll.baseurl;
+        if (poll.bot_token) document.getElementById('cfg_p0_token').value = poll.bot_token;
+        if (poll.ilink_bot_id) document.getElementById('cfg_p0_self_id').value = poll.ilink_bot_id;
+        if (currentConfig?.platforms?.[selectedPlatformIdx]) {
+          const cur = currentConfig.platforms[selectedPlatformIdx];
+          cur.extra = (cur.extra && typeof cur.extra === 'object') ? { ...cur.extra } : {};
+          if (poll.ilink_user_id) cur.extra.ilink_user_id = poll.ilink_user_id;
+        }
+        onPlatformFieldInput();
+        if (stEl) stEl.innerHTML = '<span style="color:var(--ok);font-weight:700">✓ 微信扫码授权成功！正在自动保存并热重载上线...</span>';
+        toast('微信扫码授权成功，正在保存并启动监听...');
+        await saveAllConfig();
+        return;
+      } else if (st === 'expired') {
+        stopWeixinQrPolling(false);
+        if (stEl) stEl.innerHTML = '<span style="color:var(--err)">二维码已过期，请点击「生成微信登录二维码」重新获取。</span>';
+        return;
+      }
+      await new Promise(r => setTimeout(r, 1200));
+    }
+    if (runId === _wxQrPollRunId) {
+      stopWeixinQrPolling(false);
+      if (stEl) stEl.innerHTML = '<span style="color:var(--warn)">等待扫码超时，请重新点击「生成微信登录二维码」。</span>';
+    }
+  } catch (e) {
+    if (runId === _wxQrPollRunId) {
+      stopWeixinQrPolling(false);
+      if (stEl) stEl.innerHTML = `<span style="color:var(--err)">扫码流程失败：${esc(e.message)}</span>`;
+      toast('微信扫码失败: ' + e.message, true);
+    }
+  }
 }
 
 function deleteCurrentPlatform() {
@@ -10227,6 +10369,7 @@ const SETTING_META = {
   p_ws: { title: '连接地址 / Bot API 地址', pane: 'platform', isOn: () => _chk('cfg_p_enabled') && (!!_val('cfg_p0_ws') || _isTelegramType(_val('cfg_p_type'))), usage: 'OneBot v11 填正向 WS 地址（如 ws://127.0.0.1:3001）；Telegram 留空或填 https://api.telegram.org（支持自定义反代），填完可点上方「测试连接」验证。' },
   p_token: { title: 'Access Token / Bot Token', pane: 'platform', isOn: () => !!_val('cfg_p0_token'), usage: 'OneBot v11 需与客户端正向 WS Token 一致；Telegram 填写 @BotFather /newbot 下发的 Bot Token。' },
   p_tg_proxy: { title: 'Telegram 网络代理', pane: 'platform', isOn: () => !!_val('cfg_p_tg_proxy') || _chk('cfg_p_tg_use_agy_proxy'), usage: '国内网络访问 api.telegram.org 需通过 HTTP(S) 代理；默认开启「复用核心代理」会自动沿用核心引擎代理，也可在此单独覆盖。' },
+  p_wx_qr: { title: '个人微信官方扫码 (iLink)', pane: 'platform', isOn: () => _isWeixinType(_val('cfg_p_type')) && !!_val('cfg_p0_token'), usage: '腾讯官方 ClawBot / iLink 个人微信通道（扫码 + 长轮询，无需公网 IP、零封号风险）。\n• 支持私聊文字、语音转文字与收发图片；\n• 官方当前仅开放私聊，不支持拉入微信群聊；\n• 若日志提示凭证过期 (-14)，重新点一次扫码即可秒恢复。' },
   p_guard: { title: '防打扰自动唤醒规则', pane: 'platform', isOn: () => true, usage: '机器人刚进新群时默认静默；只有群友显式 @机器人后才会激活发言；若在群内被禁言会自动重置回静默。' },
   p_user_block: { title: '用户黑名单', pane: 'platform', isOn: () => !!_val('cfg_p0_user_block'), usage: '点击在右侧逐条增删用户 ID；命中后在群聊与私聊中一律直接忽略，优先级最高。' },
   p_priv_block: { title: '私聊黑名单与自身 ID', pane: 'platform', isOn: () => !!_val('cfg_p0_priv_block') || !!_val('cfg_p0_self_id'), usage: '• 私聊黑名单：仅屏蔽对方私聊，不影响群内互动；\n• 机器人自身 ID：一般留空自动获取，仅在识别 @ 异常时手动填写 QQ 号。' },
@@ -10812,17 +10955,20 @@ function openPlatformTestModal() {
   const id = (document.getElementById('cfg_p_id')?.value || '').trim() || `client_${selectedPlatformIdx + 1}`;
   const type = document.getElementById('cfg_p_type')?.value || 'onebot_v11';
   const isTg = _isTelegramType(type);
+  const isWx = _isWeixinType(type);
   const wsUrl = (document.getElementById('cfg_p0_ws')?.value || '').trim();
   document.getElementById('platTestId').textContent = id;
-  document.getElementById('platTestType').textContent = isTg ? 'Telegram Bot API' : type;
-  document.getElementById('platTestUrl').textContent = wsUrl || (isTg ? 'https://api.telegram.org' : '（未填写）');
+  document.getElementById('platTestType').textContent = isWx ? '个人微信 (官方 iLink)' : (isTg ? 'Telegram Bot API' : type);
+  document.getElementById('platTestUrl').textContent = wsUrl || (isWx ? 'https://ilinkai.weixin.qq.com' : (isTg ? 'https://api.telegram.org' : '（未填写）'));
   const badge = document.getElementById('platTestBadge');
   badge.textContent = '待测试';
   badge.style.background = '';
   badge.style.color = '';
-  document.getElementById('platTestSummary').textContent = isTg
-    ? '点击右侧按钮实时调用 Telegram getMe 验证 Bot Token 与代理连通性'
-    : '点击右侧按钮开始实时探测 WebSocket 握手与鉴权';
+  document.getElementById('platTestSummary').textContent = isWx
+    ? '点击右侧按钮实时验证微信 Bot Token 与 iLink 官方通道连通性'
+    : (isTg
+      ? '点击右侧按钮实时调用 Telegram getMe 验证 Bot Token 与代理连通性'
+      : '点击右侧按钮开始实时探测 WebSocket 握手与鉴权');
   document.getElementById('platTestOutput').textContent = '点击「开始测试连接」后将在此显示详细连接状态与报错信息...';
   modal.style.display = 'flex';
 }
@@ -11025,20 +11171,22 @@ async function runPlatformConnectionTest() {
   const out = document.getElementById('platTestOutput');
   const ptype = document.getElementById('cfg_p_type')?.value || 'onebot_v11';
   const isTg = _isTelegramType(ptype);
+  const isWx = _isWeixinType(ptype);
   const payload = {
     id: (document.getElementById('cfg_p_id')?.value || '').trim(),
     type: ptype,
     ws_url: (document.getElementById('cfg_p0_ws')?.value || '').trim(),
     access_token: (document.getElementById('cfg_p0_token')?.value || '').trim(),
-    timeout: isTg ? 10 : 6,
+    self_id: (document.getElementById('cfg_p0_self_id')?.value || '').trim(),
+    timeout: isWx ? 12 : (isTg ? 10 : 6),
     extra: isTg ? {
       proxy: (document.getElementById('cfg_p_tg_proxy')?.value || '').trim(),
       use_agy_proxy: !!document.getElementById('cfg_p_tg_use_agy_proxy')?.checked,
     } : {},
   };
   document.getElementById('platTestId').textContent = payload.id || '-';
-  document.getElementById('platTestType').textContent = isTg ? 'Telegram Bot API' : payload.type;
-  document.getElementById('platTestUrl').textContent = payload.ws_url || (isTg ? 'https://api.telegram.org' : '（未填写）');
+  document.getElementById('platTestType').textContent = isWx ? '个人微信 (官方 iLink)' : (isTg ? 'Telegram Bot API' : payload.type);
+  document.getElementById('platTestUrl').textContent = payload.ws_url || (isWx ? 'https://ilinkai.weixin.qq.com' : (isTg ? 'https://api.telegram.org' : '（未填写）'));
 
   if (_platTestAbortCtrl) {
     try { _platTestAbortCtrl.abort(); } catch (_) {}
@@ -11052,7 +11200,9 @@ async function runPlatformConnectionTest() {
   badge.textContent = '连接中';
   badge.style.background = 'rgba(212,158,72,0.18)';
   badge.style.color = 'var(--warn)';
-  summary.textContent = isTg ? '正在连接 Telegram Bot API (getMe)...' : '正在尝试建立 WebSocket 连接...';
+  summary.textContent = isWx
+    ? '正在连接个人微信官方 iLink 服务 (getupdates)...'
+    : (isTg ? '正在连接 Telegram Bot API (getMe)...' : '正在尝试建立 WebSocket 连接...');
   out.textContent = `[${new Date().toTimeString().slice(0, 8)}] 正在向后端发起探测请求...\n`;
 
   try {
